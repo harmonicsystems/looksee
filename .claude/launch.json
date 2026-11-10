@@ -13,6 +13,19 @@
         "--strictPort"
       ],
       "port": 5178
+    },
+    {
+      "name": "looksee-built",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4178",
+        "--strictPort"
+      ],
+      "port": 4178
     }
   ]
 }

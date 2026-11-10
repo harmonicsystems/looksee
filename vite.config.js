@@ -34,13 +34,13 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // The app shell, the fonts, the feelings pictures and the credits.
+        // Everything the app shows is stored for offline use: the app shell,
+        // the fonts, every emoji picture (220 files, 5.4 MB) and the credits.
         // YouTube is never cached or intercepted.
-        globPatterns: ['**/*.{js,css,html,svg,png,ttf,webmanifest,avif,txt}'],
-        // The gesture and body pictures (192 files, 4.5 MB) are loaded when
-        // shown, not precached. Each entry here also costs bytes of service
-        // worker, which counts toward the JS budget.
-        globIgnores: ['**/node_modules/**/*', 'sw.js', 'workbox-*.js', 'people/**']
+        //
+        // Each file listed here also costs bytes of service worker, which
+        // count toward the JS budget: the pictures are about 5 KB of it.
+        globPatterns: ['**/*.{js,css,html,svg,png,ttf,webmanifest,avif,txt}']
       }
     })
   ],
