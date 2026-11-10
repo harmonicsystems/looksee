@@ -80,7 +80,13 @@ played with nothing falling back. For Spanish, every slide with a word was stepp
 both languages at the largest size, at phone and laptop shapes: no word was clipped or ran off
 the screen, and a screen reader is given the Spanish words marked as Spanish.
 
-**Not checked.** The live site since these two changes. Installing the app to a home screen. The school-day bar across a real school
+**Checked on 2026-11-10, on the live site, after these two changes.** A browser that had the
+earlier version was offered the new one in Settings ("A new version is ready"), and Reload
+switched to it. The Words choice is there, a slide shows its English and Spanish words together,
+and all 220 pictures are in the browser's store.
+
+**Not checked.** Installing the app to a home screen. Going offline on the live site itself (the
+offline run was on a local copy of the same build). The school-day bar across a real school
 day (one moment in the browser, the rest by unit tests). Typing emoji into the schedule on a
 Chromebook or iPad. The device's own reduced-motion setting (it shares a path with the Still
 setting, which was checked). Any device other than one Mac.
