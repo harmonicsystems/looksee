@@ -1,0 +1,54 @@
+name: Test, build and deploy
+
+# Every push to main is tested and built. It is published only once GitHub
+# Pages is turned on for the repo (Settings → Pages → Source = GitHub Actions),
+# so nothing fails, or goes public, before then.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # Where Pages serves the site: '' on a custom domain, '/looksee' on github.io.
+      - id: pages
+        if: github.event.repository.has_pages
+        uses: actions/configure-pages@v5
+      # build includes the bundle-size (60 KB) and contrast gates
+      - run: npm run build
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+      - if: github.event.repository.has_pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    if: github.event.repository.has_pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

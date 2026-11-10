@@ -1,0 +1,80 @@
+/* Looksee: the colors and base styles of the controls and the settings drawer.
+   Harmonic Systems low-stimulation design: muted palette, plain CSS custom
+   properties, no framework. (The stage has its own themes, in settings.js.)
+   Every color pair the controls render is checked for WCAG AA by
+   scripts/check-contrast.mjs, which gates `npm run build`. Both palettes below
+   are parsed by that script: keep each as a flat list of `--name: #rrggbb;`. */
+
+/* @palette light */
+:root {
+  --bg: #eef3f4;
+  --surface: #ffffff;
+  --sunk: #e2eaec;
+  --ink: #10242b;
+  --muted: #4f656d;
+  --line: #c9d6da;
+  --brand: #0d6a70;
+  --brand-ink: #ffffff;
+  --focus: #f2b705;
+  --focus-edge: #10242b;
+  --bad: #a03a29;
+}
+
+/* @palette dark */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d181c;
+    --surface: #15242a;
+    --sunk: #0a1316;
+    --ink: #e4eef0;
+    --muted: #9db2b9;
+    --line: #2b3f46;
+    --brand: #46b0b6;
+    --brand-ink: #06191b;
+    --focus: #ffc933;
+    --focus-edge: #0d181c;
+    --bad: #ec7a64;
+  }
+}
+
+:root {
+  color-scheme: light dark;
+  --font: 'Atkinson Hyperlegible', Verdana, system-ui, sans-serif;
+  --mono: ui-monospace, 'Cascadia Code', Consolas, Menlo, monospace;
+  /* Two-tone focus ring: a dark edge against the control, yellow outside it,
+     so it shows on light and dark grounds alike. */
+  --ring: 0 0 0 2px var(--focus-edge);
+}
+
+/* Bundled font (public/fonts, SIL OFL) — never a network font. */
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/AtkinsonHyperlegible-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/AtkinsonHyperlegible-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.45; }
+button, input, textarea, select { font: inherit; color: inherit; }
+a { color: var(--brand); }
+h1, h2, h3 { text-wrap: balance; }
+.mono { font-family: var(--mono); }
+kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--sunk); color: var(--ink); }
+
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; color: var(--ink); }
+.btn.small { padding: 3px 9px; font-size: 14px; }
+.btn.primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn:focus-visible, input:focus-visible, a:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--ring);
+}
+
+.banner { background: var(--sunk); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--ink); margin: 12px 0 0; }

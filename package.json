@@ -1,0 +1,21 @@
+{
+  "name": "looksee",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A calm screen that plays first concepts one at a time: letters, numbers, shapes, colors, feelings, gestures and body parts, with a bar for the school day and an optional corner video.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/check-bundle-size.mjs && node scripts/check-contrast.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "pictures": "node scripts/fetch-pictures.mjs"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.1.0",
+    "svelte": "^5.28.0",
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^3.1.4"
+  }
+}

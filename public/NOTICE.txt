@@ -1,0 +1,25 @@
+Emoji pictures in Looksee
+=========================
+
+The picture files in the feelings and people folders are unmodified copies
+of Google's Noto Emoji:
+
+  <code>.avif   the animated emoji, 512 x 512
+  <code>.svg    the still emoji
+
+Animated Noto Emoji is licensed under the Creative Commons Attribution 4.0
+International license (CC BY 4.0).
+  License: https://creativecommons.org/licenses/by/4.0/legalcode
+  Source:  https://googlefonts.github.io/noto-emoji-animation/
+
+The still images are Noto Emoji artwork. The Noto Emoji project states that
+its tools and most image resources are under the Apache License, Version 2.0.
+  License: https://www.apache.org/licenses/LICENSE-2.0
+  Source:  https://github.com/googlefonts/noto-emoji
+
+The copies were fetched from https://fonts.gstatic.com/s/e/notoemoji/latest/
+by scripts/fetch-pictures.mjs. Looksee does not contact Google while it runs;
+it shows these copies.
+
+The emoji on the school-day bar are not files. They are drawn by the device's
+own emoji font.
