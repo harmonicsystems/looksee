@@ -5,7 +5,7 @@
   // corner video.
   import { untrack } from 'svelte'
   import Visual from './Visual.svelte'
-  import { SETS, buildDeck, pictureSrc } from './concepts.js'
+  import { SETS, buildDeck, pictureSrc, labelRows } from './concepts.js'
   import { THEMES, OPTIONS, DECK_KEYS, loadSettings, saveSettings, normalizeSettings } from './settings.js'
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
   import { PipPlayer } from './pip.js'
@@ -33,6 +33,10 @@
     index = 0
   })
   const item = $derived(deck[Math.min(index, deck.length - 1)])
+  // The words under the slide, in the language chosen, and the same words as
+  // the slide's name for a screen reader.
+  const rows = $derived(item ? labelRows(item, s.words) : [])
+  const say = $derived(rows.length ? rows.map((r) => r.words.join(', ')).join(' / ') : item?.say)
   const theme = $derived(THEMES[s.theme])
   const color = $derived(s.colorMode === 'rainbow' ? theme.colors[index % theme.colors.length] : theme.ink)
 
@@ -230,6 +234,7 @@
     letterCase: { upper: 'A', lower: 'a', both: 'Aa' },
     numberStyle: { digit: 'Numeral', dots: 'Dots', both: 'Both' },
     feelingMotion: { moving: 'Moving', still: 'Still' },
+    words: { en: 'English', es: 'Español', both: 'Both' },
     skin: { mixed: 'Mixed', '1f3fb': 'Light', '1f3fc': 'Medium-light', '1f3fd': 'Medium', '1f3fe': 'Medium-dark', '1f3ff': 'Dark' },
     theme: Object.fromEntries(Object.entries(THEMES).map(([k, t]) => [k, t.label])),
     background: { plain: 'Plain', glow: 'Soft glow', dots: 'Dotted' },
@@ -286,10 +291,12 @@
     {#if item}
       {#key index + deckKey}
         <div class="slide in-{s.entrance}">
-          <div class="vis idle-{s.idle}"><Visual {item} {s} {color} {still} ink={theme.ink} /></div>
-          {#if s.showLabel && item.label.length}
-            <p class="label" class:two={Array.isArray(item.label)}>
-              {#each [item.label].flat() as w}<span>{w}</span>{/each}
+          <div class="vis idle-{s.idle}"><Visual {item} {s} {color} {still} {say} lang={s.words === 'es' ? 'es' : undefined} ink={theme.ink} /></div>
+          {#if s.showLabel && rows.length}
+            <p class="label" class:both={rows.length > 1}>
+              {#each rows as r}
+                <span class="words" class:two={r.words.length > 1} lang={r.lang}>{#each r.words as w}<span>{w}</span>{/each}</span>
+              {/each}
             </p>
           {/if}
         </div>
@@ -337,6 +344,7 @@
           {/each}
         </div>
       </fieldset>
+      {@render seg('words', 'Words')}
       {@render seg('letterCase', 'Letters')}
       {@render seg('numberStyle', 'Numbers')}
       <div class="fld row">
@@ -447,9 +455,12 @@
   .look.quiet .scene { cursor: none; }
   .slide { display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
   .vis { width: calc(var(--k) * 1cqmin); height: calc(var(--k) * 1cqmin); }
-  .label { margin: 0; font-family: var(--stage-font); font-weight: 700; font-size: 8cqmin; line-height: 1.1; display: flex; justify-content: center; }
-  .label.two { width: calc(var(--k) * 1cqmin); font-size: 6.5cqmin; }
-  .label.two span { flex: 1; text-align: center; }
+  /* One row of words per language; a pair of opposites puts a word under each half. */
+  .label { margin: 0; font-family: var(--stage-font); font-weight: 700; font-size: 8cqmin; line-height: 1.1; display: flex; flex-direction: column; align-items: center; gap: 0.6cqmin; }
+  .label.both { font-size: 6.5cqmin; }
+  .words { display: flex; justify-content: center; text-align: center; }
+  .words.two { width: calc(var(--k) * 1cqmin); font-size: 6.5cqmin; }
+  .words.two span { flex: 1; }
   .nothing { font-size: 20px; max-width: 24em; text-align: center; padding: 16px; }
 
   .prog { position: absolute; left: 0; right: var(--inset-r); bottom: var(--inset-b); height: 6px; background: color-mix(in srgb, var(--stage-ink) 12%, transparent); }

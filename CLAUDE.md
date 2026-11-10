@@ -37,7 +37,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 38.5 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 43.9 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -55,7 +55,8 @@ is pure logic and tested.
   playing, the settings drawer, the school-day bar, the corner video and the **window-level
   keyboard handler**.
 - `Visual.svelte` — draws one slide by `kind` (`glyph | number | shape | color | pair | picture`).
-- `concepts.js` — the sets as data + `buildDeck(settings, rng)` + `dotLayout`. Add a concept here.
+- `concepts.js` — the sets as data + `buildDeck(settings, rng)` + `dotLayout` + `labelRows`. Add a
+  concept here, with its word in English (`label`) and Spanish (`es`).
 - `settings.js` — `DEFAULTS`, `OPTIONS`, `normalizeSettings`, stage `THEMES`. `DECK_KEYS` are the
   only settings that rebuild (and reshuffle) the deck.
 - `day.js` — the school-day schedule (below).
@@ -88,10 +89,26 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
   mix is random but even. `round` in `App.svelte` rebuilds the deck each time it starts over, so
   every loop is dealt again (and a mixed-up deck is mixed again). The `skin` setting can hold one
   tone instead.
-- **Offline:** the feelings pictures are precached. The people pictures (192 files, 4.5 MB) are
-  **not** (`globIgnores` in `vite.config.js`): they load when shown, and offline those slides fall
-  back to the device's emoji. Each precache entry also costs bytes of service worker, which count
-  toward the JS budget (192 more would be about 7 KB).
+- **Offline:** every picture is precached (220 files, 5.4 MB), so the whole app works offline
+  once the service worker has installed; only the corner video needs a connection. Each precache
+  entry also costs bytes of service worker, which count toward the JS budget: the pictures are
+  about 5 KB of it. To test offline for real, build, start the `looksee-built` preview
+  (`.claude/launch.json`, `vite preview` on port 4178), let it load, stop the server and reload.
+
+## Words
+
+The `words` setting shows the word under a slide in English, Spanish or both. `labelRows(item,
+lang)` returns one row per language (two words in a row for a pair of opposites); it is read at
+render time, so changing the language does not rebuild the deck. Each row carries a `lang`
+attribute, and the slide's name for a screen reader follows the words shown.
+
+- Every concept has `label` (English) and `es` (Spanish). `label` is also what the tests and the
+  code use to name a slide, whatever language is showing. A test fails if a concept has no Spanish.
+- The Spanish is Latin American as heard in US classrooms (anaranjado, rosa, café, morado,
+  angosto, audífono). Words that change with gender are written "enojado/a". **It has not been
+  checked by a Spanish speaker.**
+- Only the words under the slides change. Letters stay the 26 English ones (no Ñ), and the
+  controls and Settings stay in English.
 
 ## School-day bar
 

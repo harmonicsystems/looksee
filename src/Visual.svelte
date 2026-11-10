@@ -4,7 +4,8 @@
   // The 'picture' kind (feelings, gestures, body) is a file, not drawn here.
   import { dotLayout, pictureSrc } from './concepts.js'
 
-  let { item, s, color, ink, still = false } = $props()
+  // `say` is the slide's name for a screen reader, in the language shown.
+  let { item, s, color, ink, still = false, say = item.say, lang } = $props()
 
   // A picture slide shows the best this browser can manage: the moving
   // picture, else the still one, else the device's own emoji as text.
@@ -29,12 +30,13 @@
 {#if item.kind === 'picture' && tier < 2}
   <img
     src={pictureSrc(item, still || tier > 0)}
-    alt={item.say}
+    alt={say}
+    {lang}
     draggable="false"
     onerror={() => (tier = still || tier ? 2 : 1)}
   />
 {:else}
-<svg viewBox="0 0 400 400" role="img" aria-label={item.say}>
+<svg viewBox="0 0 400 400" role="img" aria-label={say} {lang}>
   {#if item.kind === 'picture'}
     <text x="200" y="212" font-size="290" class="glyph" fill={ink}>{item.emoji}</text>
   {:else if item.kind === 'glyph'}

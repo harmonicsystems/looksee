@@ -8,6 +8,9 @@ As of 2026-11-10. `CLAUDE.md` explains how Looksee is built. This note says wher
 by GitHub Pages from its own public repo, `harmonicsystems/looksee`. Every push to `main` is
 tested, built and published.
 
+**Two changes went out on 2026-11-10, after the split:** every picture stored for offline use,
+and the words in Spanish. Both are described under "Since the split" below.
+
 **The address `looksee.harmonic-systems.org` is not set up.** It needs a DNS record (CNAME
 `looksee` → `harmonicsystems.github.io`) and the custom domain set in the repo's Pages settings.
 Nothing in the code has to change: the deploy builds for whichever address Pages is using.
@@ -41,6 +44,19 @@ its own repo. Looksee was lifted out with only what it uses, renamed, and made t
 is served from a domain's root or from `/looksee/`. Its focus ring also gained a dark edge, because
 yellow alone did not show against the white settings drawer.
 
+## Since the split
+
+**Every picture is now stored for offline use.** The 192 hands and body pictures had been left out
+to spare Clip Choice visitors the download. With Looksee alone that reason is gone, so the app
+stores all 220 pictures: about 5.5 MB to install, and it then runs with no connection at all
+except for the corner video.
+
+**The words can be in English, Spanish or both.** A setting chooses; with both, the English word
+sits above the Spanish one, and a pair of opposites keeps a word under each half. The Spanish is
+Latin American as heard in US classrooms, and words that change with gender are written
+"enojado/a". Only the words under the slides change: the letters, the controls and Settings stay
+as they were.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -57,17 +73,23 @@ the service worker activates and stores the app, fonts and all 28 feelings pictu
 the hands and body pictures, as intended), nothing is requested from Google, and the console is
 clean.
 
-**Not checked.** Installing the app and actually using it offline. The school-day bar across a real school
+**Checked on 2026-11-10, after the split, locally.** All 32 tests pass and the build passes its
+gates at 43.9 KB of 60. Offline was tested for real: the built site was loaded once, its server
+shut down, and the page reloaded. It came up from what was stored, and all 38 picture slides
+played with nothing falling back. For Spanish, every slide with a word was stepped through in
+both languages at the largest size, at phone and laptop shapes: no word was clipped or ran off
+the screen, and a screen reader is given the Spanish words marked as Spanish.
+
+**Not checked.** The live site since these two changes. Installing the app to a home screen. The school-day bar across a real school
 day (one moment in the browser, the rest by unit tests). Typing emoji into the schedule on a
 Chromebook or iPad. The device's own reduced-motion setting (it shares a path with the Still
 setting, which was checked). Any device other than one Mac.
 
 ## Decisions still open
 
-- **Offline for hands and body.** Those 192 pictures (4.5 MB) load when shown and are not stored
-  for offline use. That was to spare Clip Choice visitors the download. Now that Looksee is alone,
-  storing them is a fair trade: about 4.5 MB more to install, and about 7 KB of the JavaScript
-  limit.
+- **The Spanish words.** They were chosen without a Spanish speaker and need checking. The
+  regional choices are deliberate but arguable (anaranjado not naranja, rosa not rosado, café not
+  marrón), as is writing "enojado/a" for words that change with gender. The letters have no Ñ.
 - **The words.** Feelings, gestures and body words were chosen without a clinician: "angry"
   rather than "mad", "stop" for a raised hand, "love" for heart hands. Each is one line in
   `src/concepts.js`.

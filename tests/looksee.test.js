@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES } from '../src/concepts.js'
+import { buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES } from '../src/concepts.js'
 import { DEFAULTS, THEMES, normalizeSettings } from '../src/settings.js'
 import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
@@ -29,6 +29,38 @@ describe('buildDeck', () => {
     expect(b.map((x) => x.label)).not.toEqual(a.map((x) => x.label))
     expect(b.map((x) => x.label).sort()).toEqual(a.map((x) => x.label).sort())
     expect(shuffle([1, 2, 3], () => 0.99)).toEqual([1, 2, 3])
+  })
+})
+
+describe('words', () => {
+  const all = deck({ sets: ['letters', 'numbers', 'shapes', 'colors', 'opposites', 'feelings', 'gestures', 'body'], numberFrom: 0, numberTo: 20 })
+  const find = (label) => all.find((x) => String(x.label) === String(label))
+  it('shows the word in the language asked for', () => {
+    expect(labelRows(find('circle'), 'en')).toEqual([{ lang: 'en', words: ['circle'] }])
+    expect(labelRows(find('circle'), 'es')).toEqual([{ lang: 'es', words: ['círculo'] }])
+    expect(labelRows(find('three'), 'both')).toEqual([{ lang: 'en', words: ['three'] }, { lang: 'es', words: ['tres'] }])
+    expect(labelRows(find('happy'), 'es')[0].words).toEqual(['feliz'])
+    expect(labelRows(find('hearing aid'), 'es')[0].words).toEqual(['audífono'])
+  })
+  it('keeps a pair of opposites side by side in each language', () => {
+    expect(labelRows(find(['big', 'small']), 'both')).toEqual([
+      { lang: 'en', words: ['big', 'small'] },
+      { lang: 'es', words: ['grande', 'pequeño'] }
+    ])
+  })
+  it('shows no word for letters, in any language', () => {
+    for (const lang of ['en', 'es', 'both']) expect(labelRows(all[0], lang)).toEqual([])
+  })
+  it('has a Spanish word wherever there is an English one', () => {
+    for (const x of all) {
+      const en = [x.label].flat().filter(Boolean)
+      const es = [x.es].flat().filter(Boolean)
+      expect(es.length, String(x.label)).toBe(en.length)
+      for (const w of es) expect(w.trim(), String(x.label)).toBe(w)
+    }
+    // Spanish is not just the English again.
+    const same = all.filter((x) => x.label.length && String(x.label) === String(x.es))
+    expect(same.map((x) => x.label)).toEqual([])
   })
 })
 
@@ -142,6 +174,8 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ feelingMotion: 'spin' }).feelingMotion).toBe('moving')
     expect(normalizeSettings({ skin: '1f3fd' }).skin).toBe('1f3fd')
     expect(normalizeSettings({ skin: 'green' }).skin).toBe('mixed')
+    expect(normalizeSettings({ words: 'both' }).words).toBe('both')
+    expect(normalizeSettings({ words: 'fr' }).words).toBe('en')
   })
   it('never hands out the defaults themselves', () => {
     const a = normalizeSettings(null)
