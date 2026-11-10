@@ -4,8 +4,9 @@ As of 2026-11-10. `CLAUDE.md` explains how Looksee is built. This note says wher
 
 ## Where it stands
 
-**Looksee has its own repo, `harmonicsystems/looksee`, as of 2026-11-10.** It is one app at the
-site root, set up to be published by GitHub Pages at `https://harmonicsystems.github.io/looksee/`.
+**Looksee is live at `https://harmonicsystems.github.io/looksee/`** as of 2026-11-10, published
+by GitHub Pages from its own public repo, `harmonicsystems/looksee`. Every push to `main` is
+tested, built and published.
 
 **The address `looksee.harmonic-systems.org` is not set up.** It needs a DNS record (CNAME
 `looksee` → `harmonicsystems.github.io`) and the custom domain set in the repo's Pages settings.
@@ -49,7 +50,14 @@ by their new paths, the credits open, and a YouTube link with a start time plays
 Earlier checks of the stage, settings, skin tones, school-day bar and fallbacks were made before
 the split, on the same code.
 
-**Not checked.** Installing the app and using it offline. The school-day bar across a real school
+**Checked on 2026-11-10, on the live site.** The page, manifest, icons, font and credits all load
+from under `/looksee/`. The host serves the moving pictures as `image/avif`, which had been an
+open question. In a browser: the app runs, feelings, gesture and body pictures load and animate,
+the service worker activates and stores the app, fonts and all 28 feelings pictures (and none of
+the hands and body pictures, as intended), nothing is requested from Google, and the console is
+clean.
+
+**Not checked.** Installing the app and actually using it offline. The school-day bar across a real school
 day (one moment in the browser, the rest by unit tests). Typing emoji into the schedule on a
 Chromebook or iPad. The device's own reduced-motion setting (it shares a path with the Still
 setting, which was checked). Any device other than one Mac.
