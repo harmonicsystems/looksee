@@ -28,7 +28,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   and shows still pictures.
 - **Mouse-only must work too.** The classroom it is made for has a Chromebook with a mouse and no
   keyboard: everything a teacher needs during class takes only clicks on large targets, no typing.
-- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `S` settings, `V` video, `M` sound,
+- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `S` settings, `V` video, `W` watch, `M` sound,
   `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
@@ -39,7 +39,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 50.0 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 51.7 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -67,7 +67,8 @@ is pure logic and tested.
 - `day.js` — the school-day schedule (below).
 - `share.js` — settings as a link (`linkQuery`, `linkSettings`, `setupName`). `home.js` — `setHome`,
   the per-link title and manifest (not pure).
-- `pip.js` — `PipPlayer`, the corner video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
+- `videos.js` — `VIDEOS`, the preset videos for Watch with their words, and `sides(n)`.
+- `pip.js` — `PipPlayer`, the corner video and the Watch video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
   `startSeconds` (reads a link's `?t=`).
 - `styles.css` — control palettes (parsed by the contrast gate) and base styles.
 - `public/feelings`, `public/people` — the emoji pictures. `public/NOTICE.txt` — their credits.
@@ -180,6 +181,26 @@ attribute, and the slide's name for a screen reader follows the words shown (`ro
   checked by a Spanish speaker.**
 - Only the words on the slides change. Letters stay the 26 English ones (no Ñ), and the controls
   and Settings stay in English.
+
+## Watch: preset videos with words around them
+
+The **Watch** button (or `W`) opens big tiles, one per entry in `VIDEOS` (`src/videos.js`), plus
+"Your link" when Settings has a video link. One click pauses the slides, stops the corner video,
+and plays that video medium-sized in the middle with its words in a frame around it (`sides(n)`
+splits them top, bottom, right, left; CSS grid keeps them off the video). Each word is an emoji
+above the word, through `labelRows`, so the Words settings (English / Spanish / both, el / la)
+apply; a word the same in both languages shows once. Every 4 s the next word is lit (a soft
+highlight, and a slight grow unless reduced motion). **Back to slides** or `Esc` ends it and
+destroys the player. "Words around the video" (`wordWeb`) turns the frame off.
+
+**To add a preset:** an entry in `VIDEOS` (link, title, tile emoji, words with `label`, `es`, `art`,
+`emoji`). Check first that it plays in the corner: some owners block embedding.
+
+**Ads** (both players, `pip.js`): YouTube gives embeds no ad events, but a pre-roll holds the real
+video back and YouTube starts the video itself when the ad ends. So only a player that never gets
+*ready* within 20 s fails; once ready, a start slower than 6 s shows "Waiting for the video,
+probably an ad" and is left to finish (Clip Choice's approach). The ad can't be skipped: the player
+takes no clicks, which also keeps YouTube's suggestions out of reach.
 
 ## Settings links
 

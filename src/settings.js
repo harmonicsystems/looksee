@@ -83,7 +83,8 @@ export const DEFAULTS = {
   videoUrl: '',
   corner: 'br',
   videoSize: 'medium',
-  videoMuted: false
+  videoMuted: false,
+  wordWeb: true
 }
 
 const int = (v, lo, hi, d) => {
@@ -95,7 +96,7 @@ export function normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const s = { ...DEFAULTS }
   for (const k of Object.keys(OPTIONS)) if (OPTIONS[k].includes(r[k])) s[k] = r[k]
-  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph']) if (typeof r[k] === 'boolean') s[k] = r[k]
+  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb']) if (typeof r[k] === 'boolean') s[k] = r[k]
   // Fresh arrays every time, so editing settings never edits DEFAULTS.
   s.sets = [...s.sets]
   if (Array.isArray(r.sets)) {
