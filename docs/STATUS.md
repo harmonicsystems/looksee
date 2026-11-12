@@ -140,6 +140,22 @@ Chrome's own check finds the per-link manifest installable, with the link as its
 the setup's name. Not checked: a real bookmark or installed shortcut on the Chromebook, and iOS Add
 to Home Screen.
 
+**Bookmarks confirmed on the classroom Chromebook** by David, 2026-11-12.
+
+## 2026-11-12: set groups, and bookmark names with the language
+
+The twelve sets are in five groups (🔤 Letters & Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites,
+😊 Feelings & Body), chosen by David. Settings lists them under their groups, and a group's heading
+turns it all on or off with one click. A link window's title, which a bookmark takes as its name,
+now leads with the group and ends with the language: "➕ Math · EN+ES". Existing bookmarks keep their
+old names until saved again.
+
+**Checked on 2026-11-12, locally, on a build for `/looksee/`.** 62 tests pass; the build passes its
+gates at 50.0 KB of 60. In Chromium, titles for one group, part of a group, two groups, three groups
+and the default sets, in each language; group headings clicked on and off with the mouse, with the
+deck, address and title following, and "mixed" shown for part of a group; Settings at laptop and
+phone widths. Not checked: the new names on the Chromebook's bookmarks bar.
+
 **Next:** preset videos with word webs (needs the teacher's video links).
 
 ## Checked, and not checked

@@ -351,6 +351,16 @@ export const SETS = [
   { id: 'body', label: 'Body', es: 'Cuerpo' }
 ]
 
+// The sets in groups, for Settings and for naming a bookmark. Every set is in
+// exactly one group, and the groups keep the order of SETS.
+export const GROUPS = [
+  { id: 'early', label: 'Letters & Numbers', emoji: '🔤', sets: ['letters', 'numbers'] },
+  { id: 'math', label: 'Math', emoji: '➕', sets: ['adding', 'subtracting'] },
+  { id: 'art', label: 'Shapes & Colors', emoji: '🎨', sets: ['shapes', 'colors', 'colorShapes', 'mixing'] },
+  { id: 'opposites', label: 'Opposites', emoji: '↔️', sets: ['opposites'] },
+  { id: 'people', label: 'Feelings & Body', emoji: '😊', sets: ['feelings', 'gestures', 'body'] }
+]
+
 export function shuffle(list, rng = Math.random) {
   const a = list.slice()
   for (let i = a.length - 1; i > 0; i--) {
