@@ -41,6 +41,9 @@
   const wait = $derived(wordWait(s))
   const theme = $derived(THEMES[s.theme])
   const color = $derived(s.colorMode === 'rainbow' ? theme.colors[index % theme.colors.length] : theme.ink)
+  // Adding and subtracting color-code their two numbers, whatever the Color
+  // setting: two colors from opposite ends of the theme's list.
+  const two = $derived([0, 3].map((d) => theme.colors[(index + d) % theme.colors.length]))
 
   // Pictures move unless the device asks for reduced motion or Still is chosen.
   const motionQuery = matchMedia('(prefers-reduced-motion: reduce)')
@@ -301,7 +304,7 @@
         <div class="slide in-{s.entrance}">
           {#if item.kind !== 'title'}
             <div class="vis idle-{s.idle}">
-              <Visual {item} {s} {color} {still} {say} lang={s.words === 'es' ? 'es' : undefined} ink={theme.ink} />
+              <Visual {item} {s} {color} {two} {still} {say} lang={s.words === 'es' ? 'es' : undefined} ink={theme.ink} />
             </div>
           {/if}
           <!-- The words are made fresh for every slide, so the pause before them starts again. -->

@@ -39,7 +39,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 47.7 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 47.9 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -157,8 +157,11 @@ attribute, and the slide's name for a screen reader follows the words shown (`ro
 - **Adding and subtracting** (`adding`, `subtracting` sets): `mathFacts(op, max)` lists every fact
   within the `mathTo` setting (5 or 10) with no zeros; up to 5 all 10 play, up to 10 a round deals
   10 of the 45. A `sum` slide follows `numberStyle`: the sentence "2 + 3 = 5", dots in rows of five,
-  or both. Adding: the second group is in ink and both groups slide together. Subtracting: the dots
-  taken away are crossed out one by one and stay. Words "two plus three is five" / "dos más tres son
+  or both. **Color-coded:** each number in the sentence is the color of its dots (`two` in
+  `App.svelte`: two theme colors three apart, whatever the Color setting). Adding: the groups slide
+  together, then the answer appears in ink. Subtracting: the dots start in the first number's color,
+  the ones taken away turn the second number's color and fade away one by one, and the answer
+  appears in the color of what is left. Words "two plus three is five" / "dos más tres son
   cinco" ("es" when the answer is one).
 - **Set names** (`setNames`): a `title` slide before each set, when more than one set plays and
   they play in order (`namesSets`). They show even when the words under the pictures are hidden.
