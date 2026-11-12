@@ -5,10 +5,11 @@
   // corner video.
   import { untrack } from 'svelte'
   import Visual from './Visual.svelte'
-  import { SETS, GROUPS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart } from './concepts.js'
+  import { SETS, GROUPS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart, rowsText } from './concepts.js'
   import { THEMES, OPTIONS, deckKey as deckKeyOf, wordWait, loadSettings, saveSettings, normalizeSettings } from './settings.js'
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
   import { PipPlayer } from './pip.js'
+  import { VIDEOS, sides } from './videos.js'
   import { linkQuery, linkSettings, setupName } from './share.js'
   import { setHome } from './home.js'
   import { videoId, startSeconds } from './link.js'
@@ -196,7 +197,8 @@
     playing: 'Playing in the corner.',
     blocked: 'YouTube could not be reached (offline, or blocked on this network).',
     unavailable: 'This video can’t be played here. Its owner may not allow embedding.',
-    timeout: 'The video took too long to start.'
+    timeout: 'The video took too long to start.',
+    waiting: 'Waiting for the video, probably an ad. It starts by itself when the ad ends.'
   }
   function stopVideo() {
     pip?.destroy()
@@ -214,6 +216,7 @@
       { videoId: vid, start: startSeconds(s.videoUrl), muted: s.videoMuted },
       {
         onPlaying: () => (pipStatus = 'playing'),
+        onWaiting: () => (pipStatus = 'waiting'),
         onError: (why) => {
           pip = null
           pipOn = false
@@ -233,13 +236,81 @@
   })
   $effect(() => () => pip?.destroy())
 
+  // ---- Watch: a preset video in the middle, its words around it ----
+  // The presets, plus the link from Settings when there is one.
+  const watchList = $derived(
+    vid ? [...VIDEOS, { id: 'yours', title: 'Your link', emoji: '🔗', url: s.videoUrl, words: [] }] : VIDEOS
+  )
+  let picking = $state(false)
+  let watching = $state(null)
+  let watchHost = $state()
+  let watchStatus = $state('')
+  let lit = $state(0)
+  function watch(v) {
+    playing = false
+    stopVideo()
+    picking = false
+    lit = 0
+    watching = v
+  }
+  function stopWatch() {
+    watching = null
+    stageEl?.focus({ preventScroll: true })
+  }
+  // One player per video chosen; leaving Watch destroys it (no pause, as in the corner).
+  $effect(() => {
+    const v = watching
+    if (!v || !watchHost) return
+    watchStatus = 'loading'
+    const player = (watchPlayer = untrack(
+      () =>
+        new PipPlayer(
+          watchHost,
+          { videoId: videoId(v.url), start: startSeconds(v.url), muted: s.videoMuted },
+          {
+            onPlaying: () => (watchStatus = 'playing'),
+            onWaiting: () => (watchStatus = 'waiting'),
+            onError: (why) => (watchStatus = why)
+          }
+        )
+    ))
+    return () => {
+      player.destroy()
+      watchPlayer = null
+    }
+  })
+  let watchPlayer = null
+  $effect(() => {
+    const m = s.videoMuted
+    watchPlayer?.setMuted(m)
+  })
+  // Every 4 s the next word is lit, so eyes move calmly from word to word.
+  $effect(() => {
+    const n = watching?.words.length ?? 0
+    if (!n || !s.wordWeb) return
+    const t = setInterval(() => (lit = (lit + 1) % n), 4000)
+    return () => clearInterval(t)
+  })
+  // The words split between the four sides of the video.
+  const web = $derived.by(() => {
+    if (!watching || !s.wordWeb) return null
+    const c = sides(watching.words.length)
+    // A name that is the same in both languages ("Paw Patrol") shows once.
+    const ws = watching.words.map((x, i) => ({ ...x, i, rows: labelRows(x, s).filter((r, j, all) => !j || rowsText([r]) !== rowsText([all[0]])) }))
+    let at = 0
+    const take = (k) => ws.slice(at, (at += k))
+    return { top: take(c.top), bottom: take(c.bottom), right: take(c.right), left: take(c.left) }
+  })
+
   // ---- keyboard ----
   function onKey(e) {
     wake()
     if (e.metaKey || e.ctrlKey || e.altKey) return
     const tag = e.target?.tagName
     if (e.key === 'Escape') {
-      if (drawer) {
+      if (picking) picking = false
+      else if (watching) stopWatch()
+      else if (drawer) {
         drawer = false
         stageEl?.focus({ preventScroll: true })
       } else playing = false
@@ -253,6 +324,7 @@
     else if (k === 'arrowleft') step(-1)
     else if (k === 's') drawer = !drawer
     else if (k === 'v') toggleVideo()
+    else if (k === 'w') watching ? stopWatch() : (picking = !picking)
     else if (k === 'm') s.videoMuted = !s.videoMuted
     else if (k === 'f') fullscreen()
     else return
@@ -383,13 +455,56 @@
     <div class="pip-shield"></div>
   </div>
 
+  {#snippet word(x)}
+    <div class="ww" class:lit={x.i === lit}>
+      <span class="ww-pic" aria-hidden="true">{x.emoji}</span>
+      {#each x.rows as r (r.lang)}
+        <span class="ww-word" lang={r.lang}>{r.art ? r.art + ' ' : ''}{r.words.join(' ')}</span>
+      {/each}
+    </div>
+  {/snippet}
+
+  {#if watching}
+    <section class="watch" class:bare={!web} aria-label={watching.title}>
+      {#if web}
+        <div class="ww-side top">{#each web.top as x (x.i)}{@render word(x)}{/each}</div>
+        <div class="ww-side left">{#each web.left as x (x.i)}{@render word(x)}{/each}</div>
+        <div class="ww-side right">{#each web.right as x (x.i)}{@render word(x)}{/each}</div>
+        <div class="ww-side bottom">{#each web.bottom as x (x.i)}{@render word(x)}{/each}</div>
+      {/if}
+      <div class="watch-video" aria-hidden="true">
+        <div class="pip-host" bind:this={watchHost}></div>
+        <div class="pip-shield"></div>
+        {#if watchStatus !== 'playing'}<p class="watch-msg">{PIP_MSG[watchStatus] ?? ''}</p>{/if}
+      </div>
+    </section>
+  {/if}
+
+  {#if picking}
+    <div class="pick" role="dialog" aria-modal="true" aria-label="Choose a video">
+      <div class="pick-grid">
+        {#each watchList as v (v.id)}
+          <button class="btn tile" onclick={() => watch(v)}><span class="tile-pic" aria-hidden="true">{v.emoji}</span>{v.title}</button>
+        {/each}
+        <button class="btn tile close" onclick={() => (picking = false)}>Close</button>
+      </div>
+    </div>
+  {/if}
+
   <nav class="ctl" aria-label="Controls">
+    {#if watching}
+      <button class="btn primary big" onclick={stopWatch}>Back to slides</button>
+      <button class="btn big" onclick={() => (s.videoMuted = !s.videoMuted)} aria-pressed={s.videoMuted}>{s.videoMuted ? 'Sound on' : 'Sound off'}</button>
+      <button class="btn big" onclick={() => (picking = true)} aria-haspopup="dialog">Other video</button>
+    {:else}
     <button class="btn" onclick={() => step(-1)} disabled={!deck.length}>Back</button>
     <button class="btn primary play" onclick={toggle} disabled={!deck.length}>{playing ? 'Pause' : 'Play'}</button>
     <button class="btn" onclick={() => step(1)} disabled={!deck.length}>Next</button>
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
     <button class="btn" onclick={toggleVideo} disabled={!vid} aria-pressed={pipOn}>{pipOn ? 'Hide video' : 'Video'}</button>
+    <button class="btn" onclick={() => (picking = true)} aria-haspopup="dialog">Watch</button>
     <button class="btn" onclick={() => (drawer = !drawer)} aria-expanded={drawer}>Settings</button>
+    {/if}
   </nav>
 
   {#if drawer}
@@ -495,7 +610,8 @@
       <label class="chk"><input type="checkbox" bind:checked={s.showLabel} /> Show the word underneath</label>
       <label class="chk"><input type="checkbox" bind:checked={s.showProgress} /> Show the progress line</label>
 
-      <h2>Corner video</h2>
+      <h2>Videos</h2>
+      <label class="chk"><input type="checkbox" bind:checked={s.wordWeb} /> Words around the video in Watch</label>
       <label class="fld">
         <span>YouTube link</span>
         <input type="url" placeholder="https://www.youtube.com/watch?v=…" bind:value={s.videoUrl} spellcheck="false" autocomplete="off" />
@@ -546,7 +662,7 @@
 
       <h2>Keys</h2>
       <p class="hint keyhelp">
-        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video ·
+        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch ·
         <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
       </p>
       <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
@@ -627,6 +743,35 @@
   .pip-host :global(iframe) { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; }
   /* Clicks never reach YouTube: no links out, no focus in the iframe. */
   .pip-shield { position: absolute; inset: 0; }
+
+  /* Watch: the video in the middle, its words in a frame around it. */
+  .watch { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 78px) 0; container-type: size; display: grid;
+    grid-template: 'top top top' 1fr 'left video right' auto 'bottom bottom bottom' 1fr / 1fr minmax(0, 54cqw) 1fr; gap: 2cqmin; padding: 2cqmin; background: var(--stage-bg); z-index: 2; }
+  .watch.bare { grid-template: '. . .' 1fr '. video .' auto '. . .' 1fr / 1fr minmax(0, 80cqw) 1fr; }
+  .watch-video { grid-area: video; position: relative; aspect-ratio: 16 / 9; max-height: 62cqh; border-radius: 12px; overflow: hidden; background: #000; border: 3px solid var(--stage-ink); justify-self: center; width: 100%; }
+  .watch.bare .watch-video { max-height: 80cqh; }
+  .watch-msg { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; color: #fff; font-size: clamp(14px, 2.4cqmin, 22px); text-align: center; }
+  .ww-side { display: flex; align-items: center; justify-content: space-evenly; gap: 2cqmin; min-height: 0; min-width: 0; }
+  .ww-side.top { grid-area: top; }
+  .ww-side.bottom { grid-area: bottom; }
+  .ww-side.left { grid-area: left; flex-direction: column; }
+  .ww-side.right { grid-area: right; flex-direction: column; }
+  .ww { display: flex; flex-direction: column; align-items: center; padding: 0.6cqmin 1.6cqmin; border-radius: 14px; font-family: var(--stage-font); font-weight: 700;
+    color: var(--stage-ink); font-size: 3.6cqmin; line-height: 1.15; text-align: center; transition: background-color 0.6s; }
+  .ww-pic { font-size: 2em; line-height: 1.1; }
+  .ww.lit { background: color-mix(in srgb, var(--stage-ink) 12%, transparent); }
+  @media (prefers-reduced-motion: no-preference) {
+    .ww { transition: background-color 0.6s, transform 0.6s; }
+    .ww.lit { transform: scale(1.15); }
+  }
+
+  /* The video picker: big tiles, one click each. */
+  .pick { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: color-mix(in srgb, var(--stage-bg) 92%, transparent); padding: 24px; overflow: auto; }
+  .pick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 260px)); gap: 16px; justify-content: center; width: min(100%, 900px); }
+  .tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 160px; font-size: 20px; text-align: center; }
+  .tile-pic { font-size: 64px; line-height: 1; }
+  .tile.close { min-height: 160px; font-size: 18px; }
+  .ctl .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
 
   .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--inset-r); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
   .drawer-panel header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

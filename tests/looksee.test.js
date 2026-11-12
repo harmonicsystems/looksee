@@ -10,6 +10,7 @@ import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait } from '../src/s
 import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
 import { linkQuery, linkSettings, setupName } from '../src/share.js'
+import { VIDEOS, sides } from '../src/videos.js'
 
 // Set names are off here unless a test asks for them, so decks hold only their slides.
 const deck = (over) => buildDeck({ ...DEFAULTS, setNames: false, ...over }, () => 0.42)
@@ -522,5 +523,35 @@ describe('settings links', () => {
   })
   it('puts every set in exactly one group, in the order of SETS', () => {
     expect(GROUPS.flatMap((g) => g.sets)).toEqual(SETS.map((x) => x.id))
+  })
+})
+
+describe('preset videos', () => {
+  it('has a playable link, a title, a tile picture and words in both languages', () => {
+    const ids = new Set()
+    for (const v of VIDEOS) {
+      expect(videoId(v.url), v.title).toMatch(/^[\w-]{11}$/)
+      expect(v.title && v.emoji && v.id).toBeTruthy()
+      ids.add(v.id)
+      expect(v.words.length).toBeGreaterThan(3)
+      for (const x of v.words) {
+        expect(x.label && x.es && x.emoji, `${v.title}: ${x.label}`).toBeTruthy()
+        expect(['', 'el', 'la', 'los', 'las']).toContain(x.art)
+      }
+    }
+    expect(ids.size).toBe(VIDEOS.length)
+  })
+  it('shows a word in the language asked for, with el or la', () => {
+    const dog = VIDEOS[0].words.find((x) => x.label === 'dog')
+    expect(rowsText(labelRows(dog, { words: 'both', articles: true }))).toBe('dog / el perro')
+  })
+  it('spreads words evenly around the video', () => {
+    for (let n = 0; n <= 16; n++) {
+      const s = sides(n)
+      const counts = Object.values(s)
+      expect(counts.reduce((a, b) => a + b)).toBe(n)
+      expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(1)
+      expect(s.top).toBeGreaterThanOrEqual(s.left)
+    }
   })
 })

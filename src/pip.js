@@ -4,14 +4,21 @@
 //
 // There is deliberately no pause: a paused YouTube embed shows a "more
 // videos" shelf. Off means destroyed.
+//
+// Ads: YouTube tells embeds nothing about them, but a pre-roll ad holds the
+// real video back, and YouTube starts the video by itself when the ad ends.
+// So only a player that never gets *ready* within 20 s is a failure; once it
+// is ready, a slow start is reported with onWaiting ("probably an ad") and
+// left to finish. (Clip Choice does the same.) The ad can't be skipped: the
+// player takes no clicks, so no one can reach YouTube's suggestions.
 import { loadApi } from './youtube.js'
 
 const ENDED = 0
 const PLAYING = 1
 
 export class PipPlayer {
-  constructor(host, { videoId, start = 0, muted = false, loop = true }, { onPlaying, onError, onEnd } = {}) {
-    Object.assign(this, { host, videoId, start, muted, loop, onPlaying, onError, onEnd })
+  constructor(host, { videoId, start = 0, muted = false, loop = true }, { onPlaying, onWaiting, onError, onEnd } = {}) {
+    Object.assign(this, { host, videoId, start, muted, loop, onPlaying, onWaiting, onError, onEnd })
     this.player = null
     this.dead = false
     this._guard = () => this.reclaimFocus()
@@ -44,6 +51,8 @@ export class PipPlayer {
           },
           events: {
             onReady: () => {
+              clearTimeout(this.stall)
+              this.wait = setTimeout(() => !this.dead && this.onWaiting?.(), 6000)
               const f = this.player?.getIframe?.()
               if (f) {
                 f.tabIndex = -1
@@ -59,7 +68,7 @@ export class PipPlayer {
             onError: () => this.fail('unavailable'),
             onStateChange: (e) => {
               if (e.data === PLAYING) {
-                clearTimeout(this.stall)
+                clearTimeout(this.wait)
                 this.onPlaying?.()
               }
               if (e.data === ENDED) this.restart()
@@ -116,6 +125,7 @@ export class PipPlayer {
     this.dead = true
     clearInterval(this.poll)
     clearTimeout(this.stall)
+    clearTimeout(this.wait)
     removeEventListener('blur', this._guard)
     try {
       this.player?.destroy?.()

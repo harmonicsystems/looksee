@@ -156,7 +156,27 @@ and the default sets, in each language; group headings clicked on and off with t
 deck, address and title following, and "mixed" shown for part of a group; Settings at laptop and
 phone widths. Not checked: the new names on the Chromebook's bookmarks bar.
 
-**Next:** preset videos with word webs (needs the teacher's video links).
+## 2026-11-12: Watch, and videos that wait out their ads
+
+**Watch** plays a preset video in the middle of the screen with its words and pictures around it,
+one gently lit at a time. First preset: Paw Patrol penguins (`https://youtu.be/z1vXJVI2L5M`), with
+11 words drafted by Claude and accepted by David for now (Paw Patrol, dog, pup, penguin, help,
+rescue, team, snow, ice, cold, slide).
+
+**Videos with ads now play.** Looksee used to give up 20 s after starting if the video hadn't
+begun, which a pre-roll ad could cause. Now only a player that never loads fails; during an ad it
+says "Waiting for the video, probably an ad" and the video starts by itself afterwards.
+
+**Checked on 2026-11-12, locally, on a build for `/looksee/`.** 65 tests pass; the build passes its
+gates at 51.7 KB of 60. In Chromium with mouse clicks only: Watch opens the tiles, the Paw Patrol
+tile opens the Watch screen with all 11 words around the video, none over it or off screen, in
+English, Spanish and both, at laptop, Chromebook (1366×768) and phone sizes; the lit word moves on
+every 4 s; Back to slides and Esc return to the paused deck; with words off, the video is larger and
+alone. **YouTube is blocked in this test environment**, so the player showed "YouTube could not be
+reached" there. **Not checked:** the Paw Patrol video actually playing (whether its owner allows
+embedding), ads, and sound: these need the live site on the Chromebook.
+
+**Next:** David checks the Paw Patrol video on the Chromebook, and edits its words; more presets.
 
 ## Checked, and not checked
 
@@ -233,9 +253,9 @@ setting, which was checked). Any device other than one Mac.
   rather than "mad", "stop" for a raised hand, "love" for heart hands. Each is one line in
   `src/concepts.js`.
 - **The default school day.** 8:00 to 3:00, lunch at 11:30, going home at 2:30 is a placeholder.
-- **Ads on the corner video.** The app adds none and hides YouTube's controls, suggestions and end
-  screen, but it cannot remove ads YouTube places on a video.
+- **Ads on videos.** The app adds none and hides YouTube's controls, suggestions and end screen,
+  but it cannot remove or skip ads YouTube places on a video. Since 2026-11-12 it waits them out
+  instead of giving up.
 - **What Clip Choice has learned since.** Its repo has newer handling for pre-roll ads and for
-  pasted embed code and share links. Looksee still has the earlier versions: `src/pip.js` gives a
-  video 20 seconds to start, and `src/link.js` reads plain links only.
+  pasted embed code and share links. Looksee now waits out pre-roll ads the same way; `src/link.js` still reads plain links only.
 - **A license for the code.** The repo is public and has none yet.
