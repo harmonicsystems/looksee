@@ -226,6 +226,34 @@ export const colorShape = (shape, color) => ({
   say: `${color.label} ${shape.label}`
 })
 
+// Paint mixing, as taught in class: two colors make a third. Each is a name
+// from COLORS, so the result is exactly the color the Colors set shows.
+export const MIXES = [
+  ['red', 'yellow', 'orange'],
+  ['yellow', 'blue', 'green'],
+  ['blue', 'red', 'purple'],
+  ['red', 'white', 'pink'],
+  ['black', 'white', 'gray'],
+  ['red', 'green', 'brown']
+]
+const colorNamed = (name) => COLORS.find((c) => c.label === name)
+
+// "red + yellow = orange": two blobs of paint and what they make together.
+// `hex` is the result, so the first letter is plain ink, as on color slides.
+export const colorMix = ([a, b, out]) => {
+  const [x, y, z] = [a, b, out].map(colorNamed)
+  return {
+    kind: 'mix',
+    set: 'mixing',
+    a: x.hex,
+    b: y.hex,
+    hex: z.hex,
+    label: `${x.label} + ${y.label} = ${z.label}`,
+    es: `${x.es} + ${y.es} = ${z.es}`,
+    say: `${x.label} and ${y.label} make ${z.label}`
+  }
+}
+
 // Every picture file the app expects: [{ dir, code, label }]. The fetch
 // script and the tests both read this.
 export function pictureFiles() {
@@ -286,6 +314,7 @@ export const SETS = [
   { id: 'shapes', label: 'Shapes', es: 'Figuras' },
   { id: 'colors', label: 'Colors', es: 'Colores' },
   { id: 'colorShapes', label: 'Colors and shapes', es: 'Colores y figuras' },
+  { id: 'mixing', label: 'Mixing colors', es: 'Mezclar colores' },
   { id: 'opposites', label: 'Opposites', es: 'Opuestos' },
   { id: 'feelings', label: 'Feelings', es: 'Emociones' },
   { id: 'gestures', label: 'Gestures', es: 'Gestos' },
@@ -301,7 +330,7 @@ export function shuffle(list, rng = Math.random) {
   return a
 }
 
-// → [{ kind: 'title'|'glyph'|'number'|'shape'|'color'|'pair'|'picture', set, label, es, ... }]
+// → [{ kind: 'title'|'glyph'|'number'|'shape'|'color'|'mix'|'pair'|'picture', set, label, es, ... }]
 export function buildDeck(s, rng = Math.random) {
   const deck = []
   const titles = namesSets(s)
@@ -329,6 +358,7 @@ export function buildDeck(s, rng = Math.random) {
   add('colors', () => COLORS.map((x) => ({ kind: 'color', set: 'colors', ...x, say: x.label })))
   const color = bag(COLORS, rng)
   add('colorShapes', () => SHAPES.map((x) => colorShape(x, color())))
+  add('mixing', () => MIXES.map(colorMix))
   add('opposites', () =>
     OPPOSITES.map(([a, b]) => ({ kind: 'pair', set: 'opposites', sides: [a, b], label: [a.label, b.label], es: [a.es, b.es], say: `${a.label}, ${b.label}` }))
   )

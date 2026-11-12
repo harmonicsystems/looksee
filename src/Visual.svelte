@@ -37,6 +37,34 @@
       clearTimeout(finish)
     }
   })
+  // A mixing slide: two blobs of paint slide together and where they overlap
+  // is the color they make. `gap` goes from 1 (apart) to 0 (overlapping);
+  // with reduced motion the slide starts finished.
+  const MIX_R = 92
+  const uid = 'mix' + Math.random().toString(36).slice(2, 8)
+  let gap = $state(item.kind === 'mix' && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 0)
+  $effect(() => {
+    if (untrack(() => gap) === 0) return
+    let frame
+    let began
+    const tick = (now) => {
+      began ??= now
+      // A short pause first, so the two colors are seen apart.
+      const k = Math.min(1, Math.max(0, (now - began - 500) / 1200))
+      gap = 1 - ease(k)
+      if (k < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    // No frames in a background tab: finish anyway.
+    const finish = setTimeout(() => (gap = 0), 1800)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(finish)
+    }
+  })
+  // Apart, the blobs just miss each other; together they overlap by a third.
+  const mixX = $derived(MIX_R * 0.68 + gap * MIX_R * 0.42)
+
   // A color + shape slide is painted its own true color, outlined in ink so
   // white and yellow show; any other shape follows the drawing-style setting.
   const own = $derived(item.kind === 'shape' && item.hex)
@@ -94,6 +122,15 @@
     />
   {:else if item.kind === 'color'}
     <rect x="50" y="50" width="300" height="300" rx="70" fill={item.hex} stroke={ink} stroke-width="6" />
+  {:else if item.kind === 'mix'}
+    <defs>
+      <clipPath id={uid}><circle cx={200 - mixX} cy="200" r={MIX_R} /></clipPath>
+    </defs>
+    <circle cx={200 - mixX} cy="200" r={MIX_R} fill={item.a} />
+    <circle cx={200 + mixX} cy="200" r={MIX_R} fill={item.b} />
+    <circle cx={200 + mixX} cy="200" r={MIX_R} fill={item.hex} clip-path="url(#{uid})" />
+    <circle cx={200 - mixX} cy="200" r={MIX_R} fill="none" stroke={ink} stroke-width="6" />
+    <circle cx={200 + mixX} cy="200" r={MIX_R} fill="none" stroke={ink} stroke-width="6" />
   {:else if item.kind === 'pair'}
     {#each item.sides as side, i}
       <g transform="translate({i * 200} 0)">
