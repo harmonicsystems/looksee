@@ -36,6 +36,7 @@ export const OPTIONS = {
   mathTo: [5, 10],
   feelingMotion: ['moving', 'still'],
   words: ['en', 'es', 'both'],
+  esGender: ['both', 'o', 'a'],
   skin: ['mixed', ...TONES],
   theme: Object.keys(THEMES),
   background: ['plain', 'glow', 'dots'],
@@ -61,6 +62,8 @@ export const DEFAULTS = {
   mathTo: 5,
   feelingMotion: 'moving',
   words: 'en',
+  esGender: 'both',
+  speakSlides: false,
   letterWords: true,
   articles: true,
   firstLetter: true,
@@ -96,7 +99,7 @@ export function normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const s = { ...DEFAULTS }
   for (const k of Object.keys(OPTIONS)) if (OPTIONS[k].includes(r[k])) s[k] = r[k]
-  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb']) if (typeof r[k] === 'boolean') s[k] = r[k]
+  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides']) if (typeof r[k] === 'boolean') s[k] = r[k]
   // Fresh arrays every time, so editing settings never edits DEFAULTS.
   s.sets = [...s.sets]
   if (Array.isArray(r.sets)) {

@@ -178,6 +178,26 @@ embedding), ads, and sound: these need the live site on the Chromebook.
 
 **Next:** David checks the Paw Patrol video on the Chromebook, and edits its words; more presets.
 
+## 2026-11-12: speech, and Spanish feelings as -o, -a or both
+
+Speech was offered on 11-11 and not chosen; David asked for it now. A click on the slide says its
+words (it no longer pauses; Play/Pause is the button and Space), in English, Spanish or both as
+shown, each in its own language's voice; a setting reads every slide as it appears; a word around a
+Watch video says itself when clicked. Only the device's own voices are used, so nothing is sent to
+Google. The twelve Spanish feelings written "enojado/a" get a setting: enojado, enojada, or both
+(shown "enojado/a", said "enojado, enojada"); a settings link carries it, so a teacher can keep a
+bookmark per child.
+
+**Checked on 2026-11-12, locally, on a build for `/looksee/`.** 72 tests pass; the build passes its
+gates at 52.9 KB of 60. In Chromium, with the speech engine replaced by a recorder and a made-up voice
+list (one online Spanish voice, local English and Spanish ones): a click on a letter slide says
+"A. airplane" in the English voice and "el avión" in the Spanish one and does not start play; the
+feeling "angry" in Spanish shows and says the form chosen in each setting; reading each slide while
+playing says every slide once; with no local Spanish voice, Spanish is skipped (the online voice is
+never used) and Settings says how to add one; a Watch word click says it. **Not checked:** real
+voices on the Chromebook, whether it has a Spanish voice, the ChromeOS menu path in the hint, and the
+video turning down while a word is said.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
