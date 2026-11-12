@@ -129,7 +129,19 @@ clock by hand, since the window was not being drawn at the time: each change sta
 shape, passes through distinct in-between shapes and ends as the new one; stepping on mid-change
 continues from where the outline was; and the last shape changes back into the first.
 
-**Not checked.** The morph watched at full speed on a screen. Installing the app to a home screen. Going offline on the live site itself (the
+**Checked on 2026-11-11, on the live site, after this change.** The site serves the new build
+and its console is clean. The deck opens on the set name, and letter slides show their word and
+small picture. With both languages on, the shape, color + shape and feelings slides show the
+right words, el or la, and the Spanish color after its noun; the first letter is the slide's
+color on shapes and plain ink on color + shape slides; and no label runs past its box. The
+service worker installs and stores all 220 pictures. The morph ran at full speed this time and
+was read on every frame: circle to square took 0.68 s and passed through 77 different outlines
+in the same picture element, and stepping on mid-change carried on with no jump.
+
+**Not checked.** The morph seen by a person: it has been measured frame by frame, not watched.
+The "A new version is ready" prompt for this change (the test browser had no earlier version
+stored; the prompt was checked on 2026-11-10 and has not changed). Installing the app to a home
+screen. Going offline on the live site itself (the
 offline run was on a local copy of the same build). The school-day bar across a real school
 day (one moment in the browser, the rest by unit tests). Typing emoji into the schedule on a
 Chromebook or iPad. The device's own reduced-motion setting (it shares a path with the Still
