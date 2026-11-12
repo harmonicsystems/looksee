@@ -268,6 +268,34 @@ const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'e
 const WORDS_ES = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once',
   'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte']
 
+// Adding and subtracting: every fact whose numbers stay within `max`, with
+// no zeros (nothing added, nothing left). Up to 5 that is 10 of each; up to
+// 10, 45 of each.
+export function mathFacts(op, max) {
+  const out = []
+  for (let a = 1; a <= max; a++)
+    for (let b = 1; b <= max; b++) if (op === '+' ? a + b <= max : b < a) out.push([a, b])
+  return out
+}
+
+// "two plus three is five" / "dos más tres son cinco" ("es" for one).
+export function sumSlide(op, a, b) {
+  const n = op === '+' ? a + b : a - b
+  const en = op === '+' ? 'plus' : 'minus'
+  const es = op === '+' ? 'más' : 'menos'
+  return {
+    kind: 'sum',
+    set: op === '+' ? 'adding' : 'subtracting',
+    op,
+    a,
+    b,
+    n,
+    label: `${WORDS[a]} ${en} ${WORDS[b]} is ${WORDS[n]}`,
+    es: `${WORDS_ES[a]} ${es} ${WORDS_ES[b]} ${n === 1 ? 'es' : 'son'} ${WORDS_ES[n]}`,
+    say: `${WORDS[a]} ${en} ${WORDS[b]} is ${WORDS[n]}`
+  }
+}
+
 // The words under a slide: a row per language shown, each one word (or two for
 // a pair of opposites). `art` is the Spanish article, when articles are on and
 // the word is a noun. A letter has rows only when letter words are on.
@@ -311,6 +339,8 @@ export const namesSets = (s) => s.setNames && s.order !== 'shuffle' && SETS.filt
 export const SETS = [
   { id: 'letters', label: 'Letters', es: 'Letras' },
   { id: 'numbers', label: 'Numbers', es: 'Números' },
+  { id: 'adding', label: 'Adding', es: 'Sumar' },
+  { id: 'subtracting', label: 'Subtracting', es: 'Restar' },
   { id: 'shapes', label: 'Shapes', es: 'Figuras' },
   { id: 'colors', label: 'Colors', es: 'Colores' },
   { id: 'colorShapes', label: 'Colors and shapes', es: 'Colores y figuras' },
@@ -330,7 +360,7 @@ export function shuffle(list, rng = Math.random) {
   return a
 }
 
-// → [{ kind: 'title'|'glyph'|'number'|'shape'|'color'|'mix'|'pair'|'picture', set, label, es, ... }]
+// → [{ kind: 'title'|'glyph'|'number'|'shape'|'color'|'mix'|'sum'|'pair'|'picture', set, label, es, ... }]
 export function buildDeck(s, rng = Math.random) {
   const deck = []
   const titles = namesSets(s)
@@ -354,6 +384,16 @@ export function buildDeck(s, rng = Math.random) {
       return { kind: 'number', set: 'numbers', n, label: WORDS[n], es: WORDS_ES[n], say: String(n) }
     })
   )
+  // Up to 5, every fact plays. Up to 10 there are 45 of each, so a round
+  // deals 10 of them: a fresh handful every time the deck starts over.
+  const facts = (op) => {
+    const all = mathFacts(op, s.mathTo)
+    const hand = s.mathTo > 5 ? shuffle(all, rng).slice(0, 10) : all
+    const sorted = s.order === 'shuffle' ? hand : hand.sort((x, y) => (op === '+' ? x[0] + x[1] - y[0] - y[1] : x[0] - x[1] - (y[0] - y[1])) || x[0] - y[0])
+    return sorted.map(([a, b]) => sumSlide(op, a, b))
+  }
+  add('adding', () => facts('+'))
+  add('subtracting', () => facts('−'))
   add('shapes', () => SHAPES.map((x) => ({ kind: 'shape', set: 'shapes', ...x, say: x.label })))
   add('colors', () => COLORS.map((x) => ({ kind: 'color', set: 'colors', ...x, say: x.label })))
   const color = bag(COLORS, rng)

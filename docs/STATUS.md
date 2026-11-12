@@ -105,8 +105,23 @@ largest size, with no word off the screen and a clean console; the blobs were se
 overlapping; with reduced motion they start overlapped. Not yet checked on the live site, and the
 Spanish ("Mezclar colores") is as unchecked as the rest.
 
-**Next:** preset videos with word webs (needs the teacher's video links), then adding and taking
-away.
+## 2026-11-12: adding and subtracting
+
+Two more sets, on by default for new visitors. A setting chooses "Up to 5" (every fact: 10 of each)
+or "Up to 10" (a fresh 10 of the 45 each round). Each slide shows "2 + 3 = 5", dots in rows of five,
+or both, following the Numbers setting. Adding: the two groups, the second in ink, slide together.
+Subtracting: the dots taken away are crossed out one by one and stay on screen. Words: "two plus
+three is five" / "dos más tres son cinco". David chose plus/minus wording, the setting, and the
+crossed-out dots staying.
+
+**Checked on 2026-11-12, locally.** All 57 tests pass and the build passes its gates at 47.7 KB of
+60. In a browser: every slide of both sets up to 5, and a dealt round up to 10, in both languages
+at the largest size, at laptop and phone shapes, with no word off the screen and a clean console;
+numeral-only, dots-only and both; mid-way and finished; reduced motion starts finished; "Up to 10"
+chosen with mouse clicks only. Not yet checked on the live site or by a teacher; "son" vs "es igual
+a" in the Spanish is for a Spanish speaker to judge.
+
+**Next:** preset videos with word webs (needs the teacher's video links).
 
 ## Checked, and not checked
 
