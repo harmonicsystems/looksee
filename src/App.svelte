@@ -240,6 +240,7 @@
     order: { inOrder: 'In order', shuffle: 'Mixed up' },
     letterCase: { upper: 'A', lower: 'a', both: 'Aa' },
     numberStyle: { digit: 'Numeral', dots: 'Dots', both: 'Both' },
+    mathTo: { 5: 'Up to 5', 10: 'Up to 10' },
     feelingMotion: { moving: 'Moving', still: 'Still' },
     words: { en: 'English', es: 'Español', both: 'Both' },
     skin: { mixed: 'Mixed', '1f3fb': 'Light', '1f3fc': 'Medium-light', '1f3fd': 'Medium', '1f3fe': 'Medium-dark', '1f3ff': 'Dark' },
@@ -389,6 +390,7 @@
         <label>From <input type="number" min="0" max="20" bind:value={s.numberFrom} onchange={fixRange} /></label>
         <label>to <input type="number" min="0" max="20" bind:value={s.numberTo} onchange={fixRange} /></label>
       </div>
+      {@render seg('mathTo', 'Adding and subtracting')}
       {@render seg('feelingMotion', 'Faces and hands')}
       {@render seg('skin', 'Skin tone')}
 

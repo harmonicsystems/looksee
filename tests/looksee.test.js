@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
-  buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix,
+  buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix, mathFacts, sumSlide,
   SETS, MIXES, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
 } from '../src/concepts.js'
 import { POINTS, mix, ease, pathOf } from '../src/morph.js'
@@ -141,6 +141,50 @@ describe('mixing colors', () => {
     expect(deck({ sets: ['colors'] }).some((x) => x.kind === 'mix')).toBe(false)
     expect(deck({ sets: ['colors', 'mixing'], setNames: true })[COLORS.length + 1]).toMatchObject({ kind: 'title', label: 'Mixing colors', es: 'Mezclar colores' })
     expect(normalizeSettings({ sets: ['mixing'] }).sets).toEqual(['mixing'])
+  })
+})
+
+describe('adding and subtracting', () => {
+  it('has every fact within the limit, with no zeros', () => {
+    for (const max of [5, 10]) {
+      const add = mathFacts('+', max)
+      const sub = mathFacts('−', max)
+      expect(add.length).toBe(max === 5 ? 10 : 45)
+      expect(sub.length).toBe(max === 5 ? 10 : 45)
+      for (const [a, b] of add) {
+        const x = sumSlide('+', a, b)
+        expect(x.n).toBe(a + b)
+        expect(Math.min(a, b)).toBeGreaterThan(0)
+        expect(x.n).toBeLessThanOrEqual(max)
+      }
+      for (const [a, b] of sub) {
+        const x = sumSlide('−', a, b)
+        expect(x.n).toBe(a - b)
+        expect(x.n).toBeGreaterThan(0)
+        expect(a).toBeLessThanOrEqual(max)
+      }
+    }
+  })
+  it('says the fact in English and Spanish', () => {
+    expect(rowsText(labelRows(sumSlide('+', 2, 3), { words: 'both' }))).toBe('two plus three is five / dos más tres son cinco')
+    expect(rowsText(labelRows(sumSlide('−', 2, 1), { words: 'both' }))).toBe('two minus one is one / dos menos uno es uno')
+  })
+  it('plays every fact up to 5, smallest answers first', () => {
+    const d = deck({ sets: ['adding'] })
+    expect(d.length).toBe(10)
+    expect(d.map((x) => x.n)).toEqual([...d.map((x) => x.n)].sort((a, b) => a - b))
+  })
+  it('deals a fresh handful of 10 up to 10', () => {
+    const one = buildDeck({ ...DEFAULTS, setNames: false, sets: ['subtracting'], mathTo: 10 }, () => 0.42)
+    const two = buildDeck({ ...DEFAULTS, setNames: false, sets: ['subtracting'], mathTo: 10 }, () => 0.9)
+    expect(one.length).toBe(10)
+    expect(new Set(one.map((x) => x.label)).size).toBe(10)
+    expect(one.map((x) => x.label)).not.toEqual(two.map((x) => x.label))
+  })
+  it('keeps 5 or 10, and rebuilds the deck when it changes', () => {
+    expect(normalizeSettings({ mathTo: 10 }).mathTo).toBe(10)
+    expect(normalizeSettings({ mathTo: 7 }).mathTo).toBe(5)
+    expect(deckKey({ ...DEFAULTS, mathTo: 10 })).not.toBe(deckKey(DEFAULTS))
   })
 })
 

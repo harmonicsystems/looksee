@@ -39,7 +39,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 46.9 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 47.7 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -56,7 +56,7 @@ is pure logic and tested.
 - `index.html` → `src/main.svelte.js` → `App.svelte`: the stage, the control bar that fades while
   playing, the settings drawer, the school-day bar, the corner video and the **window-level
   keyboard handler**.
-- `Visual.svelte` — draws one slide by `kind` (`glyph | number | shape | color | mix | pair | picture`;
+- `Visual.svelte` — draws one slide by `kind` (`glyph | number | shape | color | mix | sum | pair | picture`;
   a `title` slide is words only and is drawn by `App.svelte`).
 - `concepts.js` — the sets as data + `buildDeck(settings, rng)` + `dotLayout` + `labelRows`. Add a
   concept here, with its word in English (`label`) and Spanish (`es`, plus `art` for a noun).
@@ -154,6 +154,12 @@ attribute, and the slide's name for a screen reader follows the words shown (`ro
   taught in class), so a result is exactly what the Colors set shows. Two blobs slide together and
   their overlap is the color they make; under reduced motion they start overlapped. The words are
   one sentence per language, "red + yellow = orange" / "rojo + amarillo = anaranjado".
+- **Adding and subtracting** (`adding`, `subtracting` sets): `mathFacts(op, max)` lists every fact
+  within the `mathTo` setting (5 or 10) with no zeros; up to 5 all 10 play, up to 10 a round deals
+  10 of the 45. A `sum` slide follows `numberStyle`: the sentence "2 + 3 = 5", dots in rows of five,
+  or both. Adding: the second group is in ink and both groups slide together. Subtracting: the dots
+  taken away are crossed out one by one and stay. Words "two plus three is five" / "dos más tres son
+  cinco" ("es" when the answer is one).
 - **Set names** (`setNames`): a `title` slide before each set, when more than one set plays and
   they play in order (`namesSets`). They show even when the words under the pictures are hidden.
 - Long words are drawn smaller instead of running off the screen: the label gets its longest

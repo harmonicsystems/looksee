@@ -33,6 +33,7 @@ export const OPTIONS = {
   order: ['inOrder', 'shuffle'],
   letterCase: ['upper', 'lower', 'both'],
   numberStyle: ['digit', 'dots', 'both'],
+  mathTo: [5, 10],
   feelingMotion: ['moving', 'still'],
   words: ['en', 'es', 'both'],
   skin: ['mixed', ...TONES],
@@ -49,7 +50,7 @@ export const OPTIONS = {
 }
 
 export const DEFAULTS = {
-  sets: ['letters', 'numbers', 'shapes', 'colors', 'colorShapes', 'mixing', 'feelings', 'gestures', 'body'],
+  sets: ['letters', 'numbers', 'adding', 'subtracting', 'shapes', 'colors', 'colorShapes', 'mixing', 'feelings', 'gestures', 'body'],
   order: 'inOrder',
   loop: true,
   seconds: 4,
@@ -57,6 +58,7 @@ export const DEFAULTS = {
   numberFrom: 1,
   numberTo: 10,
   numberStyle: 'both',
+  mathTo: 5,
   feelingMotion: 'moving',
   words: 'en',
   letterWords: true,
@@ -128,7 +130,7 @@ export function saveSettings(s) {
 
 // The settings that change which slides there are. Look-only settings must
 // not restart or reshuffle a running deck, so they are not here.
-export const DECK_KEYS = ['sets', 'order', 'letterCase', 'numberFrom', 'numberTo', 'skin']
+export const DECK_KEYS = ['sets', 'order', 'letterCase', 'numberFrom', 'numberTo', 'mathTo', 'skin']
 
 // Changes exactly when the deck has to be built again. Set names count only
 // when they would actually appear (see namesSets).

@@ -37,33 +37,57 @@
       clearTimeout(finish)
     }
   })
-  // A mixing slide: two blobs of paint slide together and where they overlap
-  // is the color they make. `gap` goes from 1 (apart) to 0 (overlapping);
-  // with reduced motion the slide starts finished.
-  const MIX_R = 92
-  const uid = 'mix' + Math.random().toString(36).slice(2, 8)
-  let gap = $state(item.kind === 'mix' && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 0)
+  // Mixing and math slides play out once: `k` goes from 0 to 1 after a short
+  // pause, so the start is seen first. With reduced motion they start finished.
+  const plays = item.kind === 'mix' || item.kind === 'sum'
+  let k = $state(plays && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1)
   $effect(() => {
-    if (untrack(() => gap) === 0) return
+    if (untrack(() => k) === 1) return
     let frame
     let began
     const tick = (now) => {
       began ??= now
-      // A short pause first, so the two colors are seen apart.
-      const k = Math.min(1, Math.max(0, (now - began - 500) / 1200))
-      gap = 1 - ease(k)
+      k = Math.min(1, Math.max(0, (now - began - 500) / 1200))
       if (k < 1) frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     // No frames in a background tab: finish anyway.
-    const finish = setTimeout(() => (gap = 0), 1800)
+    const finish = setTimeout(() => (k = 1), 1800)
     return () => {
       cancelAnimationFrame(frame)
       clearTimeout(finish)
     }
   })
-  // Apart, the blobs just miss each other; together they overlap by a third.
-  const mixX = $derived(MIX_R * 0.68 + gap * MIX_R * 0.42)
+
+  // Two blobs of paint slide together; where they overlap is the color they
+  // make. Apart they just miss each other; together they overlap by a third.
+  const MIX_R = 92
+  const uid = 'mix' + Math.random().toString(36).slice(2, 8)
+  const mixX = $derived(MIX_R * 0.68 + (1 - ease(k)) * MIX_R * 0.42)
+
+  // Adding: the two groups start apart and slide into one ten-frame.
+  // Subtracting: the dots taken away are crossed out one after another, and
+  // stay, so both what was there and what is left can be seen.
+  const sumDots = $derived.by(() => {
+    if (item.kind !== 'sum' || digitOnly) return []
+    const total = item.op === '+' ? item.n : item.a
+    const box = dotsOnly ? { top: 60, bottom: 340 } : { top: 200, bottom: 390 }
+    const apart = (1 - ease(k)) * 36
+    return dotLayout(total, box).map((d, i) => {
+      const second = item.op === '+' && i >= item.a
+      const gone = item.op !== '+' && i >= item.n
+      return {
+        ...d,
+        cx: d.cx + (item.op === '+' ? (second ? apart : -apart) : 0),
+        second,
+        gone,
+        // How far this dot's X is drawn: each one after the last.
+        x: gone ? Math.min(1, Math.max(0, k * item.b - (i - item.n))) : 0
+      }
+    })
+  })
+  const sentence = $derived(item.kind === 'sum' ? `${item.a} ${item.op} ${item.b} = ${item.n}` : '')
+  const sentenceSize = $derived(sentence.length > 9 ? 66 : 74)
 
   // A color + shape slide is painted its own true color, outlined in ink so
   // white and yellow show; any other shape follows the drawing-style setting.
@@ -131,6 +155,17 @@
     <circle cx={200 + mixX} cy="200" r={MIX_R} fill={item.hex} clip-path="url(#{uid})" />
     <circle cx={200 - mixX} cy="200" r={MIX_R} fill="none" stroke={ink} stroke-width="6" />
     <circle cx={200 + mixX} cy="200" r={MIX_R} fill="none" stroke={ink} stroke-width="6" />
+  {:else if item.kind === 'sum'}
+    {#if !dotsOnly}
+      <text x="200" y={digitOnly ? 205 : 110} font-size={digitOnly ? sentenceSize * 1.15 : sentenceSize} class="glyph" {fill} fill-opacity={fillOpacity} {stroke} stroke-width="4">{sentence}</text>
+    {/if}
+    {#each sumDots as d}
+      <circle cx={d.cx} cy={d.cy} r={d.r} fill={d.second ? ink : fill} fill-opacity={d.second ? 1 : fillOpacity} stroke={d.second ? 'none' : stroke} stroke-width="4" />
+      {#if d.x > 0}
+        {@const e = d.r * 0.95 * d.x}
+        <path d="M{d.cx - e} {d.cy - e}L{d.cx + e} {d.cy + e}M{d.cx + e} {d.cy - e}L{d.cx - e} {d.cy + e}" stroke={ink} stroke-width={d.r * 0.32} stroke-linecap="round" />
+      {/if}
+    {/each}
   {:else if item.kind === 'pair'}
     {#each item.sides as side, i}
       <g transform="translate({i * 200} 0)">
