@@ -9,12 +9,42 @@
   import { THEMES, OPTIONS, deckKey as deckKeyOf, wordWait, loadSettings, saveSettings, normalizeSettings } from './settings.js'
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
   import { PipPlayer } from './pip.js'
+  import { linkQuery, linkSettings, setupName } from './share.js'
+  import { setHome } from './home.js'
   import { videoId, startSeconds } from './link.js'
 
   let { update = null } = $props()
 
-  const s = $state(loadSettings())
-  $effect(() => saveSettings($state.snapshot(s)))
+  // A settings link (?v=1&…) wins over what this device has saved, every
+  // time it opens, and changes made in its window stay with its address
+  // (the device's own saved settings are left alone). See share.js.
+  const fromLink = linkSettings(location.search)
+  const s = $state(fromLink ?? loadSettings())
+  const query = $derived(linkQuery(s))
+  const shareUrl = $derived(new URL('./', document.baseURI).href + '?' + query)
+  $effect(() => {
+    const snap = $state.snapshot(s)
+    if (!fromLink) return saveSettings(snap)
+    const q = query
+    try {
+      history.replaceState(null, '', '?' + q)
+    } catch {}
+    setHome(q, setupName(snap))
+  })
+  let shareMsg = $state('')
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      shareMsg = 'Link copied.'
+    } catch {
+      shareMsg = 'Couldn’t copy: select the link above and copy it.'
+    }
+  }
+  // Keep a link's settings as this device's own, and open the plain app.
+  function keepHere() {
+    saveSettings($state.snapshot(s))
+    location.href = new URL('./', document.baseURI).href
+  }
 
   // ---- deck ----
   const deckKey = $derived(deckKeyOf(s))
@@ -464,6 +494,34 @@
         can’t remove ads YouTube itself places on a video; pick videos that don’t carry them.
       </p>
 
+      <h2>Share this setup</h2>
+      {#if fromLink}
+        <p class="hint">
+          This window opened from a settings link, as <b>{setupName(s)}</b>. Its settings come from the link every time,
+          and changes made here stay with this window’s link, not this device.
+        </p>
+      {:else}
+        <p class="hint">A link that opens Looksee with exactly these settings, school day and video included, on any device.</p>
+      {/if}
+      <input class="link" type="text" readonly value={shareUrl} aria-label="Link to this setup" onfocus={(e) => e.currentTarget.select()} />
+      <div class="fld row">
+        <button class="btn" onclick={copyLink}>Copy link</button>
+        {#if fromLink}
+          <button class="btn" onclick={keepHere}>Use these on this device</button>
+        {:else}
+          <a class="btn" href={shareUrl}>Open as its own page</a>
+        {/if}
+        <span class="hint" role="status">{shareMsg}</span>
+      </div>
+      <p class="hint">
+        To keep a setup, open its page and click the <b>☆</b> star in the address bar: the bookmark is named after its sets,
+        and opens this setup every time. One bookmark per setup, side by side on the bookmarks bar.
+      </p>
+      <p class="hint">
+        Or as its own app: Chrome’s <b>⋮</b> menu → <b>Cast, save and share</b> → <b>Install page</b> (or <b>Create
+        shortcut</b>, with “Open as window”). On an iPad: Share → <b>Add to Home Screen</b>.
+      </p>
+
       <h2>Keys</h2>
       <p class="hint keyhelp">
         <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video ·
@@ -571,6 +629,8 @@
   .chk input { width: 18px; height: 18px; accent-color: var(--brand); }
   .hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
   .hint.bad { color: var(--bad); }
+  a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+  .link { width: 100%; box-sizing: border-box; font: 13px/1.4 ui-monospace, monospace; padding: 8px; margin-bottom: 8px; }
   .keyhelp { line-height: 2; }
   .motion-note { display: none; }
 

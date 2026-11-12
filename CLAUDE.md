@@ -39,7 +39,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 47.9 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 49.4 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -65,6 +65,8 @@ is pure logic and tested.
   exactly when the deck must be rebuilt (and reshuffled): `DECK_KEYS`, plus set names when they
   would actually appear. Look-only settings must never be in it.
 - `day.js` — the school-day schedule (below).
+- `share.js` — settings as a link (`linkQuery`, `linkSettings`, `setupName`). `home.js` — `setHome`,
+  the per-link title and manifest (not pure).
 - `pip.js` — `PipPlayer`, the corner video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
   `startSeconds` (reads a link's `?t=`).
 - `styles.css` — control palettes (parsed by the contrast gate) and base styles.
@@ -178,6 +180,22 @@ attribute, and the slide's name for a screen reader follows the words shown (`ro
   checked by a Spanish speaker.**
 - Only the words on the slides change. Letters stay the 26 English ones (no Ñ), and the controls
   and Settings stay in English.
+
+## Settings links
+
+`?v=1&sets=adding.subtracting&mathTo=10` (`share.js`): `v=1` marks a Looksee link, then only the
+settings that differ from `DEFAULTS`; everything travels, school day and video included. A link is
+the whole setup (missing = default) and **wins over the device's saved settings every time it
+opens**: a Chromebook's bookmarks and shortcuts share one storage, so that is the only way each can
+keep its own setup. In a link window, changes go into the address (`replaceState`), never into
+`localStorage`; "Use these on this device" saves them and opens the plain app.
+
+The intended use (David): one bookmark per setup on the bookmarks bar. The page title in a link
+window is `setupName` ("Looksee · Adding, Subtracting"), which a bookmark takes as its name. For
+installing one as an app, `home.js` swaps in a `data:` manifest whose `start_url` is the link
+(BackTrack's approach); Chrome reported it installable with no errors. On iOS the manifest is
+removed instead, so Add to Home Screen saves the page's own address. Settings ▸ Share this setup
+has the link, Copy link, and Open as its own page.
 
 ## School-day bar
 

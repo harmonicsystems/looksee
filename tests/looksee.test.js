@@ -9,6 +9,7 @@ import { POINTS, mix, ease, pathOf } from '../src/morph.js'
 import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait } from '../src/settings.js'
 import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
+import { linkQuery, linkSettings, setupName } from '../src/share.js'
 
 // Set names are off here unless a test asks for them, so decks hold only their slides.
 const deck = (over) => buildDeck({ ...DEFAULTS, setNames: false, ...over }, () => 0.42)
@@ -481,4 +482,37 @@ describe('stage themes', () => {
       }
     })
   }
+})
+
+describe('settings links', () => {
+  it('is just the marker when nothing differs from the defaults', () => {
+    expect(linkQuery(DEFAULTS)).toBe('v=1')
+    expect(linkSettings('?v=1')).toEqual(normalizeSettings({}))
+  })
+  it('carries every kind of setting there and back', () => {
+    const s = normalizeSettings({
+      sets: ['adding', 'subtracting'], mathTo: 10, words: 'both', seconds: 7, morph: false, theme: 'night',
+      day: [{ at: '09:00', icon: '🎒' }, { at: '12:00', icon: '🍎🥪' }], dayEnd: '15:15',
+      videoUrl: 'https://www.youtube.com/watch?v=abc123DEF45&t=30'
+    })
+    const q = linkQuery(s)
+    expect(q).toContain('sets=adding.subtracting')
+    expect(q).not.toContain('order=')
+    expect(linkSettings('?' + q)).toEqual(s)
+  })
+  it('is not a link without the marker, and drops what it does not know', () => {
+    expect(linkSettings('?sets=adding')).toBe(null)
+    expect(linkSettings('')).toBe(null)
+    const s = linkSettings('?v=1&sets=adding.nonsense&theme=purple&seconds=999&day=%5Bbroken&evil=1')
+    expect(s.sets).toEqual(['adding'])
+    expect(s.theme).toBe(DEFAULTS.theme)
+    expect(s.seconds).toBe(30)
+    expect(s.day).toEqual(DEFAULTS.day)
+    expect('evil' in s).toBe(false)
+  })
+  it('names a shortcut after its sets', () => {
+    expect(setupName(DEFAULTS)).toBe('Looksee')
+    expect(setupName({ ...DEFAULTS, sets: ['adding', 'subtracting'] })).toBe('Looksee · Adding, Subtracting')
+    expect(setupName({ ...DEFAULTS, sets: ['letters', 'numbers', 'shapes'] })).toBe('Looksee · 3 sets')
+  })
 })

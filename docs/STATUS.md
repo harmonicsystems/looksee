@@ -121,6 +121,25 @@ numeral-only, dots-only and both; mid-way and finished; reduced motion starts fi
 chosen with mouse clicks only. Not yet checked on the live site or by a teacher; "son" vs "es igual
 a" in the Spanish is for a Spanish speaker to judge.
 
+## 2026-11-12: matching colors, fading, and settings links
+
+**Adding and subtracting are color-coded.** Each number in "2 + 3 = 5" is the color of its dots,
+and the answer appears once the dots are done. Subtracting now fades the taken-away dots (they
+turn the second number's color first) instead of crossing them out. Both were David's calls after
+seeing the first version.
+
+**Settings travel as a link.** `?v=1&…` opens Looksee with exactly those settings, every time, over
+whatever the device has saved; a teacher can keep one bookmark per setup on the bookmarks bar, each
+named after its sets. Settings ▸ Share this setup shows the link and can copy it.
+
+**Checked on 2026-11-12, locally, on a build for `/looksee/`.** 61 tests pass; the build passes its
+gates at 49.4 KB of 60. In Chromium: a link wins over saved settings; changing a setting with clicks
+updates the address and leaves the device's settings alone; reloading keeps the link's setup; the
+plain address still opens the device's settings; a different link opens offline from the stored app;
+Chrome's own check finds the per-link manifest installable, with the link as its start address and
+the setup's name. Not checked: a real bookmark or installed shortcut on the Chromebook, and iOS Add
+to Home Screen.
+
 **Next:** preset videos with word webs (needs the teacher's video links).
 
 ## Checked, and not checked
