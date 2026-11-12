@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
-  buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix, mathFacts, sumSlide,
+  buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix, mathFacts, sumSlide, genderForm,
   SETS, GROUPS, MIXES, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
 } from '../src/concepts.js'
 import { POINTS, mix, ease, pathOf } from '../src/morph.js'
@@ -11,6 +11,7 @@ import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
 import { linkQuery, linkSettings, setupName } from '../src/share.js'
 import { VIDEOS, sides } from '../src/videos.js'
+import { speechLines, pickVoice } from '../src/speech.js'
 
 // Set names are off here unless a test asks for them, so decks hold only their slides.
 const deck = (over) => buildDeck({ ...DEFAULTS, setNames: false, ...over }, () => 0.42)
@@ -553,5 +554,60 @@ describe('preset videos', () => {
       expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(1)
       expect(s.top).toBeGreaterThanOrEqual(s.left)
     }
+  })
+})
+
+describe('Spanish feelings: -o, -a or both', () => {
+  it('shows the form asked for', () => {
+    expect(genderForm('enojado/a', 'o')).toBe('enojado')
+    expect(genderForm('enojado/a', 'a')).toBe('enojada')
+    expect(genderForm('enojado/a', 'both')).toBe('enojado/a')
+    expect(genderForm('feliz', 'a')).toBe('feliz')
+  })
+  it('applies to the words under a feeling, read at render time', () => {
+    const angry = deck({ sets: ['feelings'] }).find((x) => x.label === 'angry')
+    expect(rowsText(labelRows(angry, { words: 'es', esGender: 'a' }))).toBe('enojada')
+    expect(rowsText(labelRows(angry, { words: 'both' }))).toBe('angry / enojado/a')
+    expect(normalizeSettings({ esGender: 'a' }).esGender).toBe('a')
+    expect(deckKey({ ...DEFAULTS, esGender: 'a' })).toBe(deckKey(DEFAULTS))
+  })
+})
+
+describe('speech', () => {
+  const say = (item, s) => speechLines(item, labelRows(item, { ...DEFAULTS, ...s }))
+  const find = (sets, label) => deck({ sets }).find((x) => x.label === label || String(x.label) === label)
+  it('says each language shown, in its own language', () => {
+    expect(say(find(['shapes'], 'circle'), { words: 'both' })).toEqual([
+      { lang: 'en', text: 'circle' },
+      { lang: 'es', text: 'el círculo' }
+    ])
+  })
+  it('reads letters, sums, mixes and pairs aloud as words', () => {
+    expect(say(deck({ sets: ['letters'] })[0], { words: 'both' })).toEqual([
+      { lang: 'en', text: 'A. airplane' },
+      { lang: 'es', text: 'el avión' }
+    ])
+    expect(say(sumSlide('+', 2, 3), { words: 'es' })).toEqual([{ lang: 'es', text: 'dos más tres son cinco' }])
+    expect(say(colorMix(['red', 'yellow', 'orange']), { words: 'both' }).map((l) => l.text)).toEqual([
+      'red plus yellow equals orange',
+      'rojo más amarillo es igual a anaranjado'
+    ])
+    expect(say(find(['opposites'], 'big,small'))[0].text).toBe('big, small')
+  })
+  it('says both forms of a feeling when both are shown, else the one shown', () => {
+    const angry = find(['feelings'], 'angry')
+    expect(say(angry, { words: 'es' })[0].text).toBe('enojado, enojada')
+    expect(say(angry, { words: 'es', esGender: 'a' })[0].text).toBe('enojada')
+  })
+  it('says the slide name when no words are shown', () => {
+    expect(say(deck({ sets: ['letters'] })[1], { letterWords: false })).toEqual([{ lang: 'en', text: 'B' }])
+  })
+  it("uses only the device's own voices, US English and US Spanish first", () => {
+    const v = (name, lang, localService) => ({ name, lang, localService })
+    const all = [v('Google español', 'es-US', false), v('Mónica', 'es-ES', true), v('Paulina', 'es-MX', true), v('Samantha', 'en-US', true)]
+    expect(pickVoice(all, 'es').name).toBe('Paulina')
+    expect(pickVoice(all, 'en').name).toBe('Samantha')
+    expect(pickVoice([v('Google US English', 'en-US', false)], 'en')).toBe(null)
+    expect(pickVoice([v('Mónica', 'es_ES', true)], 'es').name).toBe('Mónica')
   })
 })

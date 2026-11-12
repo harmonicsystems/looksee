@@ -105,6 +105,13 @@ export class PipPlayer {
     } catch {}
   }
 
+  // Turned down while a word is spoken over it, then back up.
+  setVolume(v) {
+    try {
+      this.player?.setVolume(v)
+    } catch {}
+  }
+
   reclaimFocus() {
     const a = document.activeElement
     if (a && a.tagName === 'IFRAME') {

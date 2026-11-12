@@ -10,6 +10,8 @@
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
   import { PipPlayer } from './pip.js'
   import { VIDEOS, sides } from './videos.js'
+  import { speechLines, pickVoice } from './speech.js'
+  import { speak, onVoices } from './speak.js'
   import { linkQuery, linkSettings, setupName } from './share.js'
   import { setHome } from './home.js'
   import { videoId, startSeconds } from './link.js'
@@ -70,6 +72,22 @@
   const say = $derived(item ? slideName(item, rows) : '')
   const len = $derived(item ? labelLen(rows, item) : 1)
   const wait = $derived(wordWait(s))
+
+  // ---- speech ----
+  // A click on the slide says its words. With "Read each slide aloud", each
+  // slide is also said once its word shows, while playing. Nothing is said
+  // before someone clicks (Play counts), and only the device's own voices
+  // are used (speech.js).
+  const speakSlide = () => item && speak(speechLines(item, rows))
+  $effect(() => {
+    if (!playing || !s.speakSlides || !item) return
+    const lines = untrack(() => speechLines(item, rows))
+    const t = setTimeout(() => speak(lines), wait * 1000)
+    return () => clearTimeout(t)
+  })
+  let voiceList = $state([])
+  $effect(() => onVoices((v) => (voiceList = v)))
+  const voiceFor = $derived({ en: pickVoice(voiceList, 'en'), es: pickVoice(voiceList, 'es') })
   const theme = $derived(THEMES[s.theme])
   const color = $derived(s.colorMode === 'rainbow' ? theme.colors[index % theme.colors.length] : theme.ink)
   // Adding and subtracting color-code their two numbers, whatever the Color
@@ -284,6 +302,13 @@
     const m = s.videoMuted
     watchPlayer?.setMuted(m)
   })
+  // A word around the video says itself when clicked, over the video turned down.
+  function speakWord(x) {
+    speak(speechLines({ say: x.label }, x.rows), {
+      onStart: () => watchPlayer?.setVolume(30),
+      onEnd: () => watchPlayer?.setVolume(100)
+    })
+  }
   // Every 4 s the next word is lit, so eyes move calmly from word to word.
   $effect(() => {
     const n = watching?.words.length ?? 0
@@ -324,6 +349,7 @@
     else if (k === 'arrowleft') step(-1)
     else if (k === 's') drawer = !drawer
     else if (k === 'v') toggleVideo()
+    else if (k === 'r') speakSlide()
     else if (k === 'w') watching ? stopWatch() : (picking = !picking)
     else if (k === 'm') s.videoMuted = !s.videoMuted
     else if (k === 'f') fullscreen()
@@ -355,6 +381,7 @@
     mathTo: { 5: 'Up to 5', 10: 'Up to 10' },
     feelingMotion: { moving: 'Moving', still: 'Still' },
     words: { en: 'English', es: 'Español', both: 'Both' },
+    esGender: { both: 'enojado/a', o: 'enojado', a: 'enojada' },
     skin: { mixed: 'Mixed', '1f3fb': 'Light', '1f3fc': 'Medium-light', '1f3fd': 'Medium', '1f3fe': 'Medium-dark', '1f3ff': 'Dark' },
     theme: Object.fromEntries(Object.entries(THEMES).map(([k, t]) => [k, t.label])),
     background: { plain: 'Plain', glow: 'Soft glow', dots: 'Dotted' },
@@ -407,7 +434,7 @@
   {/if}
 
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scene" id="focus-home" tabindex="-1" bind:this={stageEl} onclick={toggle}>
+  <div class="scene" id="focus-home" tabindex="-1" bind:this={stageEl} onclick={speakSlide} title="Click to hear it">
     {#if item}
       {#key slideKey}
         <div class="slide in-{s.entrance}">
@@ -456,12 +483,12 @@
   </div>
 
   {#snippet word(x)}
-    <div class="ww" class:lit={x.i === lit}>
+    <button class="ww" class:lit={x.i === lit} onclick={() => speakWord(x)}>
       <span class="ww-pic" aria-hidden="true">{x.emoji}</span>
       {#each x.rows as r (r.lang)}
         <span class="ww-word" lang={r.lang}>{r.art ? r.art + ' ' : ''}{r.words.join(' ')}</span>
       {/each}
-    </div>
+    </button>
   {/snippet}
 
   {#if watching}
@@ -541,6 +568,7 @@
         {/each}
       </fieldset>
       {@render seg('words', 'Words')}
+      {#if s.words !== 'en'}{@render seg('esGender', 'Spanish feelings')}{/if}
       <label class="chk"><input type="checkbox" bind:checked={s.letterWords} /> A word for each letter</label>
       <label class="chk"><input type="checkbox" bind:checked={s.firstLetter} /> Highlight the first letter</label>
       <label class="chk"><input type="checkbox" bind:checked={s.articles} /> El / la with Spanish words</label>
@@ -561,6 +589,23 @@
       {@render seg('mathTo', 'Adding and subtracting')}
       {@render seg('feelingMotion', 'Faces and hands')}
       {@render seg('skin', 'Skin tone')}
+
+      <h2>Speech</h2>
+      <p class="hint">Click the slide to hear its words, in the language shown.</p>
+      <label class="chk"><input type="checkbox" bind:checked={s.speakSlides} /> Read each slide aloud as it appears</label>
+      <p class="hint">
+        Voices on this device:
+        {#each [['en', 'English'], ['es', 'Spanish']] as [k, name]}
+          <span class="voice">{name}: {voiceFor[k] ? voiceFor[k].name : 'none'}</span>
+        {/each}
+      </p>
+      {#if s.words !== 'en' && !voiceFor.es}
+        <p class="hint bad">
+          No Spanish voice on this device, so Spanish words are not read. On a Chromebook: Settings → Accessibility →
+          Text-to-speech, and add a Spanish voice. Only voices kept on the device are used; online voices would send the
+          words away.
+        </p>
+      {/if}
 
       <h2>Pace</h2>
       <label class="fld">
@@ -662,7 +707,7 @@
 
       <h2>Keys</h2>
       <p class="hint keyhelp">
-        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch ·
+        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>R</kbd> read aloud ·
         <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
       </p>
       <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
@@ -756,7 +801,7 @@
   .ww-side.bottom { grid-area: bottom; }
   .ww-side.left { grid-area: left; flex-direction: column; }
   .ww-side.right { grid-area: right; flex-direction: column; }
-  .ww { display: flex; flex-direction: column; align-items: center; padding: 0.6cqmin 1.6cqmin; border-radius: 14px; font-family: var(--stage-font); font-weight: 700;
+  .ww { display: flex; flex-direction: column; align-items: center; padding: 0.6cqmin 1.6cqmin; border-radius: 14px; font-family: var(--stage-font); font-weight: 700; border: 0; background: none; cursor: pointer;
     color: var(--stage-ink); font-size: 3.6cqmin; line-height: 1.15; text-align: center; transition: background-color 0.6s; }
   .ww-pic { font-size: 2em; line-height: 1.1; }
   .ww.lit { background: color-mix(in srgb, var(--stage-ink) 12%, transparent); }
@@ -801,6 +846,7 @@
   .grp-head[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .grp-head[aria-pressed='mixed'] { border: 2px solid var(--brand); }
   a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+  .voice { display: inline-block; margin-left: 0.6em; }
   .link { width: 100%; box-sizing: border-box; font: 13px/1.4 ui-monospace, monospace; padding: 8px; margin-bottom: 8px; }
   .keyhelp { line-height: 2; }
   .motion-note { display: none; }

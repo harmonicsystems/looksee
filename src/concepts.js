@@ -299,13 +299,18 @@ export function sumSlide(op, a, b) {
 // The words under a slide: a row per language shown, each one word (or two for
 // a pair of opposites). `art` is the Spanish article, when articles are on and
 // the word is a noun. A letter has rows only when letter words are on.
-export function labelRows(item, { words = 'en', articles = false, letterWords = true } = {}) {
+export function labelRows(item, { words = 'en', articles = false, letterWords = true, esGender = 'both' } = {}) {
   if (item.kind === 'glyph' && !letterWords) return []
   const rows = []
   if (words !== 'es' && item.label.length) rows.push({ lang: 'en', art: '', words: [item.label].flat() })
-  if (words !== 'en' && item.es.length) rows.push({ lang: 'es', art: (articles && item.art) || '', words: [item.es].flat() })
+  if (words !== 'en' && item.es.length)
+    rows.push({ lang: 'es', art: (articles && item.art) || '', words: [item.es].flat().map((w) => genderForm(w, esGender)) })
   return rows
 }
+
+// Spanish words that change with gender are written "enojado/a". The
+// esGender setting shows them as "enojado", "enojada", or as written ('both').
+export const genderForm = (text, g) => (g === 'both' ? text : text.replace(/o\/a\b/g, g === 'a' ? 'a' : 'o'))
 
 // The same rows as one line of text, for a screen reader.
 export const rowsText = (rows) => rows.map((r) => (r.art ? r.art + ' ' : '') + r.words.join(', ')).join(' / ')

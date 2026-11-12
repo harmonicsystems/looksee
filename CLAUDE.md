@@ -22,13 +22,15 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   files: the IFrame API script from `www.youtube.com` (loaded lazily, the first time a video is
   started) and the player from `www.youtube-nocookie.com`. No analytics, no CDN fonts, scripts or
   images. The emoji pictures are copies in this repo; the app never loads them from Google.
+  Speech uses only the device's own voices (`localService`): Chrome's online voices send the text
+  to Google.
 - **Nothing is collected.** No names, no logging. The only stored data is the settings, in
   `localStorage` (`look-settings-v1`).
 - **Starts paused** (no auto-playing media). Reduced motion turns entrance and idle animation off
   and shows still pictures.
 - **Mouse-only must work too.** The classroom it is made for has a Chromebook with a mouse and no
   keyboard: everything a teacher needs during class takes only clicks on large targets, no typing.
-- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `S` settings, `V` video, `W` watch, `M` sound,
+- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `R` read aloud, `S` settings, `V` video, `W` watch, `M` sound,
   `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
@@ -39,7 +41,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 51.7 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 52.9 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -67,6 +69,8 @@ is pure logic and tested.
 - `day.js` — the school-day schedule (below).
 - `share.js` — settings as a link (`linkQuery`, `linkSettings`, `setupName`). `home.js` — `setHome`,
   the per-link title and manifest (not pure).
+- `speech.js` — `speechLines` (what to say for a slide) and `pickVoice` (pure). `speak.js` — `speak`,
+  the Web Speech API (not pure).
 - `videos.js` — `VIDEOS`, the preset videos for Watch with their words, and `sides(n)`.
 - `pip.js` — `PipPlayer`, the corner video and the Watch video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
   `startSeconds` (reads a link's `?t=`).
@@ -181,6 +185,25 @@ attribute, and the slide's name for a screen reader follows the words shown (`ro
   checked by a Spanish speaker.**
 - Only the words on the slides change. Letters stay the 26 English ones (no Ñ), and the controls
   and Settings stay in English.
+
+## Speech
+
+The browser's own speech (Web Speech API, `speechSynthesis`): no dependency, no files. **A click on
+the slide says its words** (it no longer pauses: Play/Pause is the button and `Space`); `R` does the
+same. "Read each slide aloud as it appears" (`speakSlides`, off by default) says each slide while
+playing, once its word shows. In Watch, a word around the video is a button that says itself, with
+the video turned down (`PipPlayer.setVolume`) while it speaks. Nothing speaks before a click.
+
+- `speechLines(item, rows)` follows the words shown: one line per language, each said by that
+  language's voice. "+" / "=" are said as "plus" / "más" and "equals" / "es igual a"; a letter
+  slide's English line starts with the letter ("A. airplane"); no words shown → the slide's `say`.
+- **Voices:** `pickVoice` takes only `localService` voices (online voices would send the words
+  away), preferring en-US, then es-US, es-MX, any es. A language with no local voice is skipped,
+  and Settings ▸ Speech says which voices the device has and how to add a Spanish one.
+- **Spanish feelings** that change with gender are written "enojado/a" in `FEELINGS`.
+  `esGender` (`both` | `o` | `a`) shows "enojado/a", "enojado" or "enojada" (`genderForm`, applied
+  in `labelRows`, so it is look-only, not in `DECK_KEYS`); "enojado/a" is said "enojado, enojada".
+  Shown in Settings only when Spanish is. A settings link carries it: one bookmark per child.
 
 ## Watch: preset videos with words around them
 
