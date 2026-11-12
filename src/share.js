@@ -9,7 +9,7 @@
 // can stay different. (BackTrack does the same with `?p=`.)
 
 import { DEFAULTS, normalizeSettings } from './settings.js'
-import { SETS } from './concepts.js'
+import { SETS, GROUPS } from './concepts.js'
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
@@ -52,10 +52,21 @@ export function linkSettings(search) {
   return normalizeSettings(raw)
 }
 
-// What a shortcut made from this setup is called: "Looksee · Adding,
-// Subtracting", or the number of sets when there are more than two.
+// What a bookmark or shortcut made from this setup is called: its group's
+// emoji and name, then the language, short enough for the bookmarks bar.
+// "➕ Math · EN+ES", "➕ Adding · EN", "🔤➕ Letters & Numbers + Math · ES",
+// "🔤➕🎨 Mix · EN", and "Looksee · All · EN" for every set.
+const LANG = { en: 'EN', es: 'ES', both: 'EN+ES' }
 export function setupName(s) {
-  const sets = SETS.filter((x) => s.sets.includes(x.id))
-  if (same(s.sets, DEFAULTS.sets)) return 'Looksee'
-  return `Looksee · ${sets.length > 2 ? `${sets.length} sets` : sets.map((x) => x.label).join(', ')}`
+  const lang = LANG[s.words] ?? 'EN'
+  if (SETS.every((x) => s.sets.includes(x.id))) return `Looksee · All · ${lang}`
+  const parts = GROUPS.map((g) => {
+    const on = g.sets.filter((id) => s.sets.includes(id))
+    if (!on.length) return null
+    const label = on.length === g.sets.length ? g.label : on.map((id) => SETS.find((x) => x.id === id).label).join(', ')
+    return { emoji: g.emoji, label }
+  }).filter(Boolean)
+  const emoji = parts.map((p) => p.emoji).join('')
+  const what = parts.length > 2 ? 'Mix' : parts.map((p) => p.label).join(' + ')
+  return `${emoji} ${what} · ${lang}`
 }

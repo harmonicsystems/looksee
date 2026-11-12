@@ -39,7 +39,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 49.4 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 50.0 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -190,8 +190,18 @@ opens**: a Chromebook's bookmarks and shortcuts share one storage, so that is th
 keep its own setup. In a link window, changes go into the address (`replaceState`), never into
 `localStorage`; "Use these on this device" saves them and opens the plain app.
 
-The intended use (David): one bookmark per setup on the bookmarks bar. The page title in a link
-window is `setupName` ("Looksee · Adding, Subtracting"), which a bookmark takes as its name. For
+The intended use (David): one bookmark per setup on the bookmarks bar (confirmed working on the
+classroom Chromebook, 2026-11-12). The page title in a link window is `setupName`, which a bookmark
+takes as its name: the group's emoji and name, then the language, with no "Looksee" in front so it
+fits the bar. "➕ Math · EN+ES"; part of a group lists its sets with commas ("➕ Adding · EN",
+"😊 Feelings, Body · EN"), so it never reads as the whole group; two groups "🔤➕ Letters & Numbers +
+Math · ES"; three or more "🔤➕🎨 Mix · EN"; every set "Looksee · All · EN". A bookmark keeps the
+name it was saved with.
+
+`GROUPS` (concepts.js) puts every set in one of five groups, in `SETS` order (a test): 🔤 Letters &
+Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body. Settings lists the sets under
+their groups; a group's heading turns the whole group on, or off when it is all on (`toggleGroup`),
+and shows "mixed" when part of it is on. For
 installing one as an app, `home.js` swaps in a `data:` manifest whose `start_url` is the link
 (BackTrack's approach); Chrome reported it installable with no errors. On iOS the manifest is
 removed instead, so Add to Home Screen saves the page's own address. Settings ▸ Share this setup

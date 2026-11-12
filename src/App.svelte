@@ -5,7 +5,7 @@
   // corner video.
   import { untrack } from 'svelte'
   import Visual from './Visual.svelte'
-  import { SETS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart } from './concepts.js'
+  import { SETS, GROUPS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart } from './concepts.js'
   import { THEMES, OPTIONS, deckKey as deckKeyOf, wordWait, loadSettings, saveSettings, normalizeSettings } from './settings.js'
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
   import { PipPlayer } from './pip.js'
@@ -259,6 +259,13 @@
     e.preventDefault()
   }
 
+  // A whole group of sets on or off, keeping the order of SETS.
+  function toggleGroup(g, allOn) {
+    const want = new Set(s.sets)
+    for (const id of g.sets) allOn ? want.delete(id) : want.add(id)
+    s.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
+  }
+
   function fixRange() {
     Object.assign(s, normalizeSettings($state.snapshot(s)))
   }
@@ -399,11 +406,24 @@
       <h2>What to show</h2>
       <fieldset class="fld">
         <legend>Sets</legend>
-        <div class="seg">
-          {#each SETS as set}
-            <label class:on={s.sets.includes(set.id)}><input type="checkbox" value={set.id} bind:group={s.sets} />{set.label}</label>
-          {/each}
-        </div>
+        <!-- One click on a group turns it all on, or all off when it is all on. -->
+        {#each GROUPS as g}
+          {@const on = g.sets.filter((id) => s.sets.includes(id)).length}
+          <div class="grp">
+            <button
+              class="btn grp-head"
+              aria-pressed={on === g.sets.length ? 'true' : on ? 'mixed' : 'false'}
+              onclick={() => toggleGroup(g, on === g.sets.length)}
+            ><span aria-hidden="true">{g.emoji}</span> {g.label}</button>
+            {#if g.sets.length > 1}
+              <div class="seg">
+                {#each g.sets as id}
+                  <label class:on={s.sets.includes(id)}><input type="checkbox" value={id} bind:group={s.sets} />{SETS.find((x) => x.id === id).label}</label>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/each}
       </fieldset>
       {@render seg('words', 'Words')}
       <label class="chk"><input type="checkbox" bind:checked={s.letterWords} /> A word for each letter</label>
@@ -514,8 +534,10 @@
         <span class="hint" role="status">{shareMsg}</span>
       </div>
       <p class="hint">
-        To keep a setup, open its page and click the <b>☆</b> star in the address bar: the bookmark is named after its sets,
-        and opens this setup every time. One bookmark per setup, side by side on the bookmarks bar.
+        To keep a setup, open its page and click the <b>☆</b> star in the address bar: the bookmark is named after its sets
+        and language, and opens this setup every time. One bookmark per setup, side by side on the bookmarks bar.
+        A bookmark keeps the name it was saved with: to rename one, right-click it → Delete, open the link again
+        and click ☆.
       </p>
       <p class="hint">
         Or as its own app: Chrome’s <b>⋮</b> menu → <b>Cast, save and share</b> → <b>Install page</b> (or <b>Create
@@ -629,6 +651,10 @@
   .chk input { width: 18px; height: 18px; accent-color: var(--brand); }
   .hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
   .hint.bad { color: var(--bad); }
+  .grp { margin-bottom: 10px; }
+  .grp-head { display: block; width: 100%; min-height: 44px; text-align: left; font-size: 16px; margin-bottom: 6px; }
+  .grp-head[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .grp-head[aria-pressed='mixed'] { border: 2px solid var(--brand); }
   a.btn { text-decoration: none; display: inline-flex; align-items: center; }
   .link { width: 100%; box-sizing: border-box; font: 13px/1.4 ui-monospace, monospace; padding: 8px; margin-bottom: 8px; }
   .keyhelp { line-height: 2; }

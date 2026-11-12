@@ -3,7 +3,7 @@ import { existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
   buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix, mathFacts, sumSlide,
-  SETS, MIXES, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
+  SETS, GROUPS, MIXES, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
 } from '../src/concepts.js'
 import { POINTS, mix, ease, pathOf } from '../src/morph.js'
 import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait } from '../src/settings.js'
@@ -510,9 +510,17 @@ describe('settings links', () => {
     expect(s.day).toEqual(DEFAULTS.day)
     expect('evil' in s).toBe(false)
   })
-  it('names a shortcut after its sets', () => {
-    expect(setupName(DEFAULTS)).toBe('Looksee')
-    expect(setupName({ ...DEFAULTS, sets: ['adding', 'subtracting'] })).toBe('Looksee · Adding, Subtracting')
-    expect(setupName({ ...DEFAULTS, sets: ['letters', 'numbers', 'shapes'] })).toBe('Looksee · 3 sets')
+  it('names a bookmark after its group and language', () => {
+    const name = (sets, words = 'en') => setupName({ ...DEFAULTS, sets, words })
+    expect(name(['adding', 'subtracting'], 'both')).toBe('➕ Math · EN+ES')
+    expect(name(['adding'])).toBe('➕ Adding · EN')
+    expect(name(['shapes', 'mixing'], 'es')).toBe('🎨 Shapes, Mixing colors · ES')
+    expect(name(['letters', 'numbers', 'adding', 'subtracting'])).toBe('🔤➕ Letters & Numbers + Math · EN')
+    expect(name(['feelings', 'body'])).toBe('😊 Feelings, Body · EN')
+    expect(name(['letters', 'adding', 'opposites'])).toBe('🔤➕↔️ Mix · EN')
+    expect(name(SETS.map((x) => x.id), 'both')).toBe('Looksee · All · EN+ES')
+  })
+  it('puts every set in exactly one group, in the order of SETS', () => {
+    expect(GROUPS.flatMap((g) => g.sets)).toEqual(SETS.map((x) => x.id))
   })
 })
