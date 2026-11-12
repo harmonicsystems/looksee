@@ -1,6 +1,6 @@
 // Looksee settings: every option, its allowed values, and the stage
 // themes. normalizeSettings() makes anything read from storage safe to use.
-import { SETS, TONES } from './concepts.js'
+import { SETS, TONES, namesSets } from './concepts.js'
 import { normalizeDay } from './day.js'
 
 // Stage themes. `colors` are what letters, numbers and shapes are drawn in;
@@ -49,7 +49,7 @@ export const OPTIONS = {
 }
 
 export const DEFAULTS = {
-  sets: ['letters', 'numbers', 'shapes', 'colors', 'feelings', 'gestures', 'body'],
+  sets: ['letters', 'numbers', 'shapes', 'colors', 'colorShapes', 'feelings', 'gestures', 'body'],
   order: 'inOrder',
   loop: true,
   seconds: 4,
@@ -59,6 +59,12 @@ export const DEFAULTS = {
   numberStyle: 'both',
   feelingMotion: 'moving',
   words: 'en',
+  letterWords: true,
+  articles: true,
+  firstLetter: true,
+  setNames: true,
+  wordDelay: 0,
+  morph: true,
   skin: 'mixed',
   dayBar: true,
   ...normalizeDay(),
@@ -87,7 +93,7 @@ export function normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const s = { ...DEFAULTS }
   for (const k of Object.keys(OPTIONS)) if (OPTIONS[k].includes(r[k])) s[k] = r[k]
-  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar']) if (typeof r[k] === 'boolean') s[k] = r[k]
+  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph']) if (typeof r[k] === 'boolean') s[k] = r[k]
   // Fresh arrays every time, so editing settings never edits DEFAULTS.
   s.sets = [...s.sets]
   if (Array.isArray(r.sets)) {
@@ -96,6 +102,7 @@ export function normalizeSettings(raw) {
   }
   Object.assign(s, normalizeDay(r.day, r.dayEnd))
   s.seconds = int(r.seconds, 1, 30, DEFAULTS.seconds)
+  s.wordDelay = int(r.wordDelay, 0, 5, DEFAULTS.wordDelay)
   s.numberFrom = int(r.numberFrom, 0, 20, DEFAULTS.numberFrom)
   s.numberTo = int(r.numberTo, 0, 20, DEFAULTS.numberTo)
   if (s.numberTo < s.numberFrom) s.numberTo = s.numberFrom
@@ -119,6 +126,14 @@ export function saveSettings(s) {
   } catch {}
 }
 
-// Which part of the deck a setting changes. Look-only settings must not
-// restart or reshuffle a running deck.
+// The settings that change which slides there are. Look-only settings must
+// not restart or reshuffle a running deck, so they are not here.
 export const DECK_KEYS = ['sets', 'order', 'letterCase', 'numberFrom', 'numberTo', 'skin']
+
+// Changes exactly when the deck has to be built again. Set names count only
+// when they would actually appear (see namesSets).
+export const deckKey = (s) => JSON.stringify([...DECK_KEYS.map((k) => s[k]), namesSets(s)])
+
+// How long the word really waits after the picture: what was asked for, but
+// it always gets the last second of the slide.
+export const wordWait = (s) => Math.min(s.wordDelay, Math.max(0, s.seconds - 1))

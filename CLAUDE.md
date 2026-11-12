@@ -37,7 +37,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 43.9 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 46.3 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -54,11 +54,14 @@ is pure logic and tested.
 - `index.html` → `src/main.svelte.js` → `App.svelte`: the stage, the control bar that fades while
   playing, the settings drawer, the school-day bar, the corner video and the **window-level
   keyboard handler**.
-- `Visual.svelte` — draws one slide by `kind` (`glyph | number | shape | color | pair | picture`).
+- `Visual.svelte` — draws one slide by `kind` (`glyph | number | shape | color | pair | picture`;
+  a `title` slide is words only and is drawn by `App.svelte`).
 - `concepts.js` — the sets as data + `buildDeck(settings, rng)` + `dotLayout` + `labelRows`. Add a
-  concept here, with its word in English (`label`) and Spanish (`es`).
-- `settings.js` — `DEFAULTS`, `OPTIONS`, `normalizeSettings`, stage `THEMES`. `DECK_KEYS` are the
-  only settings that rebuild (and reshuffle) the deck.
+  concept here, with its word in English (`label`) and Spanish (`es`, plus `art` for a noun).
+- `morph.js` — shape outlines as points, and changing one shape into another (below).
+- `settings.js` — `DEFAULTS`, `OPTIONS`, `normalizeSettings`, stage `THEMES`. `deckKey(s)` changes
+  exactly when the deck must be rebuilt (and reshuffled): `DECK_KEYS`, plus set names when they
+  would actually appear. Look-only settings must never be in it.
 - `day.js` — the school-day schedule (below).
 - `pip.js` — `PipPlayer`, the corner video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
   `startSeconds` (reads a link's `?t=`).
@@ -95,20 +98,71 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
   about 5 KB of it. To test offline for real, build, start the `looksee-built` preview
   (`.claude/launch.json`, `vite preview` on port 4178), let it load, stop the server and reload.
 
+## Shapes that change into each other
+
+One shape slide after another does not cut: the new shape starts as the old one and changes into
+itself over 0.7 s (`morph` setting, off under reduced motion). The idea is from David's Lottie
+shape playground (`~/Code/lottie-shape-playground`), which gives a triangle and a circle the same
+six points. **Looksee does not ship a Lottie player** (62 KB gzipped, more than the whole app):
+the browser draws the shapes itself.
+
+- `morph.js` (pure): every shape is an outline (`polygon`, `curves`, `ellipse`) `resample`d to the
+  same `POINTS` (120), clockwise from the top. Each segment's first point is always kept, so
+  corners stay exact. `mix(a, b, t)` slides point i to point i. Matching points by their order
+  along the outline was compared with matching them by angle from the centre, and is better: by
+  angle, plain shapes pinch into eight-pointed in-betweens.
+- **Only the right-hand half of a shape is described and sampled; the left half is its mirror
+  image.** Sampling the whole outline shared the points out unevenly (41 / 39 / 40 on the
+  triangle), so symmetrical shapes leaned sideways mid-change. Every shape must therefore be the
+  same on both sides, start at its top-middle and run clockwise (a flat-topped one starts mid-way
+  along its top edge, like the square).
+- Any pair works: a test changes every shape into every other and fails if the outline crosses
+  itself or pinches on the way, and another checks every shape is exactly symmetrical.
+- **One picture stays on screen through a run of shape slides.** `App.svelte` keys the slide by
+  `runStart(deck, index)` for shapes (by `index` for everything else), so `Visual` is not
+  re-created; its `item` changes and its outline moves from wherever it is now to the new shape.
+  Stepping on mid-change continues from there, and the idle float is not restarted. The words are
+  keyed by `index` inside, so they are still made fresh for each slide. The entrance animation
+  plays on the first shape of a run only.
+- The change runs on animation frames, with a timer that finishes it if no frames come (a
+  background tab), so the old shape is never left under the new word. Color changes by a CSS
+  transition on the same path.
+
 ## Words
 
 The `words` setting shows the word under a slide in English, Spanish or both. `labelRows(item,
-lang)` returns one row per language (two words in a row for a pair of opposites); it is read at
-render time, so changing the language does not rebuild the deck. Each row carries a `lang`
-attribute, and the slide's name for a screen reader follows the words shown.
+settings)` returns one row per language (two words in a row for a pair of opposites); it is read
+at render time, so changing the language does not rebuild the deck. Each row carries a `lang`
+attribute, and the slide's name for a screen reader follows the words shown (`rowsText`).
+
+- **Letter words** (`letterWords`): `LETTERS` has one thing per letter whose name starts with that
+  letter in both languages (airplane / avión), with a small picture from the device's own emoji
+  where one fits (Q, X and Z have none). A test checks both words start with the letter.
+- **El / la** (`articles`): Spanish nouns carry `art` and show it; adjectives, numbers, colors,
+  feelings and the verb-like gestures have none.
+- **First letter** (`firstLetter`): styled with `::first-letter`, so the word stays one piece of
+  text for a screen reader. It takes the slide's color and an underline, so it does not rely on
+  color alone. On color and color + shape slides it is plain ink: the picture has a color of its
+  own there, and "red" with a blue first letter would contradict it.
+- **Pause before the word** (`wordDelay`, seconds): the word stays hidden for that long after the
+  picture, by a CSS delay on the re-created label. It always gets the last second of the slide.
+- **Color + shape slides** (`colorShapes` set): each shape in a dealt color, "red circle / círculo
+  rojo". Spanish puts the color last and matches it to the noun (`esF`: "estrella amarilla").
+- **Set names** (`setNames`): a `title` slide before each set, when more than one set plays and
+  they play in order (`namesSets`). They show even when the words under the pictures are hidden.
+- Long words are drawn smaller instead of running off the screen: the label gets its longest
+  word's length as `--len` (`labelLen`) and caps its font size at `150cqw / len`. 150 was chosen
+  from the fonts' real letter widths: it keeps the widest label under 80% of the width in
+  Atkinson and on screen in the wider fonts it can fall back to. Check with the sweep (step
+  through every slide, Both languages, largest size, phone and laptop shapes) after adding words.
 
 - Every concept has `label` (English) and `es` (Spanish). `label` is also what the tests and the
   code use to name a slide, whatever language is showing. A test fails if a concept has no Spanish.
 - The Spanish is Latin American as heard in US classrooms (anaranjado, rosa, café, morado,
   angosto, audífono). Words that change with gender are written "enojado/a". **It has not been
   checked by a Spanish speaker.**
-- Only the words under the slides change. Letters stay the 26 English ones (no Ñ), and the
-  controls and Settings stay in English.
+- Only the words on the slides change. Letters stay the 26 English ones (no Ñ), and the controls
+  and Settings stay in English.
 
 ## School-day bar
 

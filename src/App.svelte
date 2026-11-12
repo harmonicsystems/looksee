@@ -5,8 +5,8 @@
   // corner video.
   import { untrack } from 'svelte'
   import Visual from './Visual.svelte'
-  import { SETS, buildDeck, pictureSrc, labelRows } from './concepts.js'
-  import { THEMES, OPTIONS, DECK_KEYS, loadSettings, saveSettings, normalizeSettings } from './settings.js'
+  import { SETS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart } from './concepts.js'
+  import { THEMES, OPTIONS, deckKey as deckKeyOf, wordWait, loadSettings, saveSettings, normalizeSettings } from './settings.js'
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
   import { PipPlayer } from './pip.js'
   import { videoId, startSeconds } from './link.js'
@@ -17,7 +17,7 @@
   $effect(() => saveSettings($state.snapshot(s)))
 
   // ---- deck ----
-  const deckKey = $derived(JSON.stringify(DECK_KEYS.map((k) => s[k])))
+  const deckKey = $derived(deckKeyOf(s))
   // `round` goes up each time the deck starts over, which deals it again:
   // new skin tones, and a new order when it is mixed up.
   let round = $state(0)
@@ -35,8 +35,10 @@
   const item = $derived(deck[Math.min(index, deck.length - 1)])
   // The words under the slide, in the language chosen, and the same words as
   // the slide's name for a screen reader.
-  const rows = $derived(item ? labelRows(item, s.words) : [])
-  const say = $derived(rows.length ? rows.map((r) => r.words.join(', ')).join(' / ') : item?.say)
+  const rows = $derived(item ? labelRows(item, s) : [])
+  const say = $derived(item ? slideName(item, rows) : '')
+  const len = $derived(item ? labelLen(rows, item) : 1)
+  const wait = $derived(wordWait(s))
   const theme = $derived(THEMES[s.theme])
   const color = $derived(s.colorMode === 'rainbow' ? theme.colors[index % theme.colors.length] : theme.ink)
 
@@ -54,6 +56,11 @@
     const next = deck[(index + 1) % deck.length]
     if (next?.kind === 'picture') new Image().src = pictureSrc(next, still)
   })
+
+  // One shape after another stays on screen as a single picture that changes
+  // from each shape into the next, so those slides share a key. Every other
+  // slide is made fresh, which is what plays its entrance.
+  const slideKey = $derived((s.morph && !reduced && item?.pts ? 'run' + runStart(deck, index) : index) + deckKey)
 
   function step(by) {
     if (!deck.length) return
@@ -289,16 +296,36 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scene" id="focus-home" tabindex="-1" bind:this={stageEl} onclick={toggle}>
     {#if item}
-      {#key index + deckKey}
+      {#key slideKey}
         <div class="slide in-{s.entrance}">
-          <div class="vis idle-{s.idle}"><Visual {item} {s} {color} {still} {say} lang={s.words === 'es' ? 'es' : undefined} ink={theme.ink} /></div>
-          {#if s.showLabel && rows.length}
-            <p class="label" class:both={rows.length > 1}>
-              {#each rows as r}
-                <span class="words" class:two={r.words.length > 1} lang={r.lang}>{#each r.words as w}<span>{w}</span>{/each}</span>
-              {/each}
-            </p>
+          {#if item.kind !== 'title'}
+            <div class="vis idle-{s.idle}">
+              <Visual {item} {s} {color} {still} {say} lang={s.words === 'es' ? 'es' : undefined} ink={theme.ink} />
+            </div>
           {/if}
+          <!-- The words are made fresh for every slide, so the pause before them starts again. -->
+          {#key index + deckKey}
+            {#if (s.showLabel || item.kind === 'title') && rows.length}
+              <p
+                class="label"
+                class:both={rows.length > 1}
+                class:title={item.kind === 'title'}
+                class:wait={wait > 0 && item.kind !== 'title'}
+                style="--len:{len};--wait:{wait}s;--first:{item.hex ? theme.ink : color}"
+              >
+                {#if item.kind === 'glyph' && item.emoji}<span class="pic" aria-hidden="true">{item.emoji}</span>{/if}
+                <span class="rows">
+                  {#each rows as r (r.lang)}
+                    <span class="words" class:two={r.words.length > 1} lang={r.lang}>
+                      {#each r.words as w (w)}
+                        <span>{r.art ? r.art + ' ' : ''}<span class="word" class:first={s.firstLetter}>{w}</span></span>
+                      {/each}
+                    </span>
+                  {/each}
+                </span>
+              </p>
+            {/if}
+          {/key}
         </div>
       {/key}
     {:else}
@@ -345,6 +372,17 @@
         </div>
       </fieldset>
       {@render seg('words', 'Words')}
+      <label class="chk"><input type="checkbox" bind:checked={s.letterWords} /> A word for each letter</label>
+      <label class="chk"><input type="checkbox" bind:checked={s.firstLetter} /> Highlight the first letter</label>
+      <label class="chk"><input type="checkbox" bind:checked={s.articles} /> El / la with Spanish words</label>
+      <label class="chk"><input type="checkbox" bind:checked={s.setNames} /> Name each set as it begins</label>
+      <label class="fld">
+        <span>The word appears: <b class="mono">{s.wordDelay ? `after ${wait} s` : 'with the picture'}</b></span>
+        <input type="range" min="0" max="5" bind:value={s.wordDelay} />
+      </label>
+      {#if wait < s.wordDelay}
+        <p class="hint">Each slide lasts {s.seconds} s, and the word always gets the last one.</p>
+      {/if}
       {@render seg('letterCase', 'Letters')}
       {@render seg('numberStyle', 'Numbers')}
       <div class="fld row">
@@ -397,6 +435,7 @@
       {@render seg('font', 'Lettering')}
       {@render seg('entrance', 'Arrives with')}
       {@render seg('idle', 'While showing')}
+      <label class="chk"><input type="checkbox" bind:checked={s.morph} /> Shapes change into each other</label>
       <p class="hint motion-note">Your device asks for reduced motion, so movement is off.</p>
       <label class="chk"><input type="checkbox" bind:checked={s.showLabel} /> Show the word underneath</label>
       <label class="chk"><input type="checkbox" bind:checked={s.showProgress} /> Show the progress line</label>
@@ -456,11 +495,27 @@
   .slide { display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
   .vis { width: calc(var(--k) * 1cqmin); height: calc(var(--k) * 1cqmin); }
   /* One row of words per language; a pair of opposites puts a word under each half. */
-  .label { margin: 0; font-family: var(--stage-font); font-weight: 700; font-size: 8cqmin; line-height: 1.1; display: flex; flex-direction: column; align-items: center; gap: 0.6cqmin; }
-  .label.both { font-size: 6.5cqmin; }
-  .words { display: flex; justify-content: center; text-align: center; }
-  .words.two { width: calc(var(--k) * 1cqmin); font-size: 6.5cqmin; }
-  .words.two span { flex: 1; }
+  /* --len is the longest word's length: the font shrinks for long words so
+     they never run off the screen. 150 keeps the widest word under 80% of the
+     width in Atkinson, and on screen in the wider fonts it can fall back to. */
+  .label { --fit: calc(150cqw / var(--len, 1)); margin: 0; font-family: var(--stage-font); font-weight: 700; font-size: min(8cqmin, var(--fit)); line-height: 1.1; display: flex; align-items: center; justify-content: center; gap: 0.35em; }
+  .label.both { font-size: min(6.5cqmin, var(--fit)); }
+  .label.title { font-size: min(15cqmin, var(--fit)); }
+  .label.both.title { font-size: min(11cqmin, var(--fit)); }
+  .rows { display: flex; flex-direction: column; align-items: center; gap: 0.6cqmin; }
+  .pic { font-size: 1.5em; line-height: 1; }
+  .label.both .pic { font-size: 2.2em; }
+  .words { display: flex; justify-content: center; text-align: center; white-space: nowrap; }
+  .words.two { width: calc(var(--k) * 1cqmin); font-size: 6.5cqmin; white-space: normal; }
+  .words.two > span { flex: 1; }
+  /* The first letter: the slide's color (plain ink on a color slide, where the
+     picture has a color of its own), and underlined so it is not color alone.
+     Done in CSS so the word stays one piece of text for a screen reader. */
+  .word { display: inline-block; }
+  .word.first::first-letter { color: var(--first); text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.14em; }
+  /* The word waits before it shows. Not motion, so it applies with reduced motion too. */
+  .label.wait { animation: reveal 0s var(--wait) both; }
+  @keyframes reveal { from { visibility: hidden; } }
   .nothing { font-size: 20px; max-width: 24em; text-align: center; padding: 16px; }
 
   .prog { position: absolute; left: 0; right: var(--inset-r); bottom: var(--inset-b); height: 6px; background: color-mix(in srgb, var(--stage-ink) 12%, transparent); }

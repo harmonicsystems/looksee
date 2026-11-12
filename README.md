@@ -3,9 +3,12 @@
 A calm screen that plays first concepts, one picture at a time.
 
 - **Letters, numbers, shapes, colors and opposites**, drawn by code so their look can be changed.
+  One shape changes smoothly into the next, and each letter comes with a word and a small picture.
 - **Feelings, gestures and body parts**, shown as animated emoji. Hands and body parts appear in
   five skin tones, dealt at random and evenly, and include a hearing aid and prosthetic limbs.
-- **Words in English, Spanish or both** under each picture.
+- **Words in English, Spanish or both** under each picture, with the first letter picked out, el
+  or la on Spanish nouns, and an optional pause so a child can say the word first.
+- **Two-word slides** that put a color with a shape: "red circle / círculo rojo".
 - **A bar for the school day** along the top: one box per part of the day, with the emoji you
   choose, shaded as the day goes by. You set when the day starts and ends and the parts in between.
 - **A corner video**: a YouTube link can play in any corner with no controls, suggestions or end

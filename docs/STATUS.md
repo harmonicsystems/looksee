@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-10. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-11. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -10,6 +10,9 @@ tested, built and published.
 
 **Two changes went out on 2026-11-10, after the split:** every picture stored for offline use,
 and the words in Spanish. Both are described under "Since the split" below.
+
+**A third change went out on 2026-11-11:** shapes that change into each other, a word for each
+letter, and five smaller language features. They are described under "2026-11-11" below.
 
 **The address `looksee.harmonic-systems.org` is not set up.** It needs a DNS record (CNAME
 `looksee` → `harmonicsystems.github.io`) and the custom domain set in the repo's Pages settings.
@@ -57,6 +60,36 @@ Latin American as heard in US classrooms, and words that change with gender are 
 "enojado/a". Only the words under the slides change: the letters, the controls and Settings stay
 as they were.
 
+## 2026-11-11: shapes that change into each other, and more language
+
+**Shapes change into each other.** David built a Lottie playground that turns a triangle into a
+circle and asked whether Looksee could use Lottie. The Lottie player alone is 62 KB, more than
+the whole app, so Looksee took the playground's idea and draws it itself: every shape is given
+the same 120 points, and one shape becomes the next by sliding each point to its partner. It
+works for any pair of the ten shapes, and the color blends on the way.
+
+**A word for each letter.** Each letter has one thing whose name starts with that letter in both
+languages (airplane / avión, lion / león), with a small picture from the device's own emoji.
+Q, X and Z have no fitting emoji and show the word alone.
+
+**Five smaller language features**, all chosen by David from a longer list: a pause before the
+word, so a child can say it first; two-word slides that put a color with a shape ("red circle /
+círculo rojo"); the first letter of each word picked out; el or la on Spanish nouns; and the name
+of each set shown as it begins. Speech, short sentences and capital letters were offered and not
+chosen.
+
+All of them are on by default except the pause, and each has a switch in Settings.
+
+**A review changed the first version the same day.** A second pass over the code found six
+things, all fixed before anything was committed. Symmetrical shapes leaned sideways mid-change,
+because the points were shared out unevenly; shapes are now sampled as a right half and
+mirrored. Stepping on during a change snapped, and a floating shape hopped; one picture now
+stays on screen through a run of shapes. The first letter of "red" was drawn in an unrelated
+color; on color slides it is now plain ink. The highlighted letter split each word in two for a
+screen reader; it is now done in CSS. Hiding the words restarted and reshuffled the deck; it no
+longer does. And the longest label could run off the screen in a fallback font; the fit is
+tighter.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -85,7 +118,18 @@ earlier version was offered the new one in Settings ("A new version is ready"), 
 switched to it. The Words choice is there, a slide shows its English and Spanish words together,
 and all 220 pictures are in the browser's store.
 
-**Not checked.** Installing the app to a home screen. Going offline on the live site itself (the
+**Checked on 2026-11-11, locally, after the review fixes.** All 49 tests pass, including one that
+changes every shape into every other and fails if the outline crosses itself or pinches, and one
+that every shape is exactly symmetrical. The build passes its gates at 46.3 KB of 60. In a
+browser, all 131 slides were stepped through in both languages at the largest size, in the widest
+font, at phone and laptop shapes, with no word clipped or off the screen. The word pause held the
+word back for the time set, including inside a run of shapes. Hiding the words left the deck
+where it was and still showed the set names. The morph was checked by stepping the animation
+clock by hand, since the window was not being drawn at the time: each change starts as the old
+shape, passes through distinct in-between shapes and ends as the new one; stepping on mid-change
+continues from where the outline was; and the last shape changes back into the first.
+
+**Not checked.** The morph watched at full speed on a screen. Installing the app to a home screen. Going offline on the live site itself (the
 offline run was on a local copy of the same build). The school-day bar across a real school
 day (one moment in the browser, the rest by unit tests). Typing emoji into the schedule on a
 Chromebook or iPad. The device's own reduced-motion setting (it shares a path with the Still
@@ -93,9 +137,18 @@ setting, which was checked). Any device other than one Mac.
 
 ## Decisions still open
 
-- **The Spanish words.** They were chosen without a Spanish speaker and need checking. The
+- **The Spanish words.** They were chosen without a Spanish speaker and need checking, and there
+  are more of them now: 26 letter words, el and la, and color words matched to their nouns. The
   regional choices are deliberate but arguable (anaranjado not naranja, rosa not rosado, café not
-  marrón), as is writing "enojado/a" for words that change with gender. The letters have no Ñ.
+  marrón, banana not plátano, carro not coche), as is writing "enojado/a" for words that change
+  with gender. The letters have no Ñ.
+- **The letter words.** Three letters are a stretch (quesadilla, xylophone / xilófono, zoo /
+  zoológico) and have no picture. The nose for N is the device's plain yellow emoji, while the
+  Body set deals five skin tones. The juice box, waffle and yo-yo are 2019 emoji and show as
+  empty boxes on devices older than that.
+- **No automatic check that words fit.** It is a manual sweep in the browser. A test that
+  measures every possible label against the font's real letter widths would catch a too-long
+  word before it ships.
 - **The words.** Feelings, gestures and body words were chosen without a clinician: "angry"
   rather than "mad", "stop" for a raised hand, "love" for heart hands. Each is one line in
   `src/concepts.js`.

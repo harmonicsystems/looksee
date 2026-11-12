@@ -3,9 +3,43 @@
   // `item` from buildDeck, `s` the settings, `color`/`ink` from the theme.
   // The 'picture' kind (feelings, gestures, body) is a file, not drawn here.
   import { dotLayout, pictureSrc } from './concepts.js'
+  import { untrack } from 'svelte'
+  import { mix, ease, pathOf } from './morph.js'
 
   // `say` is the slide's name for a screen reader, in the language shown.
   let { item, s, color, ink, still = false, say = item.say, lang } = $props()
+
+  // The outline on screen. Through a run of shape slides this one picture
+  // stays put and `item` changes under it: the outline then moves from
+  // wherever it is now to the new shape. Stepping on before it has finished
+  // just sets off again from where it had got to.
+  let pts = $state.raw(item.pts)
+  $effect(() => {
+    const to = item.pts
+    const was = untrack(() => pts)
+    if (!to || !was || was === to) {
+      pts = to
+      return
+    }
+    const began = performance.now()
+    let frame
+    const tick = () => {
+      const k = Math.min(1, (performance.now() - began) / 700)
+      pts = k < 1 ? mix(was, to, ease(k)) : to
+      if (k < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    // A page that isn't being drawn (a background tab) gets no frames. Don't
+    // leave the old shape up under the new word: finish on a timer instead.
+    const finish = setTimeout(() => (pts = to), 800)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(finish)
+    }
+  })
+  // A color + shape slide is painted its own true color, outlined in ink so
+  // white and yellow show; any other shape follows the drawing-style setting.
+  const own = $derived(item.kind === 'shape' && item.hex)
 
   // A picture slide shows the best this browser can manage: the moving
   // picture, else the still one, else the device's own emoji as text.
@@ -49,7 +83,15 @@
       <circle cx={d.cx} cy={d.cy} r={d.r} {fill} fill-opacity={fillOpacity} {stroke} stroke-width="4" />
     {/each}
   {:else if item.kind === 'shape'}
-    <path d={item.d} {fill} fill-opacity={fillOpacity} {stroke} stroke-width="12" stroke-linejoin="round" />
+    <path
+      class="shape"
+      d={pathOf(pts ?? item.pts)}
+      fill={own || fill}
+      fill-opacity={own ? 1 : fillOpacity}
+      stroke={own ? ink : stroke}
+      stroke-width={own ? 6 : 12}
+      stroke-linejoin="round"
+    />
   {:else if item.kind === 'color'}
     <rect x="50" y="50" width="300" height="300" rx="70" fill={item.hex} stroke={ink} stroke-width="6" />
   {:else if item.kind === 'pair'}
@@ -72,5 +114,9 @@
 <style>
   svg { display: block; width: 100%; height: 100%; overflow: visible; }
   img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+  /* The color changes along with the shape. */
+  @media (prefers-reduced-motion: no-preference) {
+    .shape { transition: fill 0.7s, stroke 0.7s; }
+  }
   .glyph { font-family: var(--stage-font); font-weight: 700; text-anchor: middle; dominant-baseline: central; stroke-linejoin: round; }
 </style>

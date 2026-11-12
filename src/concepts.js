@@ -5,48 +5,46 @@
 // Every concept has its word twice: `label` in English and `es` in Spanish.
 // The Spanish is Latin American, as heard in US classrooms (anaranjado, rosa,
 // café, morado, angosto), and words that change with gender are written
-// "enojado/a". A Spanish speaker should check them; each is one edit here.
+// "enojado/a". Nouns also carry their article (`art`: el, la, los).
+// A Spanish speaker should check them; each is one edit here.
+
+import { polygon, curves, ellipse, regular, resample } from './morph.js'
 
 const dot = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`
 
-// Regular polygon / star around (200, 205). `inner` makes a star.
-function poly(n, r, inner) {
-  const pts = []
-  const steps = inner ? n * 2 : n
-  for (let i = 0; i < steps; i++) {
-    const a = -Math.PI / 2 + (i * 2 * Math.PI) / steps
-    const rr = inner && i % 2 ? inner : r
-    pts.push(`${(200 + rr * Math.cos(a)).toFixed(1)} ${(205 + rr * Math.sin(a)).toFixed(1)}`)
-  }
-  return 'M' + pts.join('L') + 'z'
-}
+// Each shape is its outline as points (see morph.js): every shape has the same
+// number, so any one can change into any other. A shape is described from its
+// top-middle, clockwise; only its right-hand side is read, and the left is the
+// mirror image, so every shape here must be the same on both sides.
+const shape = (label, es, art, half) => ({ label, es, art, pts: resample(half) })
 
 export const SHAPES = [
-  { label: 'circle', es: 'círculo', d: dot(200, 200, 145) },
-  { label: 'square', es: 'cuadrado', d: 'M70 70h260v260h-260z' },
-  { label: 'triangle', es: 'triángulo', d: 'M200 60L350 330H50z' },
-  { label: 'rectangle', es: 'rectángulo', d: 'M35 110h330v180h-330z' },
-  { label: 'oval', es: 'óvalo', d: 'M35 200a165 105 0 1 0 330 0a165 105 0 1 0-330 0z' },
-  { label: 'diamond', es: 'rombo', d: 'M200 40L325 200L200 360L75 200z' },
-  { label: 'star', es: 'estrella', d: poly(5, 160, 66) },
-  { label: 'heart', es: 'corazón', d: 'M200 345C90 260 50 200 50 140C50 60 170 50 200 120C230 50 350 60 350 140C350 200 310 260 200 345z' },
-  { label: 'pentagon', es: 'pentágono', d: poly(5, 155) },
-  { label: 'hexagon', es: 'hexágono', d: poly(6, 155) }
+  shape('circle', 'círculo', 'el', ellipse(200, 145, 145)),
+  shape('square', 'cuadrado', 'el', polygon([[200, 70], [330, 70], [330, 330], [70, 330]])),
+  shape('triangle', 'triángulo', 'el', polygon([[200, 60], [350, 330], [50, 330]])),
+  shape('rectangle', 'rectángulo', 'el', polygon([[200, 110], [365, 110], [365, 290], [35, 290]])),
+  shape('oval', 'óvalo', 'el', ellipse(200, 165, 105)),
+  shape('diamond', 'rombo', 'el', polygon([[200, 40], [325, 200], [200, 360], [75, 200]])),
+  shape('star', 'estrella', 'la', polygon(regular(5, 160, 66))),
+  shape('heart', 'corazón', 'el', curves([[200, 120], [230, 50], [350, 60], [350, 140], [350, 200], [310, 260], [200, 345]])),
+  shape('pentagon', 'pentágono', 'el', polygon(regular(5, 155))),
+  shape('hexagon', 'hexágono', 'el', polygon(regular(6, 155)))
 ]
 
 // True colors, the same on every theme. The swatch gets an outline in the
 // theme's ink so white, black and yellow stay visible on any background.
+// `esF` is the form that goes with a "la" noun, where it differs.
 export const COLORS = [
-  { label: 'red', es: 'rojo', hex: '#d93a3a' },
-  { label: 'orange', es: 'anaranjado', hex: '#ef8a1d' },
-  { label: 'yellow', es: 'amarillo', hex: '#f4d21f' },
+  { label: 'red', es: 'rojo', esF: 'roja', hex: '#d93a3a' },
+  { label: 'orange', es: 'anaranjado', esF: 'anaranjada', hex: '#ef8a1d' },
+  { label: 'yellow', es: 'amarillo', esF: 'amarilla', hex: '#f4d21f' },
   { label: 'green', es: 'verde', hex: '#3a9e4b' },
   { label: 'blue', es: 'azul', hex: '#2f73d0' },
-  { label: 'purple', es: 'morado', hex: '#7d4cc2' },
+  { label: 'purple', es: 'morado', esF: 'morada', hex: '#7d4cc2' },
   { label: 'pink', es: 'rosa', hex: '#f08bb4' },
   { label: 'brown', es: 'café', hex: '#8a5a33' },
-  { label: 'black', es: 'negro', hex: '#1c1c1c' },
-  { label: 'white', es: 'blanco', hex: '#ffffff' },
+  { label: 'black', es: 'negro', esF: 'negra', hex: '#1c1c1c' },
+  { label: 'white', es: 'blanco', esF: 'blanca', hex: '#ffffff' },
   { label: 'gray', es: 'gris', hex: '#8d9399' }
 ]
 
@@ -83,6 +81,39 @@ export const OPPOSITES = [
     { label: 'full', es: 'lleno', parts: [{ d: 'M50 105L62 322H138L150 105z', solid: true }, { d: 'M42 70L58 330H142L158 70', line: true }] },
     { label: 'empty', es: 'vacío', parts: [{ d: 'M42 70L58 330H142L158 70', line: true }] }
   ]
+]
+
+// A word for each letter, A to Z: one thing whose name starts with that letter
+// in both languages, so the word under the letter means the same in each.
+// `emoji` is a small picture drawn by the device's own emoji font (no file);
+// three letters have no fitting one and show the word alone.
+export const LETTERS = [
+  { label: 'airplane', es: 'avión', art: 'el', emoji: '✈️' },
+  { label: 'banana', es: 'banana', art: 'la', emoji: '🍌' },
+  { label: 'car', es: 'carro', art: 'el', emoji: '🚗' },
+  { label: 'dinosaur', es: 'dinosaurio', art: 'el', emoji: '🦕' },
+  { label: 'elephant', es: 'elefante', art: 'el', emoji: '🐘' },
+  { label: 'flower', es: 'flor', art: 'la', emoji: '🌸' },
+  { label: 'guitar', es: 'guitarra', art: 'la', emoji: '🎸' },
+  { label: 'helicopter', es: 'helicóptero', art: 'el', emoji: '🚁' },
+  { label: 'island', es: 'isla', art: 'la', emoji: '🏝️' },
+  { label: 'juice', es: 'jugo', art: 'el', emoji: '🧃' },
+  { label: 'koala', es: 'koala', art: 'el', emoji: '🐨' },
+  { label: 'lion', es: 'león', art: 'el', emoji: '🦁' },
+  { label: 'monkey', es: 'mono', art: 'el', emoji: '🐒' },
+  { label: 'nose', es: 'nariz', art: 'la', emoji: '👃' },
+  { label: 'ocean', es: 'océano', art: 'el', emoji: '🌊' },
+  { label: 'penguin', es: 'pingüino', art: 'el', emoji: '🐧' },
+  { label: 'quesadilla', es: 'quesadilla', art: 'la', emoji: '' },
+  { label: 'robot', es: 'robot', art: 'el', emoji: '🤖' },
+  { label: 'sun', es: 'sol', art: 'el', emoji: '☀️' },
+  { label: 'tiger', es: 'tigre', art: 'el', emoji: '🐯' },
+  { label: 'unicorn', es: 'unicornio', art: 'el', emoji: '🦄' },
+  { label: 'volcano', es: 'volcán', art: 'el', emoji: '🌋' },
+  { label: 'waffle', es: 'wafle', art: 'el', emoji: '🧇' },
+  { label: 'xylophone', es: 'xilófono', art: 'el', emoji: '' },
+  { label: 'yo-yo', es: 'yoyo', art: 'el', emoji: '🪀' },
+  { label: 'zoo', es: 'zoológico', art: 'el', emoji: '' }
 ]
 
 // Feelings, gestures and body parts are pictures, not drawings: Google's
@@ -123,19 +154,19 @@ export const GESTURES = [
   { label: 'love', es: 'amor', emoji: '🫶' }
 ]
 export const BODY = [
-  { label: 'eyes', es: 'ojos', emoji: '👀', plain: true },
-  { label: 'ear', es: 'oreja', emoji: '👂' },
-  { label: 'nose', es: 'nariz', emoji: '👃' },
-  { label: 'hand', es: 'mano', emoji: '🖐️' },
-  { label: 'arm', es: 'brazo', emoji: '💪' },
-  { label: 'leg', es: 'pierna', emoji: '🦵' },
-  { label: 'foot', es: 'pie', emoji: '🦶' },
-  { label: 'brain', es: 'cerebro', emoji: '🧠', plain: true },
-  { label: 'heart', es: 'corazón', emoji: '🫀', plain: true },
-  { label: 'bone', es: 'hueso', emoji: '🦴', plain: true },
-  { label: 'hearing aid', es: 'audífono', emoji: '🦻' },
-  { label: 'prosthetic arm', es: 'prótesis de brazo', emoji: '🦾', plain: true },
-  { label: 'prosthetic leg', es: 'prótesis de pierna', emoji: '🦿', plain: true }
+  { label: 'eyes', es: 'ojos', art: 'los', emoji: '👀', plain: true },
+  { label: 'ear', es: 'oreja', art: 'la', emoji: '👂' },
+  { label: 'nose', es: 'nariz', art: 'la', emoji: '👃' },
+  { label: 'hand', es: 'mano', art: 'la', emoji: '🖐️' },
+  { label: 'arm', es: 'brazo', art: 'el', emoji: '💪' },
+  { label: 'leg', es: 'pierna', art: 'la', emoji: '🦵' },
+  { label: 'foot', es: 'pie', art: 'el', emoji: '🦶' },
+  { label: 'brain', es: 'cerebro', art: 'el', emoji: '🧠', plain: true },
+  { label: 'heart', es: 'corazón', art: 'el', emoji: '🫀', plain: true },
+  { label: 'bone', es: 'hueso', art: 'el', emoji: '🦴', plain: true },
+  { label: 'hearing aid', es: 'audífono', art: 'el', emoji: '🦻' },
+  { label: 'prosthetic arm', es: 'prótesis de brazo', art: 'la', emoji: '🦾', plain: true },
+  { label: 'prosthetic leg', es: 'prótesis de pierna', art: 'la', emoji: '🦿', plain: true }
 ]
 
 // The five skin tones, light to dark, as the code points Unicode gives them.
@@ -161,22 +192,39 @@ const picture = (set, dir, x, tone) => ({
   dir,
   label: x.label,
   es: x.es,
+  art: x.art,
   say: x.label,
   code: emojiCode(x.emoji, tone),
   emoji: tone ? bare(x.emoji).join('') + String.fromCodePoint(parseInt(tone, 16)) : x.emoji
 })
 
-// Skin tones are dealt like cards: shuffle the five, hand them out, shuffle
-// again when they run out. Random, but every tone turns up equally often.
-function dealer(skin, rng) {
+// A bag deals its things like cards: shuffle, hand them out one at a time,
+// shuffle again when they run out. Random, but everything turns up equally
+// often. Skin tones and the colors of the color + shape slides are dealt.
+function bag(things, rng) {
   let hand = []
-  return (x) => {
-    if (x.plain) return ''
-    if (skin !== 'mixed') return skin
-    if (!hand.length) hand = shuffle(TONES, rng)
+  return () => {
+    if (!hand.length) hand = shuffle(things, rng)
     return hand.pop()
   }
 }
+function dealer(skin, rng) {
+  const next = bag(TONES, rng)
+  return (x) => (x.plain ? '' : skin !== 'mixed' ? skin : next())
+}
+
+// "red circle" / "círculo rojo": English puts the color first; Spanish puts it
+// last and matches it to the noun ("estrella amarilla").
+export const colorShape = (shape, color) => ({
+  kind: 'shape',
+  set: 'colorShapes',
+  pts: shape.pts,
+  hex: color.hex,
+  art: shape.art,
+  label: `${color.label} ${shape.label}`,
+  es: `${shape.es} ${(shape.art === 'la' && color.esF) || color.es}`,
+  say: `${color.label} ${shape.label}`
+})
 
 // Every picture file the app expects: [{ dir, code, label }]. The fetch
 // script and the tests both read this.
@@ -192,25 +240,56 @@ const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'e
 const WORDS_ES = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once',
   'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte']
 
-// The words under a slide, in the language asked for ('en', 'es' or 'both'):
-// a row per language, each one word, or two for a pair of opposites. Letters
-// have no word, so no rows.
-export function labelRows(item, lang) {
+// The words under a slide: a row per language shown, each one word (or two for
+// a pair of opposites). `art` is the Spanish article, when articles are on and
+// the word is a noun. A letter has rows only when letter words are on.
+export function labelRows(item, { words = 'en', articles = false, letterWords = true } = {}) {
+  if (item.kind === 'glyph' && !letterWords) return []
   const rows = []
-  if (lang !== 'es' && item.label.length) rows.push({ lang: 'en', words: [item.label].flat() })
-  if (lang !== 'en' && item.es.length) rows.push({ lang: 'es', words: [item.es].flat() })
+  if (words !== 'es' && item.label.length) rows.push({ lang: 'en', art: '', words: [item.label].flat() })
+  if (words !== 'en' && item.es.length) rows.push({ lang: 'es', art: (articles && item.art) || '', words: [item.es].flat() })
   return rows
 }
 
+// The same rows as one line of text, for a screen reader.
+export const rowsText = (rows) => rows.map((r) => (r.art ? r.art + ' ' : '') + r.words.join(', ')).join(' / ')
+
+// How many letters the longest one-word row has (with its article), so long
+// words can be drawn smaller and never run off the screen. A letter's picture
+// counts as three more.
+export const labelLen = (rows, item) =>
+  Math.max(1, ...rows.filter((r) => r.words.length === 1).map((r) => r.words[0].length + (r.art ? r.art.length + 1 : 0))) +
+  (item.kind === 'glyph' && item.emoji ? 3 : 0)
+
+// A slide's name for a screen reader: the words showing, after the letter's
+// own name on a letter slide.
+export function slideName(item, rows) {
+  const text = rowsText(rows)
+  return item.kind === 'glyph' ? [item.say, text].filter(Boolean).join(': ') : text || item.say
+}
+
+// Where the run of shapes that slide i belongs to begins. One shape stays on
+// screen through a whole run, changing into each next one.
+export function runStart(deck, i) {
+  while (i > 0 && deck[i - 1].pts && deck[i].pts) i--
+  return i
+}
+
+// Sets are named as they begin when there is more than one of them and they
+// play in order. (Mixed up, the sets are interleaved and have no beginning.)
+export const namesSets = (s) => s.setNames && s.order !== 'shuffle' && SETS.filter((x) => s.sets.includes(x.id)).length > 1
+
+// `es` is the set's name in Spanish, shown when a set is named as it begins.
 export const SETS = [
-  { id: 'letters', label: 'Letters' },
-  { id: 'numbers', label: 'Numbers' },
-  { id: 'shapes', label: 'Shapes' },
-  { id: 'colors', label: 'Colors' },
-  { id: 'opposites', label: 'Opposites' },
-  { id: 'feelings', label: 'Feelings' },
-  { id: 'gestures', label: 'Gestures' },
-  { id: 'body', label: 'Body' }
+  { id: 'letters', label: 'Letters', es: 'Letras' },
+  { id: 'numbers', label: 'Numbers', es: 'Números' },
+  { id: 'shapes', label: 'Shapes', es: 'Figuras' },
+  { id: 'colors', label: 'Colors', es: 'Colores' },
+  { id: 'colorShapes', label: 'Colors and shapes', es: 'Colores y figuras' },
+  { id: 'opposites', label: 'Opposites', es: 'Opuestos' },
+  { id: 'feelings', label: 'Feelings', es: 'Emociones' },
+  { id: 'gestures', label: 'Gestures', es: 'Gestos' },
+  { id: 'body', label: 'Body', es: 'Cuerpo' }
 ]
 
 export function shuffle(list, rng = Math.random) {
@@ -222,34 +301,41 @@ export function shuffle(list, rng = Math.random) {
   return a
 }
 
-// → [{ kind: 'glyph'|'number'|'shape'|'color'|'pair'|'picture', set, label, es, ... }]
+// → [{ kind: 'title'|'glyph'|'number'|'shape'|'color'|'pair'|'picture', set, label, es, ... }]
 export function buildDeck(s, rng = Math.random) {
   const deck = []
-  const on = (id) => s.sets.includes(id)
-  if (on('letters')) {
-    for (let i = 0; i < 26; i++) {
+  const titles = namesSets(s)
+  const add = (id, slides) => {
+    if (!s.sets.includes(id)) return
+    const set = SETS.find((x) => x.id === id)
+    if (titles) deck.push({ kind: 'title', set: id, label: set.label, es: set.es, say: set.label })
+    deck.push(...slides())
+  }
+  add('letters', () =>
+    LETTERS.map((x, i) => {
       const up = String.fromCharCode(65 + i)
       const lo = up.toLowerCase()
       const text = s.letterCase === 'upper' ? up : s.letterCase === 'lower' ? lo : up + lo
-      deck.push({ kind: 'glyph', set: 'letters', text, label: '', es: '', say: up })
-    }
-  }
-  if (on('numbers')) {
-    for (let n = s.numberFrom; n <= s.numberTo; n++) {
-      deck.push({ kind: 'number', set: 'numbers', n, label: WORDS[n], es: WORDS_ES[n], say: String(n) })
-    }
-  }
-  if (on('shapes')) for (const x of SHAPES) deck.push({ kind: 'shape', set: 'shapes', ...x, say: x.label })
-  if (on('colors')) for (const x of COLORS) deck.push({ kind: 'color', set: 'colors', ...x, say: x.label })
-  if (on('opposites')) {
-    for (const [a, b] of OPPOSITES) {
-      deck.push({ kind: 'pair', set: 'opposites', sides: [a, b], label: [a.label, b.label], es: [a.es, b.es], say: `${a.label}, ${b.label}` })
-    }
-  }
-  if (on('feelings')) for (const x of FEELINGS) deck.push(picture('feelings', 'feelings', x))
+      return { kind: 'glyph', set: 'letters', text, ...x, say: up }
+    })
+  )
+  add('numbers', () =>
+    Array.from({ length: Math.max(0, s.numberTo - s.numberFrom + 1) }, (_, i) => {
+      const n = s.numberFrom + i
+      return { kind: 'number', set: 'numbers', n, label: WORDS[n], es: WORDS_ES[n], say: String(n) }
+    })
+  )
+  add('shapes', () => SHAPES.map((x) => ({ kind: 'shape', set: 'shapes', ...x, say: x.label })))
+  add('colors', () => COLORS.map((x) => ({ kind: 'color', set: 'colors', ...x, say: x.label })))
+  const color = bag(COLORS, rng)
+  add('colorShapes', () => SHAPES.map((x) => colorShape(x, color())))
+  add('opposites', () =>
+    OPPOSITES.map(([a, b]) => ({ kind: 'pair', set: 'opposites', sides: [a, b], label: [a.label, b.label], es: [a.es, b.es], say: `${a.label}, ${b.label}` }))
+  )
+  add('feelings', () => FEELINGS.map((x) => picture('feelings', 'feelings', x)))
   const tone = dealer(s.skin, rng)
-  if (on('gestures')) for (const x of GESTURES) deck.push(picture('gestures', 'people', x, tone(x)))
-  if (on('body')) for (const x of BODY) deck.push(picture('body', 'people', x, tone(x)))
+  add('gestures', () => GESTURES.map((x) => picture('gestures', 'people', x, tone(x))))
+  add('body', () => BODY.map((x) => picture('body', 'people', x, tone(x))))
   return s.order === 'shuffle' ? shuffle(deck, rng) : deck
 }
 
