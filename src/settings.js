@@ -49,7 +49,7 @@ export const OPTIONS = {
 }
 
 export const DEFAULTS = {
-  sets: ['letters', 'numbers', 'shapes', 'colors', 'colorShapes', 'feelings', 'gestures', 'body'],
+  sets: ['letters', 'numbers', 'shapes', 'colors', 'colorShapes', 'mixing', 'feelings', 'gestures', 'body'],
   order: 'inOrder',
   loop: true,
   seconds: 4,

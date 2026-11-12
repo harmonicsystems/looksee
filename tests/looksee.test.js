@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
-  buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape,
-  SETS, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
+  buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix,
+  SETS, MIXES, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
 } from '../src/concepts.js'
 import { POINTS, mix, ease, pathOf } from '../src/morph.js'
 import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait } from '../src/settings.js'
@@ -120,6 +120,27 @@ describe('color + shape slides', () => {
     expect(new Set(a.map((x) => x.hex)).size).toBe(SHAPES.length)
     const b = buildDeck({ ...DEFAULTS, setNames: false, sets: ['colorShapes'] }, () => 0.9)
     expect(b.map((x) => x.hex)).not.toEqual(a.map((x) => x.hex))
+  })
+})
+
+describe('mixing colors', () => {
+  const names = COLORS.map((x) => x.label)
+  it('mixes two real colors into a third, as paint does', () => {
+    for (const m of MIXES) {
+      for (const c of m) expect(names, c).toContain(c)
+      expect(new Set(m).size, String(m)).toBe(3)
+    }
+  })
+  it('says the mix in English and Spanish', () => {
+    const red = colorMix(['red', 'yellow', 'orange'])
+    expect(red).toMatchObject({ kind: 'mix', a: '#d93a3a', b: '#f4d21f', hex: '#ef8a1d' })
+    expect(rowsText(labelRows(red, { words: 'both', articles: true }))).toBe('red + yellow = orange / rojo + amarillo = anaranjado')
+  })
+  it('plays only when chosen, and is named as it begins', () => {
+    expect(deck({ sets: ['mixing'] }).map((x) => x.kind)).toEqual(MIXES.map(() => 'mix'))
+    expect(deck({ sets: ['colors'] }).some((x) => x.kind === 'mix')).toBe(false)
+    expect(deck({ sets: ['colors', 'mixing'], setNames: true })[COLORS.length + 1]).toMatchObject({ kind: 'title', label: 'Mixing colors', es: 'Mezclar colores' })
+    expect(normalizeSettings({ sets: ['mixing'] }).sets).toEqual(['mixing'])
   })
 })
 

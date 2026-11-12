@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-11. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-12. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -89,6 +89,24 @@ color; on color slides it is now plain ink. The highlighted letter split each wo
 screen reader; it is now done in CSS. Hiding the words restarted and reshuffled the deck; it no
 longer does. And the longest label could run off the screen in a fallback font; the fit is
 tighter.
+
+## 2026-11-12: mixing colors
+
+David watched a class use concept videos on a small Chromebook with a mouse and no keyboard, and
+asked for three things: color mixing, adding and taking away, and preset videos chosen with one
+click, each with a web of words around it. Mixing colors is the first. Six slides (red + yellow =
+orange, yellow + blue = green, blue + red = purple, red + white = pink, black + white = gray,
+red + green = brown): two blobs of paint slide together, and their overlap is the color they make.
+On by default for new visitors. Mouse-only is now a hard constraint beside keyboard-only.
+
+**Checked on 2026-11-12, locally.** All 52 tests pass and the build passes its gates at 46.9 KB of
+60. In a browser at laptop and phone shapes, all six slides played in both languages at the
+largest size, with no word off the screen and a clean console; the blobs were seen apart and then
+overlapping; with reduced motion they start overlapped. Not yet checked on the live site, and the
+Spanish ("Mezclar colores") is as unchecked as the rest.
+
+**Next:** preset videos with word webs (needs the teacher's video links), then adding and taking
+away.
 
 ## Checked, and not checked
 
