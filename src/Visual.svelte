@@ -7,7 +7,7 @@
   import { mix, ease, pathOf } from './morph.js'
 
   // `say` is the slide's name for a screen reader, in the language shown.
-  let { item, s, color, ink, still = false, say = item.say, lang } = $props()
+  let { item, s, color, ink, two = [color, ink], still = false, say = item.say, lang } = $props()
 
   // The outline on screen. Through a run of shape slides this one picture
   // stays put and `item` changes under it: the outline then moves from
@@ -65,28 +65,44 @@
   const uid = 'mix' + Math.random().toString(36).slice(2, 8)
   const mixX = $derived(MIX_R * 0.68 + (1 - ease(k)) * MIX_R * 0.42)
 
-  // Adding: the two groups start apart and slide into one ten-frame.
-  // Subtracting: the dots taken away are crossed out one after another, and
-  // stay, so both what was there and what is left can be seen.
+  // Adding and subtracting are color-coded: each number in the sentence is
+  // the color of its dots. `two` is the pair of colors.
+  // Adding: the groups start apart and slide into one ten-frame, then the
+  // answer appears (in ink: it is all the dots).
+  // Subtracting: all the dots start in the first number's color; the ones
+  // taken away turn the second number's color, then fade away one after
+  // another, and the answer appears in the color of the dots that are left.
+  const step = (from, to) => Math.min(1, Math.max(0, (k - from) / (to - from)))
   const sumDots = $derived.by(() => {
     if (item.kind !== 'sum' || digitOnly) return []
     const total = item.op === '+' ? item.n : item.a
     const box = dotsOnly ? { top: 60, bottom: 340 } : { top: 200, bottom: 390 }
-    const apart = (1 - ease(k)) * 36
+    const apart = (1 - ease(step(0, 0.7))) * 36
     return dotLayout(total, box).map((d, i) => {
-      const second = item.op === '+' && i >= item.a
-      const gone = item.op !== '+' && i >= item.n
-      return {
-        ...d,
-        cx: d.cx + (item.op === '+' ? (second ? apart : -apart) : 0),
-        second,
-        gone,
-        // How far this dot's X is drawn: each one after the last.
-        x: gone ? Math.min(1, Math.max(0, k * item.b - (i - item.n))) : 0
+      if (item.op === '+') {
+        const second = i >= item.a
+        return { ...d, cx: d.cx + (second ? apart : -apart), hue: two[second ? 1 : 0], o: 1 }
       }
+      const gone = i >= item.n
+      // Taken away one after another, from the last dot back.
+      const j = total - 1 - i
+      const t0 = 0.3 + (0.5 * j) / item.b
+      return { ...d, hue: gone && k > 0 ? two[1] : two[0], o: gone ? 1 - step(t0, t0 + 0.5 / item.b) : 1 }
     })
   })
-  const sentence = $derived(item.kind === 'sum' ? `${item.a} ${item.op} ${item.b} = ${item.n}` : '')
+  // The sentence's parts, each in its own color; the answer shows at the end.
+  const parts = $derived(
+    item.kind !== 'sum'
+      ? []
+      : [
+          { t: `${item.a} `, hue: two[0], o: 1 },
+          { t: `${item.op} `, hue: ink, o: 1 },
+          { t: `${item.b} `, hue: two[1], o: 1 },
+          { t: '= ', hue: ink, o: 1 },
+          { t: `${item.n}`, hue: item.op === '+' ? ink : two[0], o: digitOnly ? 1 : step(0.8, 1) }
+        ]
+  )
+  const sentence = $derived(parts.map((x) => x.t).join(''))
   const sentenceSize = $derived(sentence.length > 9 ? 66 : 74)
 
   // A color + shape slide is painted its own true color, outlined in ink so
@@ -157,14 +173,12 @@
     <circle cx={200 + mixX} cy="200" r={MIX_R} fill="none" stroke={ink} stroke-width="6" />
   {:else if item.kind === 'sum'}
     {#if !dotsOnly}
-      <text x="200" y={digitOnly ? 205 : 110} font-size={digitOnly ? sentenceSize * 1.15 : sentenceSize} class="glyph" {fill} fill-opacity={fillOpacity} {stroke} stroke-width="4">{sentence}</text>
+      <text x="200" y={digitOnly ? 205 : 110} font-size={digitOnly ? sentenceSize * 1.15 : sentenceSize} class="glyph" xml:space="preserve" stroke-width="4"
+        >{#each parts as p}<tspan fill={s.fill === 'outline' ? 'none' : p.hue} fill-opacity={soft ? 0.28 * p.o : p.o} stroke={s.fill === 'solid' ? 'none' : p.hue} stroke-opacity={p.o}>{p.t}</tspan>{/each}</text
+      >
     {/if}
     {#each sumDots as d}
-      <circle cx={d.cx} cy={d.cy} r={d.r} fill={d.second ? ink : fill} fill-opacity={d.second ? 1 : fillOpacity} stroke={d.second ? 'none' : stroke} stroke-width="4" />
-      {#if d.x > 0}
-        {@const e = d.r * 0.95 * d.x}
-        <path d="M{d.cx - e} {d.cy - e}L{d.cx + e} {d.cy + e}M{d.cx + e} {d.cy - e}L{d.cx - e} {d.cy + e}" stroke={ink} stroke-width={d.r * 0.32} stroke-linecap="round" />
-      {/if}
+      <circle class="dot" cx={d.cx} cy={d.cy} r={d.r} fill={s.fill === 'outline' ? 'none' : d.hue} fill-opacity={soft ? 0.28 * d.o : d.o} stroke={s.fill === 'solid' ? 'none' : d.hue} stroke-opacity={d.o} stroke-width="4" />
     {/each}
   {:else if item.kind === 'pair'}
     {#each item.sides as side, i}
@@ -189,6 +203,7 @@
   /* The color changes along with the shape. */
   @media (prefers-reduced-motion: no-preference) {
     .shape { transition: fill 0.7s, stroke 0.7s; }
+    .dot { transition: fill 0.3s, stroke 0.3s; }
   }
   .glyph { font-family: var(--stage-font); font-weight: 700; text-anchor: middle; dominant-baseline: central; stroke-linejoin: round; }
 </style>
