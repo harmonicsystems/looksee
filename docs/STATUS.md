@@ -212,6 +212,14 @@ the total is about the same as before (353 against 343) and the biggest single j
 (54 against 63). The heart to the star is the one step with no geometry behind it. Built on
 2026-11-11, before the six changes above, and published after them.
 
+**Checked on 2026-11-15, locally and on the live site.** On top of the six changes above, 72
+tests pass and the build passes its gates at 52.8 KB of 60. In a browser, opened by a settings
+link for Shapes and Colors and shapes: both sets play in the new order, the star changes back
+into the triangle, one picture stays on screen through the run, a click on a shape says the
+shape shown, the device's saved settings are left alone, and the console is clean. The live site
+serves the new build and plays the same order. Not checked: the order watched by a child or a
+teacher, and the "A new version is ready" prompt (the test browser again had no earlier version).
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
