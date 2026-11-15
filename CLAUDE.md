@@ -127,6 +127,13 @@ the browser draws the shapes itself.
   along its top edge, like the square).
 - Any pair works: a test changes every shape into every other and fails if the outline crosses
   itself or pinches on the way, and another checks every shape is exactly symmetrical.
+- **The order of `SHAPES` is the order they play in, and it is chosen as geometry:** triangle,
+  diamond, square, rectangle, pentagon, hexagon, circle, oval, heart, star. The corners count up
+  (3, 4, 4, 4, 5, 6) until the shape is round, then the round shapes, then the star, which changes
+  back into the triangle when the set loops. The diamond comes before the square so that the
+  rectangle never has to change into the diamond, the longest move among the four-cornered
+  shapes (the mean distance a point travels was measured for every pair). A new shape goes where
+  its corners put it, not at the end. The color + shape set plays in the same order.
 - **One picture stays on screen through a run of shape slides.** `App.svelte` keys the slide by
   `runStart(deck, index)` for shapes (by `index` for everything else), so `Visual` is not
   re-created; its `item` changes and its outline moves from wherever it is now to the new shape.

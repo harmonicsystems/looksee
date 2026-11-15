@@ -109,7 +109,7 @@ describe('words', () => {
 })
 
 describe('color + shape slides', () => {
-  const [circle, star] = [SHAPES[0], SHAPES.find((x) => x.label === 'star')]
+  const [circle, star] = ['circle', 'star'].map((label) => SHAPES.find((x) => x.label === label))
   const color = (label) => COLORS.find((x) => x.label === label)
   it('puts the color first in English and last in Spanish, matched to the noun', () => {
     expect(colorShape(circle, color('red'))).toMatchObject({ kind: 'shape', label: 'red circle', es: 'círculo rojo', hex: '#d93a3a' })

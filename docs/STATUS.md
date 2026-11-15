@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-12. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-15. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -197,6 +197,20 @@ playing says every slide once; with no local Spanish voice, Spanish is skipped (
 never used) and Settings says how to add one; a Watch word click says it. **Not checked:** real
 voices on the Chromebook, whether it has a Spanish voice, the ChromeOS menu path in the hint, and the
 video turning down while a word is said.
+
+## 2026-11-15: shapes in a geometric order
+
+The shapes had played in the order a child usually meets them (circle, square, triangle...), so
+the changes between them were arbitrary, and David asked for an order that makes sense as
+geometry. They now play triangle, diamond, square, rectangle, pentagon, hexagon, circle, oval,
+heart, star: the corners count up from three to six, the hexagon rounds off into the circle, the
+circle stretches into the oval, and the oval dents into the heart. The star comes last and changes
+back into the triangle when the set loops. The color + shape set follows the same order.
+
+It is more logical, not smoother. The distance the outline travels was measured for every pair:
+the total is about the same as before (353 against 343) and the biggest single jump is smaller
+(54 against 63). The heart to the star is the one step with no geometry behind it. Built on
+2026-11-11, before the six changes above, and published after them.
 
 ## Checked, and not checked
 

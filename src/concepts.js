@@ -18,17 +18,23 @@ const dot = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r
 // mirror image, so every shape here must be the same on both sides.
 const shape = (label, es, art, half) => ({ label, es, art, pts: resample(half) })
 
+// The order is the order they play in, and each one changes into the next, so
+// it is chosen to make sense as geometry. The corners count up (3, 4, 4, 4, 5,
+// 6) until there are so many the shape is round; then the round shapes; and
+// the star, which changes back into the triangle. Inside the fours: a triangle
+// and its mirror image make the diamond, the diamond squares up, and the
+// square stretches into the rectangle.
 export const SHAPES = [
-  shape('circle', 'círculo', 'el', ellipse(200, 145, 145)),
-  shape('square', 'cuadrado', 'el', polygon([[200, 70], [330, 70], [330, 330], [70, 330]])),
   shape('triangle', 'triángulo', 'el', polygon([[200, 60], [350, 330], [50, 330]])),
-  shape('rectangle', 'rectángulo', 'el', polygon([[200, 110], [365, 110], [365, 290], [35, 290]])),
-  shape('oval', 'óvalo', 'el', ellipse(200, 165, 105)),
   shape('diamond', 'rombo', 'el', polygon([[200, 40], [325, 200], [200, 360], [75, 200]])),
-  shape('star', 'estrella', 'la', polygon(regular(5, 160, 66))),
-  shape('heart', 'corazón', 'el', curves([[200, 120], [230, 50], [350, 60], [350, 140], [350, 200], [310, 260], [200, 345]])),
+  shape('square', 'cuadrado', 'el', polygon([[200, 70], [330, 70], [330, 330], [70, 330]])),
+  shape('rectangle', 'rectángulo', 'el', polygon([[200, 110], [365, 110], [365, 290], [35, 290]])),
   shape('pentagon', 'pentágono', 'el', polygon(regular(5, 155))),
-  shape('hexagon', 'hexágono', 'el', polygon(regular(6, 155)))
+  shape('hexagon', 'hexágono', 'el', polygon(regular(6, 155))),
+  shape('circle', 'círculo', 'el', ellipse(200, 145, 145)),
+  shape('oval', 'óvalo', 'el', ellipse(200, 165, 105)),
+  shape('heart', 'corazón', 'el', curves([[200, 120], [230, 50], [350, 60], [350, 140], [350, 200], [310, 260], [200, 345]])),
+  shape('star', 'estrella', 'la', polygon(regular(5, 160, 66)))
 ]
 
 // True colors, the same on every theme. The swatch gets an outline in the
