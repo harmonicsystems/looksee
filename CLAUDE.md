@@ -43,7 +43,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 64 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 63.8 KB now, about 190 bytes under, so the limit is reached.
+  (`scripts/check-bundle-size.mjs`; 63.9 KB now, 116 bytes under, so the limit is reached.
   David raised it on 2026-11-15 from 60 to 62 for the timer, then to 64 for the weather) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.

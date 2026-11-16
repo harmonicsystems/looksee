@@ -450,6 +450,12 @@ change the link; the sea animals' Spanish words came through the new text format
 live site and fixed afterwards: a closed "What to show" said "Plan, 1 blocks"; it now says
 "1-block plan".
 
+**Then pull request #9 was merged** (the timer's buttons close by themselves), 22 seconds after
+the fix above was pushed, which cancelled that push's deploy; the merge's own deploy carried both.
+The site now serves the build of `313119b`: 63.9 KB of 64, 116 bytes under, with 108 tests
+passing. A build of that commit here has the same file name as the one the site serves, and the
+fix ("1-block plan") is in it.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -536,7 +542,8 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 63.8 KB of 64 once Settings is folded (63.2 before it; raised from 60 to
+- **The size budget.** 63.9 KB of 64, 116 bytes under, with Settings folded and the timer's
+  buttons closing by themselves (63.2 before those two; raised from 60 to
   62 for the timer, which cost 3 KB, and to 64 for the weather, which cost 2.1 KB). The limit is
   reached: the next feature needs something trimmed or a bigger limit. The 161
   things cost about 1.9 KB; more of them, or another feature, needs the words loaded apart from
