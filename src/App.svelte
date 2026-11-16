@@ -14,7 +14,7 @@
   import { speechLines, pickVoice } from './speech.js'
   import { speak, onVoices } from './speak.js'
   import { linkQuery, linkSettings, setupName, setsName } from './share.js'
-  import { MINUTES, PLAN_MAX, blockDone, minutesLeft, blockAfter } from './plan.js'
+  import { MINUTES, PLAN_MAX, blockDone, minutesLeft, blockAfter, setsInUse } from './plan.js'
   import { setHome } from './home.js'
   import { keepAwake } from './awake.js'
   import { videoId, startSeconds } from './link.js'
@@ -491,7 +491,7 @@
       return
     }
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
-    if (tag === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return
+    if ((tag === 'BUTTON' || tag === 'SUMMARY') && (e.key === ' ' || e.key === 'Enter')) return
     const k = e.key.toLowerCase()
     if (k === 'o') wx ? stopWeather() : showWeather()
     // The weather is on screen instead of the slides: their keys wait.
@@ -521,6 +521,13 @@
     cur.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
   }
   const toggleSet = (id) => toggleGroup({ sets: [id] }, cur.sets.includes(id))
+
+  // Settings lists the groups; the sets inside them are shown when one is
+  // wanted alone, and from the start when a group is only partly on.
+  let single = $state(GROUPS.some((g) => g.sets.filter((id) => cur.sets.includes(id)).length % g.sets.length))
+  // A set's own options are offered in Settings only while that set is in use.
+  const used = $derived(setsInUse(s))
+  const has = (...ids) => ids.some((id) => used.includes(id))
 
   function fixRange() {
     Object.assign(s, normalizeSettings($state.snapshot(s)))
@@ -571,12 +578,13 @@
 
 <svelte:window onkeydown={onKey} onpointermove={wake} onpointerdown={wake} />
 
-{#snippet seg(key, legend)}
+<!-- One setting as a row of choices to click. A number setting gives its own list. -->
+{#snippet seg(key, legend, list = OPTIONS[key], lab = L[key], unit = '')}
   <fieldset class="fld">
     <legend>{legend}</legend>
     <div class="seg">
-      {#each OPTIONS[key] as v}
-        <label class:on={s[key] === v}><input type="radio" name={key} value={v} bind:group={s[key]} />{L[key][v]}</label>
+      {#each list as v}
+        <label class:on={s[key] === v}><input type="radio" name={key} value={v} bind:group={s[key]} />{lab[v] ?? v + unit}</label>
       {/each}
     </div>
   </fieldset>
@@ -766,50 +774,157 @@
         <p class="banner update">A new version is ready. <button class="btn small" onclick={update.reload}>Reload</button></p>
       {/if}
 
-      <h2>What to show</h2>
-      <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && !s.plan.length && addBlock()} /> A plan: different sets in turn, a few minutes each</label>
-      {#if s.planOn}
-        <div class="fld" role="group" aria-label="Plan">
-          {#each s.plan as b, i (b)}
-            <div class="grp">
-              <button class="btn grp-head" aria-pressed={i === bi} onclick={() => goBlock(i)}>{i + 1}. {setsName(b.sets) || 'No sets yet'} · {b.min} min</button>
-              <div class="seg">
-                {#each MINUTES as m}
-                  <label class:on={b.min === m}><input type="radio" name="min{i}" value={m} bind:group={b.min} aria-label="{m} minutes" />{m}</label>
-                {/each}
-                <button class="btn small" onclick={() => moveBlock(i)} disabled={!i} aria-label="Move block {i + 1} earlier">↑</button>
-                <button class="btn small" onclick={() => removeBlock(i)} disabled={s.plan.length < 2} aria-label="Remove block {i + 1}">Remove</button>
+      <!-- Folded into sections, in the order a teacher needs them: what changes in
+           class first and open, what is set up once below. A closed section says
+           what it is set to. -->
+      <details class="sec" open>
+        <summary><h2>What to show</h2><span class="sum">{block ? `Plan, ${s.plan.length} blocks` : setsName(s.sets) || 'Nothing'}</span></summary>
+        <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && !s.plan.length && addBlock()} /> A plan: different sets in turn, a few minutes each</label>
+        {#if s.planOn}
+          <div class="fld" role="group" aria-label="Plan">
+            {#each s.plan as b, i (b)}
+              <div class="grp">
+                <button class="btn grp-head" aria-pressed={i === bi} onclick={() => goBlock(i)}>{i + 1}. {setsName(b.sets) || 'No sets yet'} · {b.min} min</button>
+                <div class="seg">
+                  {#each MINUTES as m}
+                    <label class:on={b.min === m}><input type="radio" name="min{i}" value={m} bind:group={b.min} aria-label="{m} minutes" />{m}</label>
+                  {/each}
+                  <button class="btn small" onclick={() => moveBlock(i)} disabled={!i} aria-label="Move block {i + 1} earlier">↑</button>
+                  <button class="btn small" onclick={() => removeBlock(i)} disabled={s.plan.length < 2} aria-label="Remove block {i + 1}">Remove</button>
+                </div>
               </div>
+            {/each}
+            <button class="btn small" onclick={addBlock} disabled={s.plan.length >= PLAN_MAX}>Add a block</button>
+          </div>
+          <p class="hint">
+            Each block plays for its minutes, then the next begins. Minutes count only while the slides play. Click a block to
+            play it now and choose its sets below.
+          </p>
+        {/if}
+        <fieldset class="fld">
+          <legend>{block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
+          <!-- One click on a group turns it all on, or all off when it is all on. -->
+          {#each GROUPS as g}
+            {@const on = g.sets.filter((id) => cur.sets.includes(id)).length}
+            <div class="grp">
+              <button
+                class="btn grp-head"
+                aria-pressed={on === g.sets.length ? 'true' : on ? 'mixed' : 'false'}
+                onclick={() => toggleGroup(g, on === g.sets.length)}
+              ><span aria-hidden="true">{g.emoji}</span> {g.label}</button>
+              {#if single && g.sets.length > 1}
+                <div class="seg">
+                  {#each g.sets as id}
+                    <label class:on={cur.sets.includes(id)}><input type="checkbox" checked={cur.sets.includes(id)} onchange={() => toggleSet(id)} />{SETS.find((x) => x.id === id).label}</label>
+                  {/each}
+                </div>
+              {/if}
             </div>
           {/each}
-          <button class="btn small" onclick={addBlock} disabled={s.plan.length >= PLAN_MAX}>Add a block</button>
-        </div>
+          <label class="chk"><input type="checkbox" bind:checked={single} /> Choose single sets</label>
+        </fieldset>
+      </details>
+
+      <details class="sec">
+        <summary><h2>Words and speech</h2><span class="sum">{!s.showLabel ? 'No words' : s.words === 'both' ? 'English + Español' : L.words[s.words]}{s.speakSlides ? ', read aloud' : ''}</span></summary>
+        <label class="chk"><input type="checkbox" bind:checked={s.showLabel} /> Show the word underneath</label>
+        {@render seg('words', 'Words')}
+        {#if s.words !== 'en'}{@render seg('esGender', 'Spanish feelings')}{/if}
+        <label class="chk"><input type="checkbox" bind:checked={s.firstLetter} /> Highlight the first letter</label>
+        <label class="chk"><input type="checkbox" bind:checked={s.articles} /> El / la with Spanish words</label>
+        <label class="chk"><input type="checkbox" bind:checked={s.setNames} /> Name each set as it begins</label>
+        {@render seg('wordDelay', 'Pause before the word', [0, 1, 2, 3, 4, 5], { 0: 'None' }, ' s')}
+        {#if wait < s.wordDelay}
+          <p class="hint">Each slide lasts {s.seconds} s, and the word always gets the last one.</p>
+        {/if}
+        <p class="hint">Click the slide to hear its words, in the language shown.</p>
+        <label class="chk"><input type="checkbox" bind:checked={s.speakSlides} /> Read each slide aloud as it appears</label>
         <p class="hint">
-          Each block plays for its minutes, then the next one begins. The minutes count only while the slides are playing.
-          Click a block to play it now and to choose its sets below.
+          Voices on this device:
+          {#each [['en', 'English'], ['es', 'Spanish']] as [k, name]}
+            <span class="voice">{name}: {voiceFor[k] ? voiceFor[k].name : 'none'}</span>
+          {/each}
         </p>
-      {/if}
-      <fieldset class="fld">
-        <legend>{block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
-        <!-- One click on a group turns it all on, or all off when it is all on. -->
-        {#each GROUPS as g}
-          {@const on = g.sets.filter((id) => cur.sets.includes(id)).length}
-          <div class="grp">
-            <button
-              class="btn grp-head"
-              aria-pressed={on === g.sets.length ? 'true' : on ? 'mixed' : 'false'}
-              onclick={() => toggleGroup(g, on === g.sets.length)}
-            ><span aria-hidden="true">{g.emoji}</span> {g.label}</button>
-            {#if g.sets.length > 1}
-              <div class="seg">
-                {#each g.sets as id}
-                  <label class:on={cur.sets.includes(id)}><input type="checkbox" checked={cur.sets.includes(id)} onchange={() => toggleSet(id)} />{SETS.find((x) => x.id === id).label}</label>
-                {/each}
+        {#if s.words !== 'en' && !voiceFor.es}
+          <p class="hint bad">
+            No Spanish voice on this device, so Spanish words are not read. On a Chromebook: Settings → Accessibility →
+            Text-to-speech, and add a Spanish voice. Only voices kept on the device are used; online voices would send the
+            words away.
+          </p>
+        {/if}
+      </details>
+
+      <details class="sec">
+        <summary><h2>Pace</h2><span class="sum">{s.seconds} s each, {L.order[s.order].toLowerCase()}</span></summary>
+        {@render seg('seconds', 'Seconds on each', [2, 3, 4, 5, 6, 8, 10, 15], {})}
+        {@render seg('order', 'Order')}
+        <label class="chk"><input type="checkbox" bind:checked={s.loop} /> Start over at the end{block ? ' of the plan' : ''}</label>
+      </details>
+
+      <!-- A set's own options, shown only for the sets that are in use. -->
+      <details class="sec" hidden={!has('letters', 'numbers', 'adding', 'subtracting', 'shapes', 'colorShapes', 'feelings', 'gestures', 'body')}>
+        <summary><h2>Options for these sets</h2></summary>
+        <div hidden={!has('letters')}>
+          {@render seg('letterCase', 'Letters')}
+          <label class="chk"><input type="checkbox" bind:checked={s.letterWords} /> A word for each letter</label>
+        </div>
+        <div hidden={!has('numbers', 'adding', 'subtracting')}>{@render seg('numberStyle', 'Numbers')}</div>
+        <div class="fld row" hidden={!has('numbers')}>
+          <label>From <input type="number" min="0" max="20" bind:value={s.numberFrom} onchange={fixRange} /></label>
+          <label>to <input type="number" min="0" max="20" bind:value={s.numberTo} onchange={fixRange} /></label>
+        </div>
+        <div hidden={!has('adding', 'subtracting')}>{@render seg('mathTo', 'Adding and subtracting')}</div>
+        <label class="chk" hidden={!has('shapes', 'colorShapes')}><input type="checkbox" bind:checked={s.morph} /> Shapes change into each other</label>
+        <!-- Apple's browsers always get the still pictures (APPLE), so they are not asked. -->
+        <div hidden={APPLE || !has('feelings', 'gestures', 'body')}>{@render seg('feelingMotion', 'Faces and hands')}</div>
+        <div hidden={!has('gestures', 'body')}>{@render seg('skin', 'Skin tone')}</div>
+      </details>
+
+      <p class="once">Set up once</p>
+
+      <details class="sec">
+        <summary><h2>School day</h2><span class="sum">{s.dayBar ? `${s.day[0].at} to ${s.dayEnd}` : 'Off'}</span></summary>
+        <label class="chk"><input type="checkbox" bind:checked={s.dayBar} /> Show the day bar at the top</label>
+        {#if s.dayBar}
+          <div class="fld" role="group" aria-label="Parts of the day" onfocusout={tidyDay}>
+            {#each s.day as p, i (p)}
+              <div class="day-row">
+                <input type="time" bind:value={p.at} aria-label="Part {i + 1} starts at" />
+                <input type="text" bind:value={p.icon} list="day-icons" aria-label="Pictures for part {i + 1}" />
+                <button class="btn small" onclick={() => s.day.splice(i, 1)} disabled={s.day.length < 2} aria-label="Remove part {i + 1}">Remove</button>
               </div>
-            {/if}
+            {/each}
+            <div class="day-row">
+              <input type="time" bind:value={s.dayEnd} aria-label="The day ends at" />
+              <span class="hint">the day ends</span>
+              <button class="btn small" onclick={addPart} disabled={s.day.length >= DAY_MAX_PARTS}>Add a part</button>
+            </div>
           </div>
-        {/each}
-        <!-- Animals, Food and Things come with no pictures: each device is given its own. -->
+          <p class="hint">
+            Each part starts at its time and runs until the next one. Type or paste any emoji for a part, or pick a
+            suggestion.
+          </p>
+          <datalist id="day-icons">
+            {#each DAY_ICONS as [value, label]}<option {value} {label}></option>{/each}
+          </datalist>
+        {/if}
+      </details>
+
+      <details class="sec">
+        <summary><h2>Weather</h2><span class="sum">{s.weather ? 'On' : 'Off'}</span></summary>
+        <label class="chk"><input type="checkbox" bind:checked={s.weather} /> Weather in Tools: the temperature in {PLACE.name}</label>
+        <p class="hint">
+          The temperature outside as a big slide, with a word and a color for how it feels and a picture of the sky. The
+          reading comes from Open-Meteo when Weather is clicked. It is the only thing besides YouTube that this app
+          contacts: the request names {PLACE.name} and nothing about this device or class, and it is never made while this
+          is off.
+          <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather data by Open-Meteo.com</a>
+        </p>
+      </details>
+
+      <!-- Animals, Food and Things come with no pictures: each device is given its own. -->
+      <details class="sec">
+        <summary><h2>Pictures</h2><span class="sum">{picsHave} of {THING_COUNT} added</span></summary>
         <p class="hint things">
           Animals, Food and Things need pictures added on this device. They are kept here and never uploaded.
           {#if canKeep()}<b class="mono">{picsHave} of {THING_COUNT}</b> added.{:else}This browser cannot keep them.{/if}
@@ -822,167 +937,87 @@
           </div>
           {#if picsNote}<p class="hint" role="status">{picsNote}</p>{/if}
         {/if}
-      </fieldset>
-      {@render seg('words', 'Words')}
-      {#if s.words !== 'en'}{@render seg('esGender', 'Spanish feelings')}{/if}
-      <label class="chk"><input type="checkbox" bind:checked={s.letterWords} /> A word for each letter</label>
-      <label class="chk"><input type="checkbox" bind:checked={s.firstLetter} /> Highlight the first letter</label>
-      <label class="chk"><input type="checkbox" bind:checked={s.articles} /> El / la with Spanish words</label>
-      <label class="chk"><input type="checkbox" bind:checked={s.setNames} /> Name each set as it begins</label>
-      <label class="fld">
-        <span>The word appears: <b class="mono">{s.wordDelay ? `after ${wait} s` : 'with the picture'}</b></span>
-        <input type="range" min="0" max="5" bind:value={s.wordDelay} />
-      </label>
-      {#if wait < s.wordDelay}
-        <p class="hint">Each slide lasts {s.seconds} s, and the word always gets the last one.</p>
-      {/if}
-      {@render seg('letterCase', 'Letters')}
-      {@render seg('numberStyle', 'Numbers')}
-      <div class="fld row">
-        <label>From <input type="number" min="0" max="20" bind:value={s.numberFrom} onchange={fixRange} /></label>
-        <label>to <input type="number" min="0" max="20" bind:value={s.numberTo} onchange={fixRange} /></label>
-      </div>
-      {@render seg('mathTo', 'Adding and subtracting')}
-      {@render seg('feelingMotion', 'Faces and hands')}
-      {#if APPLE}<p class="hint">Safari, and any browser on an iPad or iPhone, shows them still: it cannot draw the moving ones cleanly.</p>{/if}
-      {@render seg('skin', 'Skin tone')}
+      </details>
 
-      <h2>Speech</h2>
-      <p class="hint">Click the slide to hear its words, in the language shown.</p>
-      <label class="chk"><input type="checkbox" bind:checked={s.speakSlides} /> Read each slide aloud as it appears</label>
-      <p class="hint">
-        Voices on this device:
-        {#each [['en', 'English'], ['es', 'Spanish']] as [k, name]}
-          <span class="voice">{name}: {voiceFor[k] ? voiceFor[k].name : 'none'}</span>
-        {/each}
-      </p>
-      {#if s.words !== 'en' && !voiceFor.es}
-        <p class="hint bad">
-          No Spanish voice on this device, so Spanish words are not read. On a Chromebook: Settings → Accessibility →
-          Text-to-speech, and add a Spanish voice. Only voices kept on the device are used; online voices would send the
-          words away.
+      <details class="sec">
+        <summary><h2>Videos</h2><span class="sum">{vid ? 'Link added' : 'No link'}</span></summary>
+        <label class="chk"><input type="checkbox" bind:checked={s.wordWeb} /> Words around the video in Watch</label>
+        <label class="fld">
+          <span>YouTube link</span>
+          <input type="url" placeholder="https://www.youtube.com/watch?v=…" bind:value={s.videoUrl} spellcheck="false" autocomplete="off" />
+        </label>
+        {#if s.videoUrl && !vid}<p class="hint bad">That doesn’t look like a YouTube link.</p>{/if}
+        <div class="fld row">
+          <button class="btn primary" onclick={toggleVideo} disabled={!vid}>{pipOn ? 'Stop video' : 'Start video'}</button>
+          <span class="hint" class:bad={pipStatus && !['loading', 'playing'].includes(pipStatus)} role="status">{PIP_MSG[pipStatus] ?? ''}</span>
+        </div>
+        {@render seg('corner', 'Corner')}
+        {@render seg('videoSize', 'Video size')}
+        <label class="chk"><input type="checkbox" bind:checked={s.videoMuted} /> Sound off</label>
+        <p class="hint">
+          The video plays through YouTube’s privacy-enhanced player with no controls, suggestions or end screen, and loops.
+          It can’t be paused (a paused YouTube player shows other videos) — stop it instead. This app adds no ads, but it
+          can’t remove ads YouTube itself places on a video; pick videos that don’t carry them.
         </p>
-      {/if}
+      </details>
 
-      <h2>Pace</h2>
-      <label class="fld">
-        <span>Seconds on each: <b class="mono">{s.seconds}</b></span>
-        <input type="range" min="1" max="15" bind:value={s.seconds} />
-      </label>
-      {@render seg('order', 'Order')}
-      <label class="chk"><input type="checkbox" bind:checked={s.loop} /> Start over at the end{block ? ' of the plan' : ''}</label>
+      <details class="sec">
+        <summary><h2>Look</h2><span class="sum">{L.theme[s.theme]}, {L.size[s.size]}</span></summary>
+        {@render seg('theme', 'Theme')}
+        {@render seg('size', 'Size')}
+        {@render seg('background', 'Background')}
+        {@render seg('fill', 'Drawing')}
+        {@render seg('colorMode', 'Color')}
+        {@render seg('font', 'Lettering')}
+        {@render seg('entrance', 'Arrives with')}
+        {@render seg('idle', 'While showing')}
+        <p class="hint motion-note">Your device asks for reduced motion, so movement is off.</p>
+        {@render seg('drawerSide', 'Settings open on the')}
+        <label class="chk"><input type="checkbox" bind:checked={s.showProgress} /> Show the progress line</label>
+      </details>
 
-      <h2>School day</h2>
-      <label class="chk"><input type="checkbox" bind:checked={s.dayBar} /> Show the day bar at the top</label>
-      {#if s.dayBar}
-        <div class="fld" role="group" aria-label="Parts of the day" onfocusout={tidyDay}>
-          {#each s.day as p, i (p)}
-            <div class="day-row">
-              <input type="time" bind:value={p.at} aria-label="Part {i + 1} starts at" />
-              <input type="text" bind:value={p.icon} list="day-icons" aria-label="Pictures for part {i + 1}" />
-              <button class="btn small" onclick={() => s.day.splice(i, 1)} disabled={s.day.length < 2} aria-label="Remove part {i + 1}">Remove</button>
-            </div>
-          {/each}
-          <div class="day-row">
-            <input type="time" bind:value={s.dayEnd} aria-label="The day ends at" />
-            <span class="hint">the day ends</span>
-            <button class="btn small" onclick={addPart} disabled={s.day.length >= DAY_MAX_PARTS}>Add a part</button>
-          </div>
+      <details class="sec">
+        <summary><h2>Share this setup</h2><span class="sum">{setupName(s)}</span></summary>
+        {#if fromLink}
+          <p class="hint">
+            This window opened from a settings link, as <b>{setupName(s)}</b>. Its settings come from the link every time,
+            and changes made here stay with this window’s link, not this device.
+          </p>
+        {:else}
+          <p class="hint">A link that opens Looksee with exactly these settings, school day and video included, on any device.</p>
+        {/if}
+        <input class="link" type="text" readonly value={shareUrl} aria-label="Link to this setup" onfocus={(e) => e.currentTarget.select()} />
+        <div class="fld row">
+          <button class="btn" onclick={copyLink}>Copy link</button>
+          {#if fromLink}
+            <button class="btn" onclick={keepHere}>Use these on this device</button>
+          {:else}
+            <a class="btn" href={shareUrl}>Open as its own page</a>
+          {/if}
+          <span class="hint" role="status">{shareMsg}</span>
         </div>
         <p class="hint">
-          Each part starts at its time and runs until the next one. Type or paste any emoji for a part, or pick a
-          suggestion.
+          To keep a setup, open its page and click <b>☆</b> in the address bar. The bookmark is named after its sets and
+          language, and opens this setup every time. To rename one, delete it, open the link again and click ☆.
         </p>
-        <datalist id="day-icons">
-          {#each DAY_ICONS as [value, label]}<option {value} {label}></option>{/each}
-        </datalist>
-      {/if}
-
-      <h2>Weather</h2>
-      <label class="chk"><input type="checkbox" bind:checked={s.weather} /> Weather in Tools: the temperature in {PLACE.name}</label>
-      <p class="hint">
-        The temperature outside as a big slide, with a word and a color for how it feels and a picture of the sky. The
-        reading comes from Open-Meteo when Weather is clicked. It is the only thing besides YouTube that this app
-        contacts: the request names {PLACE.name} and nothing about this device or class, and it is never made while this
-        is off.
-        <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather data by Open-Meteo.com</a>
-      </p>
-
-      <h2>Look</h2>
-      {@render seg('theme', 'Theme')}
-      {@render seg('background', 'Background')}
-      {@render seg('fill', 'Drawing')}
-      {@render seg('colorMode', 'Color')}
-      {@render seg('size', 'Size')}
-      {@render seg('drawerSide', 'Settings open on the')}
-      {@render seg('font', 'Lettering')}
-      {@render seg('entrance', 'Arrives with')}
-      {@render seg('idle', 'While showing')}
-      <label class="chk"><input type="checkbox" bind:checked={s.morph} /> Shapes change into each other</label>
-      <p class="hint motion-note">Your device asks for reduced motion, so movement is off.</p>
-      <label class="chk"><input type="checkbox" bind:checked={s.showLabel} /> Show the word underneath</label>
-      <label class="chk"><input type="checkbox" bind:checked={s.showProgress} /> Show the progress line</label>
-
-      <h2>Videos</h2>
-      <label class="chk"><input type="checkbox" bind:checked={s.wordWeb} /> Words around the video in Watch</label>
-      <label class="fld">
-        <span>YouTube link</span>
-        <input type="url" placeholder="https://www.youtube.com/watch?v=…" bind:value={s.videoUrl} spellcheck="false" autocomplete="off" />
-      </label>
-      {#if s.videoUrl && !vid}<p class="hint bad">That doesn’t look like a YouTube link.</p>{/if}
-      <div class="fld row">
-        <button class="btn primary" onclick={toggleVideo} disabled={!vid}>{pipOn ? 'Stop video' : 'Start video'}</button>
-        <span class="hint" class:bad={pipStatus && !['loading', 'playing'].includes(pipStatus)} role="status">{PIP_MSG[pipStatus] ?? ''}</span>
-      </div>
-      {@render seg('corner', 'Corner')}
-      {@render seg('videoSize', 'Video size')}
-      <label class="chk"><input type="checkbox" bind:checked={s.videoMuted} /> Sound off</label>
-      <p class="hint">
-        The video plays through YouTube’s privacy-enhanced player with no controls, suggestions or end screen, and loops.
-        It can’t be paused (a paused YouTube player shows other videos) — stop it instead. This app adds no ads, but it
-        can’t remove ads YouTube itself places on a video; pick videos that don’t carry them.
-      </p>
-
-      <h2>Share this setup</h2>
-      {#if fromLink}
         <p class="hint">
-          This window opened from a settings link, as <b>{setupName(s)}</b>. Its settings come from the link every time,
-          and changes made here stay with this window’s link, not this device.
+          Or as its own app: Chrome’s <b>⋮</b> menu → <b>Cast, save and share</b> → <b>Install page</b> (or <b>Create
+          shortcut</b>, with “Open as window”). On an iPad: Share → <b>Add to Home Screen</b>.
         </p>
-      {:else}
-        <p class="hint">A link that opens Looksee with exactly these settings, school day and video included, on any device.</p>
-      {/if}
-      <input class="link" type="text" readonly value={shareUrl} aria-label="Link to this setup" onfocus={(e) => e.currentTarget.select()} />
-      <div class="fld row">
-        <button class="btn" onclick={copyLink}>Copy link</button>
-        {#if fromLink}
-          <button class="btn" onclick={keepHere}>Use these on this device</button>
-        {:else}
-          <a class="btn" href={shareUrl}>Open as its own page</a>
-        {/if}
-        <span class="hint" role="status">{shareMsg}</span>
-      </div>
-      <p class="hint">
-        To keep a setup, open its page and click the <b>☆</b> star in the address bar: the bookmark is named after its sets
-        and language, and opens this setup every time. One bookmark per setup, side by side on the bookmarks bar.
-        A bookmark keeps the name it was saved with: to rename one, right-click it → Delete, open the link again
-        and click ☆.
-      </p>
-      <p class="hint">
-        Or as its own app: Chrome’s <b>⋮</b> menu → <b>Cast, save and share</b> → <b>Install page</b> (or <b>Create
-        shortcut</b>, with “Open as window”). On an iPad: Share → <b>Add to Home Screen</b>.
-      </p>
+      </details>
 
-      <h2>Keys</h2>
-      <p class="hint keyhelp">
-        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>T</kbd> timer · <kbd>O</kbd> weather outside · <kbd>R</kbd> read aloud ·
-        <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
-      </p>
-      <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
-      <p class="hint">
-        Faces, hands and body pictures are Noto Emoji by Google, used under CC BY 4.0.
-        <a href="NOTICE.txt" target="_blank" rel="noopener">Credits</a>
-      </p>
+      <details class="sec">
+        <summary><h2>Keys, reset and credits</h2></summary>
+        <p class="hint keyhelp">
+          <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>T</kbd> timer · <kbd>O</kbd> weather outside · <kbd>R</kbd> read aloud ·
+          <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
+        </p>
+        <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
+        <p class="hint">
+          Faces, hands and body pictures are Noto Emoji by Google, used under CC BY 4.0.
+          <a href="NOTICE.txt" target="_blank" rel="noopener">Credits</a>
+        </p>
+      </details>
     </aside>
   {/if}
 </div>
@@ -1106,10 +1141,20 @@
 
   .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
   .look.side-left .drawer-panel { right: auto; left: 0; border-left: 0; border-right: 1px solid var(--line); }
-  .drawer-panel header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .drawer-panel header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
   .head-btns { display: flex; gap: 6px; }
   h1 { font-size: 20px; margin: 0; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 22px 0 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+  /* Settings in sections that fold. The heading row is the whole width and a
+     comfortable height to click; a closed section says what it is set to. */
+  .sec { border-top: 1px solid var(--line); }
+  /* An option that does not apply is hidden, whatever display its row is given. */
+  .sec [hidden] { display: none !important; }
+  .sec > summary { padding: 13px 0; cursor: pointer; }
+  .sec[open] > summary { margin-bottom: 4px; }
+  h2 { display: inline; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0 4px; }
+  .sum { float: right; max-width: 58%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); font-size: 14px; }
+  .sec[open] .sum { display: none; }
+  .once { margin: 26px 0 8px; font-size: 14px; font-weight: 700; }
   .fld { display: block; border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
   .fld legend, .fld > span { display: block; padding: 0; margin-bottom: 4px; color: var(--muted); font-size: 14px; }
   .fld.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -1119,7 +1164,6 @@
   .day-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .day-row input[type='text'] { width: 5.5em; font-size: 18px; }
   .day-row .hint { margin: 0; flex: 1; }
-  .fld input[type='range'] { width: 100%; accent-color: var(--brand); }
   .seg { display: flex; flex-wrap: wrap; gap: 6px; }
   .seg label { position: relative; border: 1px solid var(--line); border-radius: 6px; padding: 6px 11px; cursor: pointer; font-weight: 700; background: var(--surface); color: var(--muted); }
   .seg label.on { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
@@ -1129,14 +1173,15 @@
   .chk input { width: 18px; height: 18px; accent-color: var(--brand); }
   .hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
   .hint.bad { color: var(--bad); }
-  .grp { margin-bottom: 10px; }
+  .grp { margin-bottom: 8px; }
+  .grp .seg { margin-top: 6px; }
   .hint.things { margin: 8px 0; }
   .files { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   /* A button that opens the device's file chooser: the real input lies over it, unseen. */
   .file { position: relative; overflow: hidden; cursor: pointer; }
   .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
   .file:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--ring); }
-  .grp-head { display: block; width: 100%; min-height: 44px; text-align: left; font-size: 16px; margin-bottom: 6px; }
+  .grp-head { display: block; width: 100%; min-height: 44px; text-align: left; font-size: 16px; }
   .grp-head[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .grp-head[aria-pressed='mixed'] { border: 2px solid var(--brand); }
   a.btn { text-decoration: none; display: inline-flex; align-items: center; }

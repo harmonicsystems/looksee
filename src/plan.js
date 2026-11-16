@@ -22,6 +22,10 @@ export function normalizePlan(raw) {
     .slice(0, PLAN_MAX)
 }
 
+// The sets that play: every block's with a plan on, else the settings' own.
+// Settings offers a set's own options only while the set is in use.
+export const setsInUse = (s) => (s.planOn && s.plan.length ? s.plan.flatMap((b) => b.sets) : s.sets)
+
 // Has a block that lasts `min` minutes had its time, after `ms` of playing?
 export const blockDone = (min, ms) => ms >= min * 60000
 

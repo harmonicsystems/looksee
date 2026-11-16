@@ -43,8 +43,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 64 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 63.2 KB now, so little room is left. David raised it on
-  2026-11-15 from 60 to 62 for the timer, then to 64 for the weather) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`; 63.8 KB now, about 190 bytes under, so the limit is reached.
+  David raised it on 2026-11-15 from 60 to 62 for the timer, then to 64 for the weather) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -107,7 +107,8 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
 - **Safari shows them still.** Safari, and every browser on an iPhone or iPad, draws an animated
   AVIF on a black square: it loses the clear background (David saw it on 2026-11-15). So
   `App.svelte` treats `navigator.vendor` starting with "Apple" like the Still setting, and Settings
-  says so there. Not seen in Safari since the change; if Apple fixes it, remove `APPLE`.
+  does not offer Moving or Still there. Not seen in Safari since the change; if Apple fixes it,
+  remove `APPLE`.
 - **Skin tones:** hands and body parts come in the five tones (`TONES`; `plain: true` marks the
   ones with none). `buildDeck` deals them like cards — shuffle five, hand out, reshuffle — so the
   mix is random but even. `round` in `App.svelte` rebuilds the deck each time it starts over, so
@@ -136,8 +137,8 @@ Outside). **The code is published; the pictures are not.**
   `.git/info/exclude` so that no branch can add them), and it is left out of the offline store
   (`globIgnores` in `vite.config.js`). A test fails if either guard is removed. Committing them
   is David's decision to make, not a default: ask first.
-- **A device is given its own copies.** Settings ▸ Sets has "Choose a folder" and "Choose
-  pictures" under the groups: the files are read on the device, kept in the browser's Cache
+- **A device is given its own copies.** Settings ▸ Pictures has "Choose a folder" and "Choose
+  pictures": the files are read on the device, kept in the browser's Cache
   Storage (`looksee-things`) and shown from there (`src/local.js`). Nothing is uploaded, so
   "nothing leaves the device" still holds; Chrome's own folder dialog says "upload", which is its
   word for handing files to a page. A file is matched to a thing by its name (`thingName`:
@@ -162,8 +163,10 @@ Outside). **The code is published; the pictures are not.**
   waterfall and its "shoes" carry a sports brand's mark, so neither is used. A thing whose word is
   the same in both languages is left out (mango, kiwi, piano, taco, pizza). People are drawn as
   faceless uniforms with no skin tones, so the emoji sets stay the ones for people.
-- **Each thing is a line of JavaScript, and they count toward the size gate**: the 161 cost about
-  1.9 KB gzipped. A much bigger library needs its words loaded apart from the app.
+- **Each thing is a line of text** in `things.js` (`dog,perro,el`, with the library's file name
+  fourth when it is not the English word), and they count toward the size gate: the 161 cost
+  about 1.75 KB gzipped, 125 bytes less than as lines of code. A much bigger library needs its
+  words loaded apart from the app.
 - Not built: "goes together" slides from the library's tags, a Music set (the instruments are
   good), and its pictures for letter words and Watch words.
 
@@ -278,7 +281,7 @@ the video turned down (`PipPlayer.setVolume`) while it speaks. Nothing speaks be
   slide's English line starts with the letter ("A. airplane"); no words shown → the slide's `say`.
 - **Voices:** `pickVoice` takes only `localService` voices (online voices would send the words
   away), preferring en-US, then es-US, es-MX, any es. A language with no local voice is skipped,
-  and Settings ▸ Speech says which voices the device has and how to add a Spanish one.
+  and Settings ▸ Words and speech says which voices the device has and how to add a Spanish one.
 - **Spanish feelings** that change with gender are written "enojado/a" in `FEELINGS`.
   `esGender` (`both` | `o` | `a`) shows "enojado/a", "enojado" or "enojada" (`genderForm`, applied
   in `labelRows`, so it is look-only, not in `DECK_KEYS`); "enojado/a" is said "enojado, enojada".
@@ -365,6 +368,41 @@ the plan or the school day, and none of them touch it.
   the chime.
 - Not built, from the same handoff (Codex, 2026-11-15): Settings split into quick and advanced,
   a Routine strip (Now / Next with "Done · next activity"), and a private Things pack file.
+
+## Settings: sections that fold
+
+Settings had grown to 56 kinds of control in one scroll (about 150 things to click with every set
+listed). David asked to simplify it for the teacher (2026-11-15). It is now ordered by when she
+needs each thing, and folded:
+
+- **Each section is a `<details class="sec">`** whose `<summary>` holds the `<h2>` and, on the
+  right, a `.sum`: one line saying what the section is set to ("English + Español", "4 s each, in
+  order", "Calm, Biggest"), hidden while the section is open. Only "What to show" starts open.
+  They are plain `<details>`: Settings is made again each time it opens, so it always opens the
+  same way. (Remembering which were open cost bytes there was no room for.)
+- **The order is by use.** What changes in class comes first: What to show, Words and speech,
+  Pace. Then Options for these sets. Then, under the label "Set up once": School day, Weather,
+  Pictures, Videos, Look, Share this setup, and Keys, reset and credits. At 1366 × 768 the first screen
+  holds the plan's checkbox, the eight groups, Words and speech, and Pace, with no scrolling.
+- **What to show lists the groups, one click each.** The sets inside them appear with "Choose
+  single sets" (`single`), which starts on when a group is only partly on.
+- **A set's own options show only while that set is in use** (`setsInUse` in plan.js: with a plan
+  on, every block's sets). Letter case and letter words for Letters; the number style for Numbers,
+  Adding and Subtracting; From and to for Numbers; "Up to 5 or 10" for Adding and Subtracting;
+  "Shapes change into each other" for Shapes and Colors and shapes; Moving or Still for Feelings,
+  Gestures and Body; skin tone for Gestures and Body. The rows are hidden with the `hidden`
+  attribute, not `{#if}`, which is smaller; `.sec [hidden]` needs `!important` because some rows
+  set their own `display`. With none in use the whole section is hidden.
+- **No sliders.** Seconds on each and the pause before the word are rows of choices to click
+  (`seg` takes a list of numbers). A value from an old link that is not one of the choices still
+  works; no choice is lit.
+- "Show the word underneath" moved from Look to Words and speech, and the picture chooser from
+  under the sets to its own section, Pictures.
+- **A section's heading is a control.** The window's key handler leaves Space and Enter on a
+  `SUMMARY` alone, as it does on a button, or Space would play the slides instead of opening it.
+- Not done, on purpose: no option was removed (fold first, then see what is never opened), and
+  there is no Simple / Advanced switch. An idea for later: a Sets button on the control bar that
+  opens big tiles, one per group, like Watch.
 
 ## Settings links
 

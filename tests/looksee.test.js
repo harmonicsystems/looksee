@@ -10,7 +10,7 @@ import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait, upgrade } from 
 import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
 import { linkQuery, linkSettings, setupName, setsName } from '../src/share.js'
-import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter } from '../src/plan.js'
+import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter, setsInUse } from '../src/plan.js'
 import { PRESETS, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone } from '../src/timer.js'
 import { VIDEOS, sides } from '../src/videos.js'
 import { speechLines, pickVoice } from '../src/speech.js'
@@ -735,6 +735,13 @@ describe('a plan: sets in timed blocks', () => {
     expect(back.plan).toEqual(plan)
     expect(linkSettings('?v=1&plan=nope-10_letters-99').plan).toEqual([{ sets: ['letters'], min: 10 }])
     expect(linkSettings('?v=1&plan=').plan).toEqual([])
+  })
+  it('knows which sets are in use, so Settings offers only the options that apply', () => {
+    expect(setsInUse({ ...DEFAULTS, sets: ['colors'] })).toEqual(['colors'])
+    expect(setsInUse({ ...DEFAULTS, sets: ['colors'], planOn: true, plan })).toEqual(['letters', 'numbers', 'adding', 'feelings'])
+    // A plan that is off, or has no blocks, does not count.
+    expect(setsInUse({ ...DEFAULTS, sets: ['colors'], plan })).toEqual(['colors'])
+    expect(setsInUse({ ...DEFAULTS, sets: ['colors'], planOn: true })).toEqual(['colors'])
   })
   it('is not a deck key: a block plays by lending the deck its sets', () => {
     expect(deckKey({ ...DEFAULTS, planOn: true, plan })).toBe(deckKey(DEFAULTS))

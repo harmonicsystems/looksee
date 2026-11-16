@@ -18,195 +18,173 @@
 // classrooms: carro, not coche) and has not been checked by a Spanish speaker.
 
 const t = (label, es, art, from = label.replace(/ /g, '-')) => ({ label, es, art, file: label.replace(/ /g, '-'), from })
+// One thing per line: its word in English, in Spanish, the article and, when
+// it is not just the English word, the library's file name. Kept as text
+// because 161 things as lines of code cost more of the size budget.
+const set = (lines) => lines.split('\n').map((line) => t(...line.split(',')))
 
 export const THINGS = {
-  animals: [
-    t('dog', 'perro', 'el'),
-    t('cat', 'gato', 'el'),
-    t('rabbit', 'conejo', 'el'),
-    t('mouse', 'ratón', 'el', 'common-house-mouse'),
-    t('cow', 'vaca', 'la'),
-    t('pig', 'cerdo', 'el'),
-    t('horse', 'caballo', 'el', 'horse-domestic'),
-    t('sheep', 'oveja', 'la'),
-    t('goat', 'cabra', 'la'),
-    t('donkey', 'burro', 'el'),
-    t('chicken', 'gallina', 'la', 'domestic-chicken'),
-    t('duck', 'pato', 'el', 'mandarin-duck')
-  ],
-  wild: [
-    t('lion', 'león', 'el'),
-    t('tiger', 'tigre', 'el'),
-    t('elephant', 'elefante', 'el'),
-    t('giraffe', 'jirafa', 'la'),
-    t('monkey', 'mono', 'el'),
-    t('zebra', 'cebra', 'la'),
-    t('bear', 'oso', 'el'),
-    t('wolf', 'lobo', 'el'),
-    t('fox', 'zorro', 'el', 'red-fox'),
-    t('deer', 'venado', 'el'),
-    t('kangaroo', 'canguro', 'el', 'red-kangaroo'),
-    t('crocodile', 'cocodrilo', 'el'),
-    t('snake', 'serpiente', 'la'),
-    t('frog', 'rana', 'la')
-  ],
-  sea: [
-    t('fish', 'pez', 'el'),
-    t('shark', 'tiburón', 'el'),
-    t('dolphin', 'delfín', 'el'),
-    t('whale', 'ballena', 'la', 'blue-whale'),
-    t('octopus', 'pulpo', 'el'),
-    t('crab', 'cangrejo', 'el'),
-    t('lobster', 'langosta', 'la'),
-    t('starfish', 'estrella de mar', 'la'),
-    t('turtle', 'tortuga', 'la', 'green-sea-turtle'),
-    t('seal', 'foca', 'la'),
-    t('penguin', 'pingüino', 'el', 'emperor-penguin'),
-    t('shrimp', 'camarón', 'el')
-  ],
-  birds: [
-    t('bird', 'pájaro', 'el'),
-    t('owl', 'búho', 'el'),
-    t('parrot', 'loro', 'el'),
-    t('swan', 'cisne', 'el'),
-    t('goose', 'ganso', 'el'),
-    t('eagle', 'águila', 'el', 'bald-eagle'),
-    t('butterfly', 'mariposa', 'la'),
-    t('bee', 'abeja', 'la', 'honey-bee'),
-    t('ladybug', 'mariquita', 'la'),
-    t('ant', 'hormiga', 'la'),
-    t('caterpillar', 'oruga', 'la'),
-    t('dragonfly', 'libélula', 'la')
-  ],
-  food: [
-    t('bread', 'pan', 'el', 'bread-white'),
-    t('cheese', 'queso', 'el'),
-    t('egg', 'huevo', 'el'),
-    t('milk', 'leche', 'la'),
-    t('rice', 'arroz', 'el'),
-    t('soup', 'sopa', 'la'),
-    t('butter', 'mantequilla', 'la'),
-    t('honey', 'miel', 'la'),
-    t('juice', 'jugo', 'el', 'apple-juice'),
-    t('salad', 'ensalada', 'la'),
-    t('pancakes', 'panqueques', 'los', 'pancake'),
-    t('popcorn', 'palomitas', 'las'),
-    t('cake', 'pastel', 'el'),
-    t('ice cream', 'helado', 'el')
-  ],
-  fruit: [
-    t('apple', 'manzana', 'la'),
-    t('orange', 'naranja', 'la'),
-    t('banana', 'plátano', 'el'),
-    t('strawberry', 'fresa', 'la'),
-    t('grapes', 'uvas', 'las', 'grape'),
-    t('pear', 'pera', 'la'),
-    t('peach', 'durazno', 'el'),
-    t('lemon', 'limón', 'el'),
-    t('pineapple', 'piña', 'la'),
-    t('cherries', 'cerezas', 'las'),
-    t('blueberries', 'arándanos', 'los', 'blueberry'),
-    t('melon', 'melón', 'el', 'cantaloupe')
-  ],
-  vegetables: [
-    t('carrot', 'zanahoria', 'la'),
-    t('tomato', 'tomate', 'el'),
-    t('corn', 'maíz', 'el', 'corn-on-the-cob'),
-    t('broccoli', 'brócoli', 'el'),
-    t('potato', 'papa', 'la'),
-    t('onion', 'cebolla', 'la'),
-    t('cucumber', 'pepino', 'el'),
-    t('lettuce', 'lechuga', 'la'),
-    t('pumpkin', 'calabaza', 'la'),
-    t('eggplant', 'berenjena', 'la'),
-    t('pepper', 'chile', 'el', 'chili-pepper'),
-    t('mushrooms', 'hongos', 'los', 'wild-mushroom')
-  ],
-  clothes: [
-    t('shirt', 'camiseta', 'la', 't-shirt'),
-    t('pants', 'pantalones', 'los', 'jeans'),
-    t('shorts', 'pantalones cortos', 'los'),
-    t('dress', 'vestido', 'el'),
-    t('sweater', 'suéter', 'el'),
-    t('coat', 'abrigo', 'el'),
-    t('raincoat', 'impermeable', 'el'),
-    t('scarf', 'bufanda', 'la'),
-    t('socks', 'calcetines', 'los'),
-    t('boots', 'botas', 'las', 'work-boots'),
-    t('hat', 'sombrero', 'el', 'straw-hat'),
-    t('gloves', 'guantes', 'los', 'gardening-gloves')
-  ],
-  toys: [
-    t('ball', 'pelota', 'la', 'basic-soccer-ball'),
-    t('balloon', 'globo', 'el'),
-    t('kite', 'cometa', 'la'),
-    t('puzzle', 'rompecabezas', 'el', 'jigsaw-puzzle'),
-    t('yo-yo', 'yoyo', 'el'),
-    t('top', 'trompo', 'el', 'spinning-top'),
-    t('swing', 'columpio', 'el', 'swing-playground'),
-    t('hoop', 'aro', 'el', 'hula-hoop'),
-    t('jump rope', 'cuerda de saltar', 'la'),
-    t('dice', 'dado', 'el'),
-    t('puppet', 'títere', 'el'),
-    t('bubbles', 'burbujas', 'las', 'bubble-wand')
-  ],
-  home: [
-    t('bed', 'cama', 'la'),
-    t('chair', 'silla', 'la'),
-    t('table', 'mesa', 'la'),
-    t('door', 'puerta', 'la'),
-    t('window', 'ventana', 'la'),
-    t('lamp', 'lámpara', 'la'),
-    t('spoon', 'cuchara', 'la'),
-    t('plate', 'plato', 'el'),
-    t('toothbrush', 'cepillo de dientes', 'el'),
-    t('soap', 'jabón', 'el'),
-    t('book', 'libro', 'el'),
-    t('teddy bear', 'osito de peluche', 'el')
-  ],
-  school: [
-    t('school', 'escuela', 'la'),
-    t('backpack', 'mochila', 'la'),
-    t('crayons', 'crayones', 'los'),
-    t('notebook', 'cuaderno', 'el'),
-    t('ruler', 'regla', 'la'),
-    t('desk', 'escritorio', 'el'),
-    t('chalk', 'tiza', 'la'),
-    t('paints', 'pinturas', 'las', 'acrylic-paint-set'),
-    t('computer', 'computadora', 'la', 'laptop'),
-    t('lunch box', 'lonchera', 'la'),
-    t('globe', 'globo terráqueo', 'el'),
-    t('clock', 'reloj', 'el', 'alarm-clock')
-  ],
-  transport: [
-    t('car', 'carro', 'el'),
-    t('bus', 'autobús', 'el'),
-    t('truck', 'camión', 'el'),
-    t('bicycle', 'bicicleta', 'la'),
-    t('motorcycle', 'motocicleta', 'la'),
-    t('train', 'tren', 'el'),
-    t('airplane', 'avión', 'el'),
-    t('helicopter', 'helicóptero', 'el'),
-    t('boat', 'barco', 'el'),
-    t('fire truck', 'camión de bomberos', 'el'),
-    t('ambulance', 'ambulancia', 'la'),
-    t('wheelchair', 'silla de ruedas', 'la'),
-    t('rocket', 'cohete', 'el')
-  ],
-  outside: [
-    t('sun', 'sol', 'el'),
-    t('cloud', 'nube', 'la'),
-    t('rainbow', 'arcoíris', 'el'),
-    t('storm', 'tormenta', 'la', 'thunder'),
-    t('snowflake', 'copo de nieve', 'el'),
-    t('moon', 'luna', 'la'),
-    t('star', 'estrella', 'la'),
-    t('tree', 'árbol', 'el'),
-    t('flower', 'flor', 'la', 'rose'),
-    t('leaf', 'hoja', 'la'),
-    t('mountain', 'montaña', 'la'),
-    t('river', 'río', 'el')
-  ]
+  animals: set(`dog,perro,el
+cat,gato,el
+rabbit,conejo,el
+mouse,ratón,el,common-house-mouse
+cow,vaca,la
+pig,cerdo,el
+horse,caballo,el,horse-domestic
+sheep,oveja,la
+goat,cabra,la
+donkey,burro,el
+chicken,gallina,la,domestic-chicken
+duck,pato,el,mandarin-duck`),
+  wild: set(`lion,león,el
+tiger,tigre,el
+elephant,elefante,el
+giraffe,jirafa,la
+monkey,mono,el
+zebra,cebra,la
+bear,oso,el
+wolf,lobo,el
+fox,zorro,el,red-fox
+deer,venado,el
+kangaroo,canguro,el,red-kangaroo
+crocodile,cocodrilo,el
+snake,serpiente,la
+frog,rana,la`),
+  sea: set(`fish,pez,el
+shark,tiburón,el
+dolphin,delfín,el
+whale,ballena,la,blue-whale
+octopus,pulpo,el
+crab,cangrejo,el
+lobster,langosta,la
+starfish,estrella de mar,la
+turtle,tortuga,la,green-sea-turtle
+seal,foca,la
+penguin,pingüino,el,emperor-penguin
+shrimp,camarón,el`),
+  birds: set(`bird,pájaro,el
+owl,búho,el
+parrot,loro,el
+swan,cisne,el
+goose,ganso,el
+eagle,águila,el,bald-eagle
+butterfly,mariposa,la
+bee,abeja,la,honey-bee
+ladybug,mariquita,la
+ant,hormiga,la
+caterpillar,oruga,la
+dragonfly,libélula,la`),
+  food: set(`bread,pan,el,bread-white
+cheese,queso,el
+egg,huevo,el
+milk,leche,la
+rice,arroz,el
+soup,sopa,la
+butter,mantequilla,la
+honey,miel,la
+juice,jugo,el,apple-juice
+salad,ensalada,la
+pancakes,panqueques,los,pancake
+popcorn,palomitas,las
+cake,pastel,el
+ice cream,helado,el`),
+  fruit: set(`apple,manzana,la
+orange,naranja,la
+banana,plátano,el
+strawberry,fresa,la
+grapes,uvas,las,grape
+pear,pera,la
+peach,durazno,el
+lemon,limón,el
+pineapple,piña,la
+cherries,cerezas,las
+blueberries,arándanos,los,blueberry
+melon,melón,el,cantaloupe`),
+  vegetables: set(`carrot,zanahoria,la
+tomato,tomate,el
+corn,maíz,el,corn-on-the-cob
+broccoli,brócoli,el
+potato,papa,la
+onion,cebolla,la
+cucumber,pepino,el
+lettuce,lechuga,la
+pumpkin,calabaza,la
+eggplant,berenjena,la
+pepper,chile,el,chili-pepper
+mushrooms,hongos,los,wild-mushroom`),
+  clothes: set(`shirt,camiseta,la,t-shirt
+pants,pantalones,los,jeans
+shorts,pantalones cortos,los
+dress,vestido,el
+sweater,suéter,el
+coat,abrigo,el
+raincoat,impermeable,el
+scarf,bufanda,la
+socks,calcetines,los
+boots,botas,las,work-boots
+hat,sombrero,el,straw-hat
+gloves,guantes,los,gardening-gloves`),
+  toys: set(`ball,pelota,la,basic-soccer-ball
+balloon,globo,el
+kite,cometa,la
+puzzle,rompecabezas,el,jigsaw-puzzle
+yo-yo,yoyo,el
+top,trompo,el,spinning-top
+swing,columpio,el,swing-playground
+hoop,aro,el,hula-hoop
+jump rope,cuerda de saltar,la
+dice,dado,el
+puppet,títere,el
+bubbles,burbujas,las,bubble-wand`),
+  home: set(`bed,cama,la
+chair,silla,la
+table,mesa,la
+door,puerta,la
+window,ventana,la
+lamp,lámpara,la
+spoon,cuchara,la
+plate,plato,el
+toothbrush,cepillo de dientes,el
+soap,jabón,el
+book,libro,el
+teddy bear,osito de peluche,el`),
+  school: set(`school,escuela,la
+backpack,mochila,la
+crayons,crayones,los
+notebook,cuaderno,el
+ruler,regla,la
+desk,escritorio,el
+chalk,tiza,la
+paints,pinturas,las,acrylic-paint-set
+computer,computadora,la,laptop
+lunch box,lonchera,la
+globe,globo terráqueo,el
+clock,reloj,el,alarm-clock`),
+  transport: set(`car,carro,el
+bus,autobús,el
+truck,camión,el
+bicycle,bicicleta,la
+motorcycle,motocicleta,la
+train,tren,el
+airplane,avión,el
+helicopter,helicóptero,el
+boat,barco,el
+fire truck,camión de bomberos,el
+ambulance,ambulancia,la
+wheelchair,silla de ruedas,la
+rocket,cohete,el`),
+  outside: set(`sun,sol,el
+cloud,nube,la
+rainbow,arcoíris,el
+storm,tormenta,la,thunder
+snowflake,copo de nieve,el
+moon,luna,la
+star,estrella,la
+tree,árbol,el
+flower,flor,la,rose
+leaf,hoja,la
+mountain,montaña,la
+river,río,el`)
 }
 
 // Where the pictures live, under public/. One still AVIF each.

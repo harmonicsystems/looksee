@@ -407,6 +407,35 @@ nublado", "cold / frío"), with Back to slides and Timer in the bar.
 off. Whether the classroom Chromebook's network allows `api.open-meteo.com`. Anything on the
 Chromebook.
 
+## 2026-11-15, night: Settings in sections that fold
+
+David asked how to make Settings easier for the teacher: it had 56 kinds of control in one long
+scroll. It is now folded into sections, in the order she needs them. What to show stays open
+and lists the eight groups as one-click buttons; the single sets appear on request. Words and
+speech, and Pace, come next, folded, each saying what it is set to. A set's own options show only
+while that set is in use. Everything else is under "Set up once". The two sliders became rows of
+choices. Nothing was removed. `CLAUDE.md` has the details.
+
+**Checked on 2026-11-15, locally.** 100 tests pass and the build passes its gates at 61.9 KB of
+62, about 150 bytes under (the first version was 62.4 KB and was trimmed to fit). In a browser at
+1366 × 768: with Settings open, 22 controls show where about 150 did, the panel is 1,183 px tall
+where it was about 4,970, and the first screen holds the plan's checkbox, the eight groups, Words
+and speech, and Pace. Each closed section shows its state. "Choose single sets" shows the 24 sets
+and starts on when a group is partly on. The options follow the sets exactly (colors alone: no
+section; adding: number style and "up to"; letters, shapes, feelings and body each add theirs),
+and with a plan they cover every block. The seconds and pause choices change the slide and the
+link. Space on a section's heading opens it and does not start the slides. The panel works on the
+right, and as the sheet at a phone's size with no summary cut short. The console is clean.
+**Not checked:** the teacher has not seen it; a screen reader; Safari.
+
+**The weather landed while this was being built** (pull request #8), so it was replayed on top of
+it. Weather has its own folded section under "Set up once", saying On or Off, and its key is in
+the key list. Together they came to 63.9 KB of the 64 the weather had raised the limit to, 69
+bytes under, which is too close: the 161 things' words were rewritten from lines of code to
+lines of text (the same data, checked), which gave back 125 bytes. It is now 63.8 KB, 194 bytes
+under, with 108 tests passing. The deploy measures what a build here measures: the published
+version built here has the same file names and the same sizes as the deploy's log.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -493,8 +522,9 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 63.2 KB of 64 (raised from 60 to 62 for the timer, which cost 3 KB, and to
-  64 for the weather, which cost 2.1 KB). The 161
+- **The size budget.** 63.8 KB of 64 once Settings is folded (63.2 before it; raised from 60 to
+  62 for the timer, which cost 3 KB, and to 64 for the weather, which cost 2.1 KB). The limit is
+  reached: the next feature needs something trimmed or a bigger limit. The 161
   things cost about 1.9 KB; more of them, or another feature, needs the words loaded apart from
   the app or a bigger budget again.
 - **The weather.** The place is fixed in the code (Rhinebeck), the temperature is °F only, and the
