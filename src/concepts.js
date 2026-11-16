@@ -378,7 +378,12 @@ export const SETS = [
   { id: 'home', label: 'At home', es: 'En casa' },
   { id: 'school', label: 'At school', es: 'En la escuela' },
   { id: 'transport', label: 'Transportation', es: 'Transporte' },
-  { id: 'outside', label: 'Outside', es: 'Afuera' }
+  { id: 'outside', label: 'Outside', es: 'Afuera' },
+  { id: 'music', label: 'Music', es: 'Música' },
+  { id: 'sports', label: 'Sports', es: 'Deportes' },
+  { id: 'tools', label: 'Tools', es: 'Herramientas' },
+  { id: 'town', label: 'Around town', es: 'En la ciudad' },
+  { id: 'space', label: 'Space', es: 'El espacio' }
 ]
 
 // The sets in groups, for Settings and for naming a bookmark. Every set is in
@@ -392,7 +397,8 @@ export const GROUPS = [
   // `own`: these come with no pictures, each device adds its own (things.js).
   { id: 'animals', label: 'Animals', emoji: '🐾', own: true, sets: ['animals', 'wild', 'sea', 'birds'] },
   { id: 'food', label: 'Food', emoji: '🍎', own: true, sets: ['food', 'fruit', 'vegetables'] },
-  { id: 'things', label: 'Things', emoji: '🧸', own: true, sets: ['clothes', 'toys', 'home', 'school', 'transport', 'outside'] }
+  { id: 'things', label: 'Things', emoji: '🧸', own: true, sets: ['clothes', 'toys', 'home', 'school', 'transport', 'outside', 'music', 'sports', 'tools'] },
+  { id: 'places', label: 'Places', emoji: '🌍', own: true, sets: ['town', 'space'] }
 ]
 
 export function shuffle(list, rng = Math.random) {

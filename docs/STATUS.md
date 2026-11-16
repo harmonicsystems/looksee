@@ -493,6 +493,16 @@ screen sat between the day bar and the control bar in the stage's colors, with h
 down at 1:29; its buttons were Pause, +1 min, End and Smaller; Smaller put it back in the corner;
 End cleared it. No request failed and the console was clean.
 
+## 2026-11-15, late: five more sets of things
+
+Music, Sports and Tools joined the 🧸 Things group, and a new group, 🌍 Places, holds Around town
+and Space: 62 more pictures, 223 in 18 sets. Each picture was looked at on a contact sheet before
+it was chosen. They fit under the 66 KB limit the timer's faces brought: the app is 65.6 KB with both.
+`~/Desktop/things` was brought up to date (223 files, 2.4 MB). In the dev server all 62 new
+pictures load, and a link to the Places group is titled "🌍 Places · EN+ES". 113 tests pass with main merged in.
+Not checked: the first screen of Settings at 1366 × 768 with nine groups instead of eight, and
+the label sweep for the new words (the longest are "caja de herramientas" and "fútbol americano").
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -579,9 +589,9 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 64.8 KB of 66, so about 1.2 KB is left. David raised the limit three times
+- **The size budget.** 65.6 KB of 66, so about 0.4 KB is left. David raised the limit three times
   on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
-  for the timer's faces (0.9 KB). The 161 things cost about 1.75 KB; many more of them need their
+  for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.
 - **The weather.** The place is fixed in the code (Rhinebeck), the temperature is °F only, and the
   bands (freezing below 32, cold to 49, cool to 64, warm to 79, hot from 80) were chosen without
@@ -592,6 +602,9 @@ setting, which was checked). Any device other than one Mac.
   back on the bar beside Tools.
 - **The rest of the Codex handoff.** Settings split into quick and advanced, a Routine strip
   (Now / Next, moved on by hand), and a private file of Things pictures. None is started.
+- **62 more Spanish words** for the newest things, unchecked: básquetbol, boliche for bowling,
+  pinzas for pliers, cubeta for bucket, regadera for watering can, patio de juegos for playground,
+  piscina for pool, transbordador for space shuttle.
 - **113 new Spanish words** for the things, as unchecked as the rest. Arguable ones: plátano for
   banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
   chile for pepper, palomitas for popcorn, panqueques for pancakes.

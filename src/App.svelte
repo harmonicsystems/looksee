@@ -922,11 +922,11 @@
         </p>
       </details>
 
-      <!-- Animals, Food and Things come with no pictures: each device is given its own. -->
+      <!-- Animals, Food, Things and Places come with no pictures: each device is given its own. -->
       <details class="sec">
         <summary><h2>Pictures</h2><span class="sum">{picsHave} of {THING_COUNT} added</span></summary>
         <p class="hint things">
-          Animals, Food and Things need pictures added on this device. They are kept here and never uploaded.
+          Animals, Food, Things and Places need pictures added on this device. They are kept here and never uploaded.
           {#if canKeep()}<b class="mono">{picsHave} of {THING_COUNT}</b> added.{:else}This browser cannot keep them.{/if}
         </p>
         {#if canKeep()}

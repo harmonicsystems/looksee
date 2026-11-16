@@ -639,8 +639,8 @@ describe('for a classroom', () => {
 // the repo. Each device is given its own copies (local.js).
 describe('things', () => {
   const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
-  it('is three groups of sets, each set a run of single still pictures', () => {
-    expect(GROUPS.filter((g) => g.own).map((g) => g.id)).toEqual(['animals', 'food', 'things'])
+  it('is four groups of sets, each set a run of single still pictures', () => {
+    expect(GROUPS.filter((g) => g.own).map((g) => g.id)).toEqual(['animals', 'food', 'things', 'places'])
     expect(GROUPS.filter((g) => g.own).flatMap((g) => g.sets)).toEqual(Object.keys(THINGS))
     for (const id of Object.keys(THINGS)) {
       const d = deck({ sets: [id] })
