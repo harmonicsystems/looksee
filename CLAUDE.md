@@ -30,8 +30,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   and shows still pictures.
 - **Mouse-only must work too.** The classroom it is made for has a Chromebook with a mouse and no
   keyboard: everything a teacher needs during class takes only clicks on large targets, no typing.
-- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `R` read aloud, `S` settings, `V` video, `W` watch, `M` sound,
-  `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
+- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `R` read aloud, `S` settings, `V` video, `W` watch, `T` timer,
+  `M` sound, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
   loops by seeking back just before the end.
@@ -40,8 +40,9 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 58.1 KB now, so little room is left) and WCAG AA on both control palettes
+- Build gates (`npm run build`): app JS ≤ 62 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 61.1 KB now, so little room is left. David raised it from 60
+  on 2026-11-15 for the timer) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -52,8 +53,8 @@ Svelte 5 (runes, plain Svelte) + Vite 6 (Node 20.17 here, 22 in CI) · `vite-plu
 
 ## File map
 
-Everything in `src/` except the two `.svelte` files, `main.svelte.js`, `pip.js` and `youtube.js`
-is pure logic and tested.
+Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js`, `youtube.js`,
+`awake.js` and `chime.js` is pure logic and tested.
 
 - `index.html` → `src/main.svelte.js` → `App.svelte`: the stage, the control bar that fades while
   playing, the settings drawer, the school-day bar, the corner video and the **window-level
@@ -68,6 +69,8 @@ is pure logic and tested.
   would actually appear. Look-only settings must never be in it.
 - `day.js` — the school-day schedule (below).
 - `plan.js` — a plan of timed blocks (below): `normalizePlan`, `blockDone`, `minutesLeft`, `blockAfter`.
+- `timer.js` — the timer's state and arithmetic (below). `Timer.svelte` — its sheet, clock and
+  "Time's up". `chime.js` — its two notes. `awake.js` — `keepAwake`, the one screen wake lock.
 - `share.js` — settings as a link (`linkQuery`, `linkSettings`, `setupName`, `setsName`). `home.js` — `setHome`,
   the per-link title and manifest (not pure).
 - `speech.js` — `speechLines` (what to say for a slide) and `pickVoice` (pure). `speak.js` — `speak`,
@@ -323,6 +326,41 @@ A teacher asked to "program different sets throughout the day in 5 to 25 minute 
 - In a link: `planOn=1&plan=letters.numbers-10_feelings-5` (`planQuery`, `queryPlan`). A plan's
   bookmark is named after its groups in the order they play and its length: "🔤➕😊 Plan, 30 min · EN".
 - Where the plan is (block, minutes played) is not saved: a reload starts at block 1.
+
+## The timer, and the control bar
+
+The bar is **Back, Play, Next, the slide count, Timer, Tools** (2026-11-15). Tools opens a small
+panel above the bar with Watch, the corner video (offered only when Settings has a link) and
+Settings, so those take one more click; `W`, `V` and `S` still go straight there. In Watch the bar
+is Back to slides, Sound, Other video, Timer.
+
+**One timer, apart from everything else.** It never starts, stops or advances the slides, Watch,
+the plan or the school day, and none of them touch it.
+
+- **Starting:** the Timer button (or `T`) opens a sheet over the lesson. 1, 3, 5, 10 or 15 minutes
+  start with one click; − and + set another length (1 to 60) and Start begins it. The sheet opens
+  on the minutes used last, with focus on Start, so `T` then Enter repeats the last timer.
+- **Running:** a clock with a ring in the top right corner (top left when the corner video has
+  the top right). It is outside the bar, so it stays when the bar fades. Clicking it, or `T`,
+  shows exactly Pause/Resume, +1 min and End. The bar's Timer button shows the time left.
+- **The end:** "Time's up" with Done and +2 min, and two soft notes when "Chime at the end" is on
+  (`chime.js`, Web Audio, no file). Nothing flashes or moves and nothing else on screen changes.
+- **A timer is the moment it ends** (`endsAt`), never a number counted down: `remaining(t, now)`
+  works it out from the clock, so it is right after the tab was hidden or the page reloaded.
+  Paused, it holds what was `left`. `Timer.svelte` ticks four times a second only to redraw.
+- **It is not a setting.** It is kept under its own name, `looksee-timer-v1`, and is in no link,
+  bookmark name or deck key (a test checks `DEFAULTS` has nothing of it). A link window and the
+  plain app on one device therefore share the one timer.
+- **A screen reader** hears "1 minute left", "10 seconds left" and "Time's up" from one polite
+  live region (`milestone`), never each second. Under reduced motion the ring moves in tenths.
+- **Awake:** `keepAwake(playing || timer running)` in `awake.js` is the only wake lock. A lock
+  granted after it stopped being wanted is let go, and it is asked for again when the tab returns.
+- **A hidden tab ticks slowly,** so the chime can be late there; the clock is right the moment
+  the tab is back. A timer that ended while the page was closed shows "Time's up" without a chime.
+- Left out on purpose: Undo after a preset (End is one click), and turning the video down for
+  the chime.
+- Not built, from the same handoff (Codex, 2026-11-15): Settings split into quick and advanced,
+  a Routine strip (Now / Next with "Done · next activity"), and a private Things pack file.
 
 ## Settings links
 
