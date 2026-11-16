@@ -17,6 +17,8 @@
   import { videoId, startSeconds } from './link.js'
   import { thingFiles } from './things.js'
   import { canKeep, localPictures, addPictures, removePictures } from './local.js'
+  import { PLACE, TEMPS, weatherLines } from './weather.js'
+  import { getWeather } from './outside.js'
 
   let { update = null } = $props()
 
@@ -357,6 +359,34 @@
     return { top: take(c.top), bottom: take(c.bottom), right: take(c.right), left: take(c.left) }
   })
 
+  // ---- weather ----
+  // The temperature outside as its own big slide, for circle time. Nothing is
+  // asked until someone opens it (the Weather button, or T), and the button
+  // is there only when the Weather setting is on.
+  let wx = $state(null)
+  function showWeather() {
+    if (!s.weather || watching) return
+    playing = false
+    picking = false
+    wx = { status: 'loading' }
+    getWeather().then(
+      (w) => wx && (wx = { status: 'ok', ...w }),
+      () => wx && (wx = { status: 'failed' })
+    )
+  }
+  function stopWeather() {
+    wx = null
+    stageEl?.focus({ preventScroll: true })
+  }
+  $effect(() => {
+    if (!s.weather) wx = null
+  })
+  // Its two words, in the languages the slides use.
+  const wxWords = $derived(wx?.status === 'ok' ? { temp: labelRows(TEMPS[wx.band], s), sky: labelRows(wx.sky, s) } : null)
+  const wxTime = $derived(wx?.at ? new Date(wx.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '')
+  const wxSay = $derived(wxWords ? `${PLACE.name}: ${wx.temp}°F, ${rowsText(wxWords.temp)}, ${rowsText(wxWords.sky)}` : '')
+  const speakWeather = () => wxWords && speak(weatherLines(wx, wxWords.temp.map((r) => r.lang)))
+
   // ---- keyboard ----
   function onKey(e) {
     wake()
@@ -364,6 +394,7 @@
     const tag = e.target?.tagName
     if (e.key === 'Escape') {
       if (picking) picking = false
+      else if (wx) stopWeather()
       else if (watching) stopWatch()
       else if (drawer) {
         drawer = false
@@ -374,7 +405,14 @@
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
     if (tag === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return
     const k = e.key.toLowerCase()
-    if (k === ' ') toggle()
+    if (k === 't') wx ? stopWeather() : showWeather()
+    else if (wx) {
+      // The weather is on screen instead of the slides: only R (say it) applies.
+      if (k === 'r') speakWeather()
+      else if (k === 'f') fullscreen()
+      else if (k === 's') drawer = !drawer
+      else return
+    } else if (k === ' ') toggle()
     else if (k === 'arrowright') step(1)
     else if (k === 'arrowleft') step(-1)
     else if (k === 's') drawer = !drawer
@@ -400,7 +438,7 @@
   // Back to the defaults, but the video link and the school day are kept:
   // those are set up once and are not part of the look.
   function reset() {
-    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd })
+    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, weather: s.weather })
     Object.assign(s, normalizeSettings(keep))
   }
 
@@ -547,6 +585,35 @@
     </section>
   {/if}
 
+  {#if wx}
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+    <section class="wx" aria-label={wxSay || 'The weather'} onclick={speakWeather} title="Click to hear it">
+      {#if wxWords}
+        <p class="wx-place">{PLACE.name} · {wxTime}</p>
+        <div class="wx-cols">
+          {#each [['sky', wx.sky.emoji], ['temp', wx.temp + '°F']] as [key, big] (key)}
+            <div class="wx-col">
+              <span class="wx-big {key}" style="color:{theme.colors[theme.heat[wx.band]]}" aria-hidden="true">{big}</span>
+              {#each wxWords[key] as r (r.lang)}
+                <span class="wx-word" lang={r.lang}>{r.words[0]}</span>
+              {/each}
+            </div>
+          {/each}
+        </div>
+        <!-- Cold to hot, with today's place on it: not color alone. -->
+        <div class="wx-scale" aria-hidden="true">
+          {#each theme.heat as c, i}
+            <i class:on={i === wx.band} style="background:{theme.colors[c]}"></i>
+          {/each}
+        </div>
+      {:else}
+        <p class="wx-msg" role="status">
+          {wx.status === 'loading' ? 'Looking outside…' : 'The weather could not be reached (offline, or blocked on this network).'}
+        </p>
+      {/if}
+    </section>
+  {/if}
+
   {#if picking}
     <div class="pick" role="dialog" aria-modal="true" aria-label="Choose a video">
       <div class="pick-grid">
@@ -559,7 +626,10 @@
   {/if}
 
   <nav class="ctl" aria-label="Controls">
-    {#if watching}
+    {#if wx}
+      <button class="btn primary big" onclick={stopWeather}>Back to slides</button>
+      {#if wx.status === 'failed'}<button class="btn big" onclick={showWeather}>Try again</button>{/if}
+    {:else if watching}
       <button class="btn primary big" onclick={stopWatch}>Back to slides</button>
       <button class="btn big" onclick={() => (s.videoMuted = !s.videoMuted)} aria-pressed={s.videoMuted}>{s.videoMuted ? 'Sound on' : 'Sound off'}</button>
       <button class="btn big" onclick={() => (picking = true)} aria-haspopup="dialog">Other video</button>
@@ -570,6 +640,7 @@
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
     <button class="btn" onclick={toggleVideo} disabled={!vid} aria-pressed={pipOn}>{pipOn ? 'Hide video' : 'Video'}</button>
     <button class="btn" onclick={() => (picking = true)} aria-haspopup="dialog">Watch</button>
+    {#if s.weather}<button class="btn" onclick={showWeather}>Weather</button>{/if}
     <button class="btn" onclick={() => (drawer = !drawer)} aria-expanded={drawer}>Settings</button>
     {/if}
   </nav>
@@ -699,6 +770,16 @@
         </datalist>
       {/if}
 
+      <h2>Weather</h2>
+      <label class="chk"><input type="checkbox" bind:checked={s.weather} /> A Weather button: the temperature in {PLACE.name}</label>
+      <p class="hint">
+        The temperature outside as a big slide, with a word and a color for how it feels and a picture of the sky. The
+        reading comes from Open-Meteo when the button is clicked. It is the only thing besides YouTube that this app
+        contacts: the request names {PLACE.name} and nothing about this device or class, and it is never made while this
+        is off.
+        <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather data by Open-Meteo.com</a>
+      </p>
+
       <h2>Look</h2>
       {@render seg('theme', 'Theme')}
       {@render seg('background', 'Background')}
@@ -766,7 +847,7 @@
 
       <h2>Keys</h2>
       <p class="hint keyhelp">
-        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>R</kbd> read aloud ·
+        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>T</kbd> weather · <kbd>R</kbd> read aloud ·
         <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
       </p>
       <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
@@ -870,6 +951,20 @@
     .ww { transition: background-color 0.6s, transform 0.6s; }
     .ww.lit { transform: scale(1.15); }
   }
+
+  /* Weather: the sky and the temperature side by side, their words under
+     them, and a cold-to-hot scale with today's place on it. */
+  .wx { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 78px) var(--inset-l); container-type: size; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3cqmin;
+    background: var(--stage-bg); font-family: var(--stage-font); font-weight: 700; cursor: pointer; }
+  .wx-place { margin: 0; font-size: clamp(16px, 4cqmin, 40px); opacity: 0.75; }
+  .wx-cols { display: flex; align-items: flex-start; justify-content: center; gap: 8cqw; }
+  .wx-col { display: flex; flex-direction: column; align-items: center; gap: 1cqmin; }
+  .wx-big { font-size: min(34cqh, 22cqw); line-height: 1.1; white-space: nowrap; }
+  .wx-word { font-size: min(8cqh, 6cqw); line-height: 1.1; white-space: nowrap; }
+  .wx-scale { display: flex; align-items: center; gap: 1cqmin; width: min(70cqw, 90cqh); height: 5cqmin; }
+  .wx-scale i { flex: 1; height: 40%; border-radius: 99px; opacity: 0.35; }
+  .wx-scale i.on { height: 100%; opacity: 1; outline: 3px solid var(--stage-ink); outline-offset: 2px; }
+  .wx-msg { margin: 0; padding: 16px; font-size: clamp(18px, 4cqmin, 34px); text-align: center; max-width: 24em; }
 
   /* The video picker: big tiles, one click each. */
   .pick { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: color-mix(in srgb, var(--stage-bg) 92%, transparent); padding: 24px; overflow: auto; }

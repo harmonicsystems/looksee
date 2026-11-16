@@ -13,6 +13,7 @@ import { linkQuery, linkSettings, setupName } from '../src/share.js'
 import { VIDEOS, sides } from '../src/videos.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
+import { PLACE, TEMPS, weatherUrl, tempBand, sky, readWeather, weatherLines } from '../src/weather.js'
 
 // Set names are off here unless a test asks for them, so decks hold only their slides.
 const deck = (over) => buildDeck({ ...DEFAULTS, setNames: false, ...over }, () => 0.42)
@@ -682,5 +683,75 @@ describe('things', () => {
     if (!existsSync(dir)) return
     const have = readdirSync(dir).filter((n) => !n.startsWith('.'))
     expect(have.sort()).toEqual(thingFiles().map((x) => `${x.file}.avif`).sort())
+  })
+})
+
+// The weather is the one thing besides YouTube that Looksee asks of an
+// outside service, so it is off unless a teacher turns it on.
+describe('weather', () => {
+  it('is off for a new visitor, travels in a link, and is not part of the deck', () => {
+    expect(DEFAULTS.weather).toBe(false)
+    expect(linkQuery({ ...DEFAULTS, weather: true })).toBe('v=1&weather=1')
+    expect(linkSettings('?v=1&weather=1').weather).toBe(true)
+    expect(normalizeSettings({ weather: 'yes' }).weather).toBe(false)
+    expect(deckKey({ ...DEFAULTS, weather: true })).toBe(deckKey(DEFAULTS))
+  })
+  it('asks Open-Meteo about the place and nothing else', () => {
+    const u = new URL(weatherUrl())
+    expect(u.origin).toBe('https://api.open-meteo.com')
+    expect(Object.fromEntries(u.searchParams)).toEqual({
+      latitude: String(PLACE.lat),
+      longitude: String(PLACE.lon),
+      current: 'temperature_2m,weather_code,is_day',
+      temperature_unit: 'fahrenheit'
+    })
+  })
+  it('is asked only by outside.js, and is never stored for offline use', () => {
+    const src = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
+    for (const f of readdirSync(new URL('../src', import.meta.url))) {
+      if (f !== 'outside.js') expect(src(f), f).not.toMatch(/\bfetch\(/)
+    }
+    expect(src('outside.js')).toMatch(/credentials: 'omit'/)
+    expect(readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8')).not.toMatch(/runtimeCaching|open-meteo/)
+  })
+  it('names how it feels, coldest to hottest', () => {
+    expect(TEMPS.map((t) => t.label)).toEqual(['freezing', 'cold', 'cool', 'warm', 'hot'])
+    expect([-20, 31, 32, 49, 50, 64, 65, 79, 80, 104].map(tempBand)).toEqual([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
+    for (const t of TEMPS) expect(t.es, t.label).toBeTruthy()
+  })
+  it('gives every theme a different color for each band', () => {
+    for (const [name, t] of Object.entries(THEMES)) {
+      expect(t.heat.length, name).toBe(TEMPS.length)
+      expect(new Set(t.heat).size, name).toBe(TEMPS.length)
+      for (const i of t.heat) expect(t.colors[i], name).toBeTruthy()
+    }
+  })
+  it('has a picture and both words for every weather code', () => {
+    for (let code = 0; code <= 99; code++) {
+      const x = sky(code)
+      expect(x.emoji && x.label && x.es, `code ${code}`).toBeTruthy()
+    }
+    expect([0, 2, 3, 45, 55, 63, 73, 81, 86, 95].map((c) => sky(c).label)).toEqual(
+      ['sunny', 'partly cloudy', 'cloudy', 'foggy', 'drizzly', 'rainy', 'snowy', 'rainy', 'snowy', 'stormy']
+    )
+    expect(sky(0, false)).toMatchObject({ emoji: '🌙', label: 'clear' })
+    expect(sky(3, false).label).toBe('cloudy')
+  })
+  it('reads an answer, and refuses one with no temperature', () => {
+    const w = readWeather({ current: { temperature_2m: 41.6, weather_code: 3, is_day: 1 } })
+    expect(w).toMatchObject({ temp: 42, band: 1, sky: { label: 'cloudy' } })
+    expect(readWeather({ current: { temperature_2m: 70, weather_code: 0, is_day: 0 } }).sky.label).toBe('clear')
+    expect(readWeather({ current: { temperature_2m: 70 } }).sky.label).toBe('cloudy')
+    for (const bad of [null, {}, { current: {} }, { current: { temperature_2m: '42' } }, { error: true }]) expect(readWeather(bad)).toBeNull()
+  })
+  it('says it in the languages shown', () => {
+    const w = readWeather({ current: { temperature_2m: 42, weather_code: 3, is_day: 1 } })
+    expect(weatherLines(w, ['en', 'es'])).toEqual([
+      { lang: 'en', text: '42 degrees. cold. cloudy.' },
+      { lang: 'es', text: '42 grados. frío. nublado.' }
+    ])
+    const cold = readWeather({ current: { temperature_2m: -1, weather_code: 71, is_day: 1 } })
+    expect(weatherLines(cold, ['en'])[0].text).toBe('minus 1 degree. freezing. snowy.')
+    expect(weatherLines(cold, ['es'])[0].text).toBe('menos 1 grado. helado. con nieve.')
   })
 })

@@ -20,6 +20,17 @@ Nothing in the code has to change: the deploy builds for whichever address Pages
 
 **It has only been used on one Mac.** No child, teacher or clinician has used it yet.
 
+**Weather was added on 2026-11-15 and is not yet on `main`** (branch `claude/hello-6317eb`,
+uncommitted when this was written). A Weather button, off by default, shows the temperature in
+Rhinebeck as a big slide with a word and color for how it feels and an emoji for the sky. It is the
+first thing besides YouTube that Looksee asks of an outside service (Open-Meteo); `CLAUDE.md` ▸
+Weather has the rules. Checked on David's Mac in the dev server with a live reading, in English,
+Spanish and both, in the calm and high-contrast themes, at laptop and phone shapes, with the mouse
+and with `T` / `Esc`. **Not checked:** hearing it read aloud, the "could not be reached" slide with
+the network really off, whether the classroom Chromebook's network allows `api.open-meteo.com`,
+and the Spanish weather words (helado, fresco, cálido, caluroso, algo nublado, con niebla, con
+llovizna, con nieve, tormentoso, despejado) by a Spanish speaker.
+
 ## How it got here
 
 Looksee was built over two days as "Look & See", a second page inside a checkout of Clip Choice
