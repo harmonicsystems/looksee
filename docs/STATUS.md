@@ -22,6 +22,18 @@ Nothing in the code has to change: the deploy builds for whichever address Pages
 confirmed there on 2026-11-12; the class's notes came back on 2026-11-15). Everything else has
 been checked on one Mac.
 
+**Weather was added on 2026-11-15 and is not yet on `main`** (branch `claude/hello-6317eb`, with
+`main`'s timer and plan merged into it). Weather in Tools, off by default, shows the temperature in
+Rhinebeck as a big slide with a word and color for how it feels and an emoji for the sky. It is the
+first thing besides YouTube that Looksee asks of an outside service (Open-Meteo); `CLAUDE.md` ▸
+Weather has the rules. Checked on David's Mac in the dev server with a live reading, in English,
+Spanish and both, in the calm and high-contrast themes, at laptop and phone shapes, with the mouse
+and with the keys (`O` opens and closes it; `T` stayed the timer's when `main` was merged in). The
+size gate was raised from 62 KB to 64 KB by David for it: the app is 63.2 KB. **Not checked:** hearing it read aloud, the "could not be reached" slide with
+the network really off, whether the classroom Chromebook's network allows `api.open-meteo.com`,
+and the Spanish weather words (helado, fresco, cálido, caluroso, algo nublado, con niebla, con
+llovizna, con nieve, tormentoso, despejado) by a Spanish speaker.
+
 ## How it got here
 
 Looksee was built over two days as "Look & See", a second page inside a checkout of Clip Choice
@@ -458,7 +470,8 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 61.1 KB of 62 (raised from 60 for the timer, which cost 3 KB). The 161
+- **The size budget.** 63.2 KB of 64 (raised from 60 to 62 for the timer, which cost 3 KB, and to
+  64 for the weather, which cost 2.1 KB). The 161
   things cost about 1.9 KB; more of them, or another feature, needs the words loaded apart from
   the app or a bigger budget again.
 - **Settings under Tools.** One more click than before. If the class misses it, Settings can go

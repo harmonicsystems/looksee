@@ -18,9 +18,11 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 
 ## Hard constraints
 
-- **Nothing leaves the device except YouTube.** The only network traffic besides the site's own
-  files: the IFrame API script from `www.youtube.com` (loaded lazily, the first time a video is
-  started) and the player from `www.youtube-nocookie.com`. No analytics, no CDN fonts, scripts or
+- **Nothing leaves the device except YouTube, and the weather when a teacher has turned it on.**
+  The only network traffic besides the site's own files: the IFrame API script from
+  `www.youtube.com` (loaded lazily, the first time a video is started), the player from
+  `www.youtube-nocookie.com`, and, only with the Weather setting on and only when the weather is
+  opened, one request to `api.open-meteo.com` (see "Weather"). No analytics, no CDN fonts, scripts or
   images. The emoji pictures are copies in this repo; the app never loads them from Google.
   Speech uses only the device's own voices (`localService`): Chrome's online voices send the text
   to Google.
@@ -31,7 +33,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - **Mouse-only must work too.** The classroom it is made for has a Chromebook with a mouse and no
   keyboard: everything a teacher needs during class takes only clicks on large targets, no typing.
 - **Keyboard-only must work.** `Space` play/pause, `←` `→`, `R` read aloud, `S` settings, `V` video, `W` watch, `T` timer,
-  `M` sound, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
+  `O` weather, `M` sound, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
   loops by seeking back just before the end.
@@ -40,9 +42,9 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 62 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 61.1 KB now, so little room is left. David raised it from 60
-  on 2026-11-15 for the timer) and WCAG AA on both control palettes
+- Build gates (`npm run build`): app JS ≤ 64 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 63.2 KB now, so little room is left. David raised it on
+  2026-11-15 from 60 to 62 for the timer, then to 64 for the weather) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -54,7 +56,7 @@ Svelte 5 (runes, plain Svelte) + Vite 6 (Node 20.17 here, 22 in CI) · `vite-plu
 ## File map
 
 Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js`, `youtube.js`,
-`awake.js` and `chime.js` is pure logic and tested.
+`awake.js`, `chime.js`, `speak.js`, `home.js`, `local.js` and `outside.js` is pure logic and tested.
 
 - `index.html` → `src/main.svelte.js` → `App.svelte`: the stage, the control bar that fades while
   playing, the settings drawer, the school-day bar, the corner video and the **window-level
@@ -78,6 +80,8 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
 - `videos.js` — `VIDEOS`, the preset videos for Watch with their words, and `sides(n)`.
 - `pip.js` — `PipPlayer`, the corner video and the Watch video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
   `startSeconds` (reads a link's `?t=`).
+- `weather.js` — the place, the temperature bands and sky words, reading Open-Meteo's answer (pure).
+  `outside.js` — `getWeather`, the one `fetch` in the app (not pure).
 - `styles.css` — control palettes (parsed by the contrast gate) and base styles.
 - `public/feelings`, `public/people` — the emoji pictures. `public/NOTICE.txt` — their credits.
 - `scripts/fetch-pictures.mjs`, `scripts/check-bundle-size.mjs`, `scripts/check-contrast.mjs`.
@@ -388,6 +392,34 @@ installing one as an app, `home.js` swaps in a `data:` manifest whose `start_url
 (BackTrack's approach); Chrome reported it installable with no errors. On iOS the manifest is
 removed instead, so Add to Home Screen saves the page's own address. Settings ▸ Share this setup
 has the link, Copy link, and Open as its own page.
+
+## Weather
+
+**Weather** in Tools (or `O`) shows the temperature outside as its own big slide, for circle time:
+the sky as an emoji, the temperature in °F, a word under each ("cloudy / nublado", "cold / frío"),
+and a cold-to-hot scale with today's band marked. A click on it (or `R`) says it: "42 degrees.
+cold. cloudy." **Back to slides**, `O` or `Esc` closes it. `T` is the timer, which stays in the bar. Opening it pauses the slides.
+
+- **Off by default (`weather` setting), and David chose this exception to "nothing leaves the
+  device" on 2026-11-15.** Tools offers it only when the setting is on, and the request is made
+  only when the weather is opened, never on load. It goes to Open-Meteo (free, no key, no account,
+  no cookies; free for non-commercial use, attribution in Settings ▸ Weather): `weatherUrl()`
+  carries the place's coordinates and nothing else, with `credentials: 'omit'` and no referrer.
+  Open-Meteo does see the device's IP address, as YouTube does. `outside.js` holds the only
+  `fetch` in the app, and a test fails if another file gains one or if the service worker starts
+  caching it.
+- **The place is `PLACE` in `weather.js`** (Rhinebeck, NY, to two decimal places). It is not a
+  setting: to move it, change the name and coordinates there.
+- **Bands** (`TEMPS`, °F): freezing below 32, cold 32–49, cool 50–64, warm 65–79, hot 80 and up.
+  Each theme's `heat` lists which five of its `colors` they take, coldest first, so the colors are
+  already held to 3:1 by the theme test. The scale and the word mean it is never color alone.
+- **Sky** (`sky(code, day)`): Open-Meteo's WMO weather codes grouped into sunny, partly cloudy,
+  cloudy, foggy, drizzly, rainy, snowy, stormy; a clear sky after dark is 🌙 "clear". The emoji is
+  the device's own, so there are no files.
+- The words follow the Words setting (`labelRows`). The setting travels in a settings link
+  (`&weather=1`) and survives "Reset look and pace". A reading is kept in memory for ten minutes
+  and never stored; offline, the slide says the weather could not be reached and offers Try again.
+- Not built: Celsius, a choice of place in Settings, what to wear, and a chip on the school-day bar.
 
 ## School-day bar
 

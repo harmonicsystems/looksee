@@ -6,27 +6,32 @@ import { normalizePlan } from './plan.js'
 
 // Stage themes. `colors` are what letters, numbers and shapes are drawn in;
 // tests/look.test.js holds each to 3:1 against `bg` (large graphics) and
-// `ink` to 4.5:1.
+// `ink` to 4.5:1. `heat` picks five of the colors for the weather, coldest
+// to hottest (weather.js).
 export const THEMES = {
   calm: {
     label: 'Calm',
     bg: '#f4efe6', bg2: '#fbf8f2', ink: '#2c2a26', dot: '#e3dccf',
-    colors: ['#a8452f', '#8a5a0c', '#3f7a3a', '#1f7a80', '#39689e', '#75559c']
+    colors: ['#a8452f', '#8a5a0c', '#3f7a3a', '#1f7a80', '#39689e', '#75559c'],
+    heat: [5, 4, 3, 1, 0]
   },
   bright: {
     label: 'Bright',
     bg: '#ffffff', bg2: '#f1f6ff', ink: '#14181f', dot: '#e3e8f0',
-    colors: ['#d62839', '#c75100', '#1b8a3e', '#0b7f96', '#1f6fd6', '#8a3fd0']
+    colors: ['#d62839', '#c75100', '#1b8a3e', '#0b7f96', '#1f6fd6', '#8a3fd0'],
+    heat: [5, 4, 3, 1, 0]
   },
   night: {
     label: 'Night',
     bg: '#101820', bg2: '#1a2733', ink: '#f0ede6', dot: '#1d2a36',
-    colors: ['#ff8a7a', '#ffc857', '#7bd88f', '#5fd3d8', '#7cc0ff', '#c9a3ff']
+    colors: ['#ff8a7a', '#ffc857', '#7bd88f', '#5fd3d8', '#7cc0ff', '#c9a3ff'],
+    heat: [5, 4, 3, 1, 0]
   },
   contrast: {
     label: 'High contrast',
     bg: '#000000', bg2: '#000000', ink: '#ffffff', dot: '#2a2a2a',
-    colors: ['#ffffff', '#ffe600', '#00e5ff', '#7dff6a', '#ff9d5c', '#ff8ad8']
+    colors: ['#ffffff', '#ffe600', '#00e5ff', '#7dff6a', '#ff9d5c', '#ff8ad8'],
+    heat: [0, 2, 3, 1, 4]
   }
 }
 
@@ -77,6 +82,9 @@ export const DEFAULTS = {
   morph: true,
   skin: 'mixed',
   dayBar: true,
+  // Off until a teacher turns it on: the weather is asked of an outside
+  // service (weather.js), and nothing else in Looksee is.
+  weather: false,
   ...normalizeDay(),
   theme: 'calm',
   background: 'plain',
@@ -107,7 +115,7 @@ export function normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const s = { ...DEFAULTS }
   for (const k of Object.keys(OPTIONS)) if (OPTIONS[k].includes(r[k])) s[k] = r[k]
-  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'planOn']) if (typeof r[k] === 'boolean') s[k] = r[k]
+  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'planOn', 'weather']) if (typeof r[k] === 'boolean') s[k] = r[k]
   // Fresh arrays every time, so editing settings never edits DEFAULTS.
   s.sets = [...s.sets]
   if (Array.isArray(r.sets)) {
