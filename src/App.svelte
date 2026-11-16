@@ -5,6 +5,7 @@
   // corner video.
   import { untrack } from 'svelte'
   import Visual from './Visual.svelte'
+  import Timer from './Timer.svelte'
   import { SETS, GROUPS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart, rowsText } from './concepts.js'
   import { THEMES, OPTIONS, deckKey as deckKeyOf, wordWait, loadSettings, saveSettings, normalizeSettings } from './settings.js'
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
@@ -15,6 +16,7 @@
   import { linkQuery, linkSettings, setupName, setsName } from './share.js'
   import { MINUTES, PLAN_MAX, blockDone, minutesLeft, blockAfter } from './plan.js'
   import { setHome } from './home.js'
+  import { keepAwake } from './awake.js'
   import { videoId, startSeconds } from './link.js'
   import { thingFiles } from './things.js'
   import { canKeep, localPictures, addPictures, removePictures } from './local.js'
@@ -220,13 +222,27 @@
     const t = setTimeout(() => step(1), s.seconds * 1000)
     return () => clearTimeout(t)
   })
-  // Keep the screen awake while the deck plays, where the browser allows it.
-  $effect(() => {
-    if (!playing || !navigator.wakeLock) return
-    let lock
-    navigator.wakeLock.request('screen').then((l) => (lock = l)).catch(() => {})
-    return () => lock?.release().catch(() => {})
-  })
+  // Keep the screen awake while the deck plays or a timer runs (awake.js).
+  $effect(() => keepAwake(playing || timerStatus === 'running'))
+
+  // ---- timer and tools ----
+  // The timer is its own thing (Timer.svelte); the bar only has its button.
+  // Tools holds what is used less often: Watch, the corner video, Settings.
+  let timerOpen = $state(false)
+  let timerStatus = $state('idle')
+  let timerText = $state('')
+  let timerBtn = $state()
+  let tools = $state(false)
+  let toolsBtn = $state()
+  function toggleTimer() {
+    tools = false
+    timerOpen = !timerOpen
+  }
+  // One thing from Tools, which closes it.
+  function tool(f) {
+    tools = false
+    f()
+  }
 
   let stageEl = $state()
   function toggle() {
@@ -245,7 +261,7 @@
     clearTimeout(quietTimer)
     quietTimer = setTimeout(() => (quiet = true), 2500)
   }
-  const hideBar = $derived(playing && quiet && !drawer)
+  const hideBar = $derived(playing && quiet && !drawer && !tools && !timerOpen)
 
   function fullscreen() {
     if (document.fullscreenElement) document.exitFullscreen?.()
@@ -429,7 +445,13 @@
     if (e.metaKey || e.ctrlKey || e.altKey) return
     const tag = e.target?.tagName
     if (e.key === 'Escape') {
-      if (picking) picking = false
+      if (timerOpen) {
+        timerOpen = false
+        timerBtn?.focus()
+      } else if (tools) {
+        tools = false
+        toolsBtn?.focus()
+      } else if (picking) picking = false
       else if (watching) stopWatch()
       else if (drawer) {
         drawer = false
@@ -449,6 +471,10 @@
     else if (k === 'w') watching ? stopWatch() : (picking = !picking)
     else if (k === 'm') s.videoMuted = !s.videoMuted
     else if (k === 'f') fullscreen()
+    else if (k === 't') {
+      toggleTimer()
+      if (!timerOpen) timerBtn?.focus()
+    }
     else return
     e.preventDefault()
   }
@@ -637,11 +663,27 @@
     <button class="btn" onclick={() => step(1)} disabled={!deck.length}>Next</button>
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
     {#if block}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
-    <button class="btn" onclick={toggleVideo} disabled={!vid} aria-pressed={pipOn}>{pipOn ? 'Hide video' : 'Video'}</button>
-    <button class="btn" onclick={() => (picking = true)} aria-haspopup="dialog">Watch</button>
-    <button class="btn" onclick={() => (drawer = !drawer)} aria-expanded={drawer}>Settings</button>
+    {/if}
+    <button class="btn big" class:primary={timerStatus !== 'idle'} bind:this={timerBtn} onclick={toggleTimer} aria-expanded={timerOpen}>
+      <span aria-hidden="true">⏱️</span> <span class:mono={timerStatus !== 'idle' && timerStatus !== 'done'}>{timerText || 'Timer'}</span>
+    </button>
+    {#if !watching}
+      <button class="btn big" bind:this={toolsBtn} onclick={() => ((timerOpen = false), (tools = !tools))} aria-expanded={tools}><span aria-hidden="true">🧰</span> Tools</button>
     {/if}
   </nav>
+
+  <!-- Tools: what is used less often than the timer. A video with no link is not offered. -->
+  {#if tools}
+    <div class="tools" role="group" aria-label="Tools">
+      <button class="btn big" onclick={() => tool(() => (picking = true))} aria-haspopup="dialog"><span aria-hidden="true">📺</span> Watch</button>
+      {#if vid}
+        <button class="btn big" onclick={() => tool(toggleVideo)}><span aria-hidden="true">🎬</span> {pipOn ? 'Hide video' : 'Corner video'}</button>
+      {/if}
+      <button class="btn big" onclick={() => tool(() => (drawer = !drawer))}><span aria-hidden="true">⚙️</span> {drawer ? 'Close settings' : 'Settings'}</button>
+    </div>
+  {/if}
+
+  <Timer bind:open={timerOpen} bind:status={timerStatus} bind:text={timerText} anchor={timerBtn} onLeft={s.corner === 'tr'} {reduced} />
 
   {#if drawer}
     <aside class="drawer-panel" aria-label="Settings">
@@ -856,7 +898,7 @@
 
       <h2>Keys</h2>
       <p class="hint keyhelp">
-        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>R</kbd> read aloud ·
+        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>T</kbd> timer · <kbd>R</kbd> read aloud ·
         <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
       </p>
       <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
@@ -920,7 +962,7 @@
 
   .ctl { position: absolute; left: var(--inset-l); right: var(--inset-r); bottom: calc(var(--inset-b) + 18px); display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 12px; pointer-events: none; }
   .ctl > * { pointer-events: auto; }
-  .ctl .btn { min-height: 44px; padding-inline: 16px; }
+  .ctl .btn { min-height: 52px; padding-inline: 16px; }
   .ctl .play { min-width: 6.5em; }
   .count { font-size: 13px; padding: 4px 8px; border-radius: 6px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
   .look.quiet .ctl:not(:has(:focus-visible)) { opacity: 0; }
@@ -967,7 +1009,9 @@
   .tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 160px; font-size: 20px; text-align: center; }
   .tile-pic { font-size: 64px; line-height: 1; }
   .tile.close { min-height: 160px; font-size: 18px; }
-  .ctl .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
+  .ctl .big, .tools .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
+  /* Tools rises from the control bar, like the timer's sheet. */
+  .tools { position: absolute; z-index: 3; left: var(--inset-l); right: var(--inset-r); bottom: calc(var(--inset-b) + 84px); width: max-content; max-width: calc(100vw - var(--inset-l) - var(--inset-r) - 24px); margin: 0 auto; padding: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.22); }
 
   .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
   .look.side-left .drawer-panel { right: auto; left: 0; border-left: 0; border-right: 1px solid var(--line); }
@@ -1017,6 +1061,7 @@
     .ctl { gap: 6px; }
     .ctl .btn { padding-inline: 11px; font-size: 15px; }
     .ctl .count { display: none; }
+    .tools { bottom: calc(var(--inset-b) + 142px); }
     .drawer-panel, .look.side-left .drawer-panel { top: auto; left: 0; right: 0; width: auto; height: var(--inset-b); border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
     .pip-small { width: 160px; }
     .pip-medium { width: 220px; }
