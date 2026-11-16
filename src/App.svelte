@@ -742,7 +742,7 @@
       <span aria-hidden="true">⏱️</span> <span class:mono={timerStatus !== 'idle' && timerStatus !== 'done'}>{timerText || 'Timer'}</span>
     </button>
     {#if !watching && !wx}
-      <button class="btn big" bind:this={toolsBtn} onclick={() => ((timerOpen = false), (tools = !tools))} aria-expanded={tools}><span aria-hidden="true">🧰</span> Tools</button>
+      <button class="btn big corner" bind:this={toolsBtn} onclick={() => ((timerOpen = false), (tools = !tools))} aria-expanded={tools}><span aria-hidden="true">🧰</span> Tools</button>
     {/if}
   </nav>
 
@@ -1136,8 +1136,10 @@
   .tile-pic { font-size: 64px; line-height: 1; }
   .tile.close { min-height: 160px; font-size: 18px; }
   .ctl .big, .tools .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
-  /* Tools rises from the control bar, like the timer's sheet. */
-  .tools { position: absolute; z-index: 3; left: var(--inset-l); right: var(--inset-r); bottom: calc(var(--inset-b) + 84px); width: max-content; max-width: calc(100vw - var(--inset-l) - var(--inset-r) - 24px); margin: 0 auto; padding: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.22); }
+  /* Tools sits in the bottom left corner, where a projector's mouse usually is, and its panel
+     rises from there. */
+  .ctl .corner { position: absolute; left: 12px; bottom: 0; }
+  .tools { position: absolute; z-index: 3; left: calc(var(--inset-l) + 12px); right: var(--inset-r); bottom: calc(var(--inset-b) + 84px); width: max-content; max-width: calc(100vw - var(--inset-l) - var(--inset-r) - 24px); padding: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.22); }
 
   .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
   .look.side-left .drawer-panel { right: auto; left: 0; border-left: 0; border-right: 1px solid var(--line); }
@@ -1197,7 +1199,8 @@
     .ctl { gap: 6px; }
     .ctl .btn { padding-inline: 11px; font-size: 15px; }
     .ctl .count { display: none; }
-    .tools { bottom: calc(var(--inset-b) + 142px); }
+    .ctl .corner { position: static; }
+    .tools { left: var(--inset-l); margin: 0 auto; bottom: calc(var(--inset-b) + 142px); }
     .drawer-panel, .look.side-left .drawer-panel { top: auto; left: 0; right: 0; width: auto; height: var(--inset-b); border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
     .pip-small { width: 160px; }
     .pip-medium { width: 220px; }

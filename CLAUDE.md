@@ -341,8 +341,9 @@ A teacher asked to "program different sets throughout the day in 5 to 25 minute 
 
 ## The timer, and the control bar
 
-The bar is **Back, Play, Next, the slide count, Timer, Tools** (2026-11-15). Tools opens a small
-panel above the bar with Watch, the corner video (offered only when Settings has a link) and
+The bar is **Back, Play, Next, the slide count, Timer** (2026-11-15), with **Tools on its own in
+the bottom left corner** (2026-11-16, where a projector's mouse usually is; on a phone it wraps
+into the bar). Tools opens a small panel above it with Watch, the corner video (offered only when Settings has a link) and
 Settings, so those take one more click; `W`, `V` and `S` still go straight there. In Watch the bar
 is Back to slides, Sound, Other video, Timer.
 
