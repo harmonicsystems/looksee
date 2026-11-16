@@ -254,6 +254,23 @@ stopped (offline); and Remove takes them away. **Not checked:** any of this on t
 itself, in particular choosing a folder there with a mouse, and whether that Chromebook keeps a
 site's data between sessions. The Spanish is unchecked as before.
 
+**Checked on 2026-11-15, on the live site, after publishing (`7a2d463`).** The site serves the new
+build, and no Things picture: `things/dog.avif` and the folder itself answer 404, and the service
+worker lists none. A browser that had the earlier version kept showing it, was offered the new
+one in Settings ("A new version is ready"), and Reload brought it in; until then a link naming
+the Things sets opened as the default sets, because the old version does not know them. After
+Reload, at 1366 × 768: the Things link is titled "🧸 Things · EN+ES" and has 52 slides; a thing
+with no picture shows its word alone; the picture's box is 79% of the stage with both languages;
+Settings is at the left edge with the stage moved over; Full screen and the Left / Right setting
+are there. Two test pictures made in the page ("dog.png", "Fire Truck.png") and a text file were
+given to "Choose pictures": two were added, the text file was not used, the dog showed after a
+reload, and Remove took them away again. Nothing was written to the saved settings.
+
+**A small thing, left as it is:** a thing slide with no picture on the device asks the site for
+`things/<name>.avif` and gets a 404, which the browser's console reports as an error. It is how
+the dev server shows David's own pictures, it stops once pictures are added, and nothing else is
+affected.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
