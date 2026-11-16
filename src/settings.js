@@ -42,7 +42,8 @@ export const OPTIONS = {
   background: ['plain', 'glow', 'dots'],
   fill: ['solid', 'outline', 'soft'],
   colorMode: ['rainbow', 'one'],
-  size: ['small', 'medium', 'large'],
+  size: ['small', 'medium', 'large', 'full'],
+  drawerSide: ['left', 'right'],
   entrance: ['none', 'fade', 'grow', 'slide'],
   idle: ['still', 'float', 'breathe'],
   font: ['atkinson', 'rounded', 'serif'],
@@ -77,7 +78,10 @@ export const DEFAULTS = {
   background: 'plain',
   fill: 'solid',
   colorMode: 'rainbow',
-  size: 'medium',
+  // As big as fits: in a classroom the picture is seen from across the room.
+  size: 'full',
+  // Where Settings opens. Left, because a projector's mouse usually is.
+  drawerSide: 'left',
   entrance: 'fade',
   idle: 'still',
   font: 'atkinson',
@@ -118,9 +122,15 @@ export function normalizeSettings(raw) {
 
 const KEY = 'look-settings-v1'
 
+// Settings saved before the picture's size had "Biggest" hold Medium, the old
+// default, whether or not anyone chose it. Such a device moves to the new
+// default once; `sized` marks settings saved since, so a later choice of
+// Medium is kept.
+export const upgrade = (raw) => (raw && typeof raw === 'object' && !raw.sized && raw.size === 'medium' ? { ...raw, size: DEFAULTS.size } : raw)
+
 export function loadSettings() {
   try {
-    return normalizeSettings(JSON.parse(localStorage.getItem(KEY)))
+    return normalizeSettings(upgrade(JSON.parse(localStorage.getItem(KEY))))
   } catch {
     return normalizeSettings(null)
   }
@@ -128,7 +138,7 @@ export function loadSettings() {
 
 export function saveSettings(s) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s))
+    localStorage.setItem(KEY, JSON.stringify({ ...s, sized: 1 }))
   } catch {}
 }
 

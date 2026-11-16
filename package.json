@@ -9,7 +9,8 @@
     "build": "vite build && node scripts/check-bundle-size.mjs && node scripts/check-contrast.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "pictures": "node scripts/fetch-pictures.mjs"
+    "pictures": "node scripts/fetch-pictures.mjs",
+    "things": "node scripts/things.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.1.0",

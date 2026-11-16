@@ -40,7 +40,10 @@ export default defineConfig({
         //
         // Each file listed here also costs bytes of service worker, which
         // count toward the JS budget: the pictures are about 5 KB of it.
-        globPatterns: ['**/*.{js,css,html,svg,png,ttf,webmanifest,avif,txt}']
+        globPatterns: ['**/*.{js,css,html,svg,png,ttf,webmanifest,avif,txt}'],
+        // The Things pictures (src/things.js) are local only and are never
+        // listed for storing: they are not part of what is published.
+        globIgnores: ['things/**']
       }
     })
   ],

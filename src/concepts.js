@@ -9,6 +9,7 @@
 // A Spanish speaker should check them; each is one edit here.
 
 import { polygon, curves, ellipse, regular, resample } from './morph.js'
+import { THINGS, THINGS_DIR } from './things.js'
 
 const dot = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`
 
@@ -187,8 +188,9 @@ export const emojiCode = (emoji, tone) =>
 
 // The moving picture, or the still one (reduced motion, the Still setting, or
 // a browser that can't play animated AVIF). Relative to the page on purpose:
-// the site may be served from '/' or from '/looksee/'.
-export const pictureSrc = (item, still) => `${item.dir}/${item.code}.${still ? 'svg' : 'avif'}`
+// the site may be served from '/' or from '/looksee/'. A thing (`one`) has a
+// single picture, which does not move.
+export const pictureSrc = (item, still) => `${item.dir}/${item.code}.${still && !item.one ? 'svg' : 'avif'}`
 
 // One picture slide. `emoji` is the same picture as text, in the same skin
 // tone: the last resort when the files can't load (offline, say).
@@ -203,6 +205,10 @@ const picture = (set, dir, x, tone) => ({
   code: emojiCode(x.emoji, tone),
   emoji: tone ? bare(x.emoji).join('') + String.fromCodePoint(parseInt(tone, 16)) : x.emoji
 })
+
+// One slide of a Things set (things.js): a single still picture, with no
+// emoji to fall back on, so a missing picture leaves the word alone.
+const thing = (set, x) => ({ kind: 'picture', set, dir: THINGS_DIR, one: true, label: x.label, es: x.es, art: x.art, say: x.label, code: x.file, emoji: '' })
 
 // A bag deals its things like cards: shuffle, hand them out one at a time,
 // shuffle again when they run out. Random, but everything turns up equally
@@ -359,7 +365,11 @@ export const SETS = [
   { id: 'opposites', label: 'Opposites', es: 'Opuestos' },
   { id: 'feelings', label: 'Feelings', es: 'Emociones' },
   { id: 'gestures', label: 'Gestures', es: 'Gestos' },
-  { id: 'body', label: 'Body', es: 'Cuerpo' }
+  { id: 'body', label: 'Body', es: 'Cuerpo' },
+  { id: 'animals', label: 'Animals', es: 'Animales' },
+  { id: 'food', label: 'Food', es: 'Comida' },
+  { id: 'transport', label: 'Transportation', es: 'Transporte' },
+  { id: 'home', label: 'At home', es: 'En casa' }
 ]
 
 // The sets in groups, for Settings and for naming a bookmark. Every set is in
@@ -369,7 +379,8 @@ export const GROUPS = [
   { id: 'math', label: 'Math', emoji: '➕', sets: ['adding', 'subtracting'] },
   { id: 'art', label: 'Shapes & Colors', emoji: '🎨', sets: ['shapes', 'colors', 'colorShapes', 'mixing'] },
   { id: 'opposites', label: 'Opposites', emoji: '↔️', sets: ['opposites'] },
-  { id: 'people', label: 'Feelings & Body', emoji: '😊', sets: ['feelings', 'gestures', 'body'] }
+  { id: 'people', label: 'Feelings & Body', emoji: '😊', sets: ['feelings', 'gestures', 'body'] },
+  { id: 'things', label: 'Things', emoji: '🧸', sets: ['animals', 'food', 'transport', 'home'] }
 ]
 
 export function shuffle(list, rng = Math.random) {
@@ -427,6 +438,7 @@ export function buildDeck(s, rng = Math.random) {
   const tone = dealer(s.skin, rng)
   add('gestures', () => GESTURES.map((x) => picture('gestures', 'people', x, tone(x))))
   add('body', () => BODY.map((x) => picture('body', 'people', x, tone(x))))
+  for (const id of Object.keys(THINGS)) add(id, () => THINGS[id].map((x) => thing(id, x)))
   return s.order === 'shuffle' ? shuffle(deck, rng) : deck
 }
 

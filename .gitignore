@@ -4,3 +4,7 @@ dev-dist
 .DS_Store
 *.log
 *.local
+
+# Thiings pictures (thiings.co) may not be redistributed. `npm run things` copies them
+# here from a local copy of the library; they must never be committed. See src/things.js.
+public/things/

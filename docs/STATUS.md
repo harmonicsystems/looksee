@@ -220,6 +220,40 @@ shape shown, the device's saved settings are left alone, and the console is clea
 serves the new build and plays the same order. Not checked: the order watched by a child or a
 teacher, and the "A new version is ready" prompt (the test browser again had no earlier version).
 
+## 2026-11-15: notes from the classroom, and Things
+
+**The class loved it,** David reported, and had two requests. Settings now opens on the left,
+because the projector's mouse is at the left of its screen (a setting can put it back on the
+right). And the picture is now as big as fits: it had been at a medium default, 62% of the
+screen's shorter side, and is now 79% with both languages, 85% with one and 94% with no words. A
+device still on the old default is moved to the new one once. Full screen also has a button now,
+in Settings, because the classroom has a mouse and no keyboard.
+
+**Things: four sets whose pictures each device adds for itself.** David has the June 2025
+Thiings library (1,900 pictures, with a title, category and three tags for each) in
+`~/Code/thiings-demo`, where he built an AAC symbol board from it, and asked how Looksee could
+use the pictures. There is a fifth group, Things, with four hand-picked sets of twelve (Animals,
+Food, Transportation, At home), each with its word in English and Spanish.
+
+**The pictures are not published and are in no commit.** Thiings' terms, read on 2026-11-15, say
+they may not be redistributed or made available for download, and Looksee's repo is public. So
+the sets come with no pictures, and a device is given its own: Settings ▸ Things takes a folder
+of picture files from the device and keeps them in the browser. Nothing is uploaded. David makes
+that folder from his own library with `npm run things` and carries it to the classroom
+Chromebook. A note asking Thiings for permission to publish was drafted for David to send;
+whether he bought the library or downloaded it free was not known when this was written.
+
+**Checked on 2026-11-15, locally.** 79 tests pass and the build passes its gates at 55.1 KB of
+60. In a browser: all 201 slides of every set, in both languages and in English alone, in the
+widest font, at a Chromebook's size (1366 × 768) and a phone's, with no picture or word clipped
+and none overlapping; with the words hidden; Settings on the left with everything else moved
+over, and on the right again. For Things, on a built copy with no pictures in it (as the live
+site will be): a thing slide shows its word alone; choosing a folder of the 48 files adds all 48
+and ignores two other files; the pictures show at once, after a reload, and with the server
+stopped (offline); and Remove takes them away. **Not checked:** any of this on the Chromebook
+itself, in particular choosing a folder there with a mouse, and whether that Chromebook keeps a
+site's data between sessions. The Spanish is unchecked as before.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of

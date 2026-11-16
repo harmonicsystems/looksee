@@ -1,17 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
   buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix, mathFacts, sumSlide, genderForm,
   SETS, GROUPS, MIXES, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
 } from '../src/concepts.js'
 import { POINTS, mix, ease, pathOf } from '../src/morph.js'
-import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait } from '../src/settings.js'
+import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait, upgrade } from '../src/settings.js'
 import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
 import { linkQuery, linkSettings, setupName } from '../src/share.js'
 import { VIDEOS, sides } from '../src/videos.js'
 import { speechLines, pickVoice } from '../src/speech.js'
+import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
 
 // Set names are off here unless a test asks for them, so decks hold only their slides.
 const deck = (over) => buildDeck({ ...DEFAULTS, setNames: false, ...over }, () => 0.42)
@@ -609,5 +610,77 @@ describe('speech', () => {
     expect(pickVoice(all, 'en').name).toBe('Samantha')
     expect(pickVoice([v('Google US English', 'en-US', false)], 'en')).toBe(null)
     expect(pickVoice([v('Mónica', 'es_ES', true)], 'es').name).toBe('Mónica')
+  })
+})
+
+describe('for a classroom', () => {
+  it('shows the picture as big as fits, and opens Settings on the left, unless told otherwise', () => {
+    expect(DEFAULTS).toMatchObject({ size: 'full', drawerSide: 'left' })
+    expect(normalizeSettings({ size: 'medium', drawerSide: 'right' })).toMatchObject({ size: 'medium', drawerSide: 'right' })
+    expect(normalizeSettings({ drawerSide: 'top' }).drawerSide).toBe('left')
+    // A link says only what differs from the defaults, so old bookmarks get both.
+    expect(linkQuery(DEFAULTS)).toBe('v=1')
+    expect(linkSettings('?v=1&sets=shapes')).toMatchObject({ size: 'full', drawerSide: 'left' })
+    expect(linkSettings('?v=1&drawerSide=right&size=large')).toMatchObject({ size: 'large', drawerSide: 'right' })
+  })
+  it('moves a device still on the old default size to the new one, once', () => {
+    expect(upgrade({ size: 'medium', words: 'es' })).toEqual({ size: 'full', words: 'es' })
+    expect(upgrade({ size: 'medium', sized: 1 }).size).toBe('medium')
+    expect(upgrade({ size: 'small' }).size).toBe('small')
+    expect(upgrade(null)).toBe(null)
+  })
+})
+
+// The Things sets come with no pictures: the ones they were made for are from
+// the Thiings library, which may not be redistributed, so they are never in
+// the repo. Each device is given its own copies (local.js).
+describe('things', () => {
+  const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
+  it('is one group of sets, each a run of single still pictures', () => {
+    expect(GROUPS.find((g) => g.id === 'things').sets).toEqual(Object.keys(THINGS))
+    for (const id of Object.keys(THINGS)) {
+      const d = deck({ sets: [id] })
+      expect(d.map((x) => x.label), id).toEqual(THINGS[id].map((x) => x.label))
+      for (const x of d) expect(x).toMatchObject({ kind: 'picture', set: id, dir: THINGS_DIR, one: true })
+    }
+    const dog = deck({ sets: ['animals'] })[0]
+    expect(pictureSrc(dog, false)).toBe('things/dog.avif')
+    // There is no separate still picture: reduced motion asks for the same file.
+    expect(pictureSrc(dog, true)).toBe('things/dog.avif')
+    expect(rowsText(labelRows(dog, { words: 'both', articles: true }))).toBe('dog / el perro')
+  })
+  it('gives every thing two words, an article and a file of its own', () => {
+    const all = thingFiles()
+    for (const x of all) {
+      expect(x.label && x.es, x.label).toBeTruthy()
+      expect(['el', 'la', 'los', 'las'], x.label).toContain(x.art)
+      expect(x.file, x.label).toMatch(/^[a-z]+(-[a-z]+)*$/)
+    }
+    expect(new Set(all.map((x) => x.file)).size).toBe(all.length)
+    expect(new Set(all.map((x) => x.from)).size).toBe(all.length)
+  })
+  it('keeps the pictures out of the repo and out of what is stored offline', () => {
+    expect(readFileSync(at('.gitignore'), 'utf8').split('\n')).toContain(`public/${THINGS_DIR}/`)
+    expect(readFileSync(at('vite.config.js'), 'utf8')).toContain(`globIgnores: ['${THINGS_DIR}/**']`)
+    // None of them is one of the pictures the app ships and credits.
+    expect(pictureFiles().some((f) => f.dir === THINGS_DIR)).toBe(false)
+  })
+  it('knows which thing a picture file is for, by its name', () => {
+    expect(thingName('dog.avif')).toBe('dog')
+    expect(thingName('Fire Truck.PNG')).toBe('fire-truck')
+    expect(thingName('teddy_bear.webp')).toBe('teddy-bear')
+    expect(thingName('things/horse-domestic.png')).toBe('horse') // the library's own name
+    expect(thingName('holiday.png')).toBe(null)
+    expect(thingName('dog.txt')).toBe(null)
+    expect(thingName('dog')).toBe(null)
+    for (const x of thingFiles()) expect(thingName(`${x.file}.avif`), x.label).toBe(x.file)
+  })
+  // `npm run things` makes what is missing and removes what is left over.
+  // On a computer without the library there is no folder, and nothing to check.
+  it('has exactly the pictures the sets ask for, where they have been copied', () => {
+    const dir = at(`public/${THINGS_DIR}/`)
+    if (!existsSync(dir)) return
+    const have = readdirSync(dir).filter((n) => !n.startsWith('.'))
+    expect(have.sort()).toEqual(thingFiles().map((x) => `${x.file}.avif`).sort())
   })
 })

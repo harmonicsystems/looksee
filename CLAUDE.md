@@ -41,7 +41,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 52.9 KB now) and WCAG AA on both control palettes
+  (`scripts/check-bundle-size.mjs`, 55.1 KB now) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -106,6 +106,55 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
   entry also costs bytes of service worker, which count toward the JS budget: the pictures are
   about 5 KB of it. To test offline for real, build, start the `looksee-built` preview
   (`.claude/launch.json`, `vite preview` on port 4178), let it load, stop the server and reload.
+
+## Things: sets whose pictures each device adds for itself
+
+Four sets of everyday pictures in a fifth group, "Things": Animals, Food, Transportation and At
+home, twelve slides each (`src/things.js`). **The code is published; the pictures are not, and
+must never be.**
+
+- **The pictures are from the Thiings library (thiings.co), whose terms say "You may not
+  redistribute the icons or make them available for download as standalone assets".** Looksee's
+  repo is public and its site serves every file in it, so the pictures are in neither.
+  `public/things/` is ignored by git (in `.gitignore`, and in this checkout's `.git/info/exclude`
+  so that no branch can add them), and it is left out of the offline store (`globIgnores` in
+  `vite.config.js`). A test fails if either guard is removed. Putting them in the repo or on the
+  site needs written permission from Thiings (hello@thiings.co) first.
+- **A device is given its own copies.** Settings ▸ Sets ▸ Things has "Choose a folder" and
+  "Choose pictures": the files are read on the device, kept in the browser's Cache Storage
+  (`looksee-things`) and shown from there (`src/local.js`). Nothing is uploaded, so "nothing
+  leaves the device" still holds; Chrome's own folder dialog says "upload", which is its word for
+  handing files to a page. A file is matched to a thing by its name (`thingName`: `dog.avif`,
+  `Fire Truck.png`, or the library's own `horse-domestic.png`). The pictures stay until the
+  browser's data for the site is cleared, and work offline.
+- `npm run things` (`scripts/things.mjs`) makes those files: it copies the pictures listed in
+  `src/things.js` out of David's own copy of the library (`~/Code/thiings-demo`, or
+  `THIINGS_DIR`), crops each to the thing itself and saves a 512 px AVIF of about 11 KB (48
+  pictures, 525 KB) in `public/things/`. It contacts nobody and needs ImageMagick. The dev server
+  serves that folder, so on David's Mac the pictures show without being added.
+- A thing is a `picture` slide with `one: true`: a single still file, no SVG and no emoji behind
+  it. `Visual.svelte` shows the device's own copy when there is one (`pics`), else the file under
+  `things/`, else nothing but the word.
+- The sets are off for a new visitor, who has no pictures for them.
+- **Sets are picked by hand.** The library's own categories include alcohol, weapons, military
+  vehicles, underwear and brand names, 41 titles appear twice, and its tags are machine-made (the
+  giant anteater is tagged "insect"). Its "Water" is a waterfall, so look at a picture before
+  using it. People are drawn as faceless uniforms with no skin tones, so the emoji sets stay the
+  ones for people.
+- Not built: "goes together" slides from the library's tags, and its pictures for letter words
+  and Watch words.
+
+## Seen from across a classroom
+
+- **The picture is as big as fits** (`size: 'full'`, "Biggest", the default). `k` in
+  `App.svelte` is the picture's share of the stage's shorter side: 94 with no words, 85 with one
+  row, 82 for a letter with its small picture, 79 with both languages. Those leave the words their
+  room and a little for the float and breathe motions; change them only with the sweep (every
+  slide, both languages, widest font, laptop and phone shapes). A device whose saved settings
+  still held the old default, Medium, is moved to Biggest once (`upgrade` in `settings.js`).
+- **Settings opens on the left** (`drawerSide`, default `left`), because the mouse of a projector
+  or board usually sits at its left. Everything else moves over by `--inset-l` or `--inset-r`.
+- **Full screen has a button** in the Settings header, since a classroom often has no keyboard.
 
 ## Shapes that change into each other
 

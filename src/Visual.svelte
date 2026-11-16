@@ -7,7 +7,8 @@
   import { mix, ease, pathOf } from './morph.js'
 
   // `say` is the slide's name for a screen reader, in the language shown.
-  let { item, s, color, ink, two = [color, ink], still = false, say = item.say, lang } = $props()
+  // `pics`: pictures this device keeps for itself, by name (local.js).
+  let { item, s, color, ink, two = [color, ink], still = false, say = item.say, lang, pics = {} } = $props()
 
   // The outline on screen. Through a run of shape slides this one picture
   // stays put and `item` changes under it: the outline then moves from
@@ -113,6 +114,11 @@
   // picture, else the still one, else the device's own emoji as text.
   // 0 = as asked, 1 = still picture, 2 = text.
   let tier = $state(0)
+  // A thing's picture is the device's own copy when it has one.
+  const own1 = $derived(item.one && pics[item.code])
+  $effect(() => {
+    if (own1) tier = 0
+  })
 
   const soft = $derived(s.fill === 'soft')
   const fill = $derived(s.fill === 'outline' ? 'none' : color)
@@ -131,11 +137,11 @@
 
 {#if item.kind === 'picture' && tier < 2}
   <img
-    src={pictureSrc(item, still || tier > 0)}
+    src={own1 || pictureSrc(item, still || tier > 0)}
     alt={say}
     {lang}
     draggable="false"
-    onerror={() => (tier = still || tier ? 2 : 1)}
+    onerror={() => (tier = still || tier || item.one ? 2 : 1)}
   />
 {:else}
 <svg viewBox="0 0 400 400" role="img" aria-label={say} {lang}>

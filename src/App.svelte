@@ -15,6 +15,8 @@
   import { linkQuery, linkSettings, setupName } from './share.js'
   import { setHome } from './home.js'
   import { videoId, startSeconds } from './link.js'
+  import { thingFiles } from './things.js'
+  import { canKeep, localPictures, addPictures, removePictures } from './local.js'
 
   let { update = null } = $props()
 
@@ -106,8 +108,36 @@
   // Have the next picture ready before its slide arrives.
   $effect(() => {
     const next = deck[(index + 1) % deck.length]
-    if (next?.kind === 'picture') new Image().src = pictureSrc(next, still)
+    if (next?.kind === 'picture' && !(next.one && pics[next.code])) new Image().src = pictureSrc(next, still)
   })
+
+  // Pictures this device keeps for the Things sets (local.js): added from the
+  // device's own files in Settings, kept in the browser, never uploaded.
+  let pics = $state.raw({})
+  let picsNote = $state('')
+  const THING_COUNT = thingFiles().length
+  const picsHave = $derived(thingFiles().filter((x) => pics[x.file]).length)
+  $effect(() => {
+    localPictures().then((p) => (pics = p)).catch(() => {})
+  })
+  async function addPics(e) {
+    const files = [...e.target.files]
+    e.target.value = ''
+    if (!files.length) return
+    try {
+      const r = await addPictures(files)
+      pics = await localPictures()
+      picsNote = r.added ? `Added ${r.added}.` : 'None of those files is named after a thing (dog, apple, bus…).'
+      if (r.added && r.unknown.length) picsNote += ` ${r.unknown.length} other ${r.unknown.length === 1 ? 'file was' : 'files were'} not used.`
+    } catch {
+      picsNote = 'The pictures could not be kept on this device.'
+    }
+  }
+  async function removePics() {
+    await removePictures().catch(() => {})
+    pics = await localPictures().catch(() => ({}))
+    picsNote = 'Removed.'
+  }
 
   // One shape after another stays on screen as a single picture that changes
   // from each shape into the next, so those slides share a key. Every other
@@ -387,7 +417,8 @@
     background: { plain: 'Plain', glow: 'Soft glow', dots: 'Dotted' },
     fill: { solid: 'Solid', outline: 'Outline', soft: 'Soft fill' },
     colorMode: { rainbow: 'Changing', one: 'One color' },
-    size: { small: 'Small', medium: 'Medium', large: 'Large' },
+    size: { small: 'Small', medium: 'Medium', large: 'Large', full: 'Biggest' },
+    drawerSide: { left: 'Left', right: 'Right' },
     entrance: { none: 'None', fade: 'Fade', grow: 'Grow', slide: 'Slide' },
     idle: { still: 'Still', float: 'Float', breathe: 'Breathe' },
     font: { atkinson: 'Atkinson', rounded: 'Rounded', serif: 'Serif' },
@@ -399,7 +430,15 @@
     rounded: "ui-rounded, 'Arial Rounded MT Bold', 'Varela Round', 'Comic Sans MS', sans-serif",
     serif: "Georgia, 'Times New Roman', serif"
   }
+  // How big the picture is, as a share of the stage's shorter side. 'full' is
+  // as big as fits once the words under it have their room: one row of words,
+  // two (both languages), a letter's own small picture, or none at all.
   const SIZE = { small: 46, medium: 62, large: 76 }
+  const k = $derived.by(() => {
+    if (s.size !== 'full') return SIZE[s.size]
+    if (!item || !s.showLabel || !rows.length) return 94
+    return rows.length > 1 ? 79 : item.kind === 'glyph' && item.emoji ? 82 : 85
+  })
 </script>
 
 <svelte:window onkeydown={onKey} onpointermove={wake} onpointerdown={wake} />
@@ -419,8 +458,9 @@
   class="look bg-{s.background}"
   class:drawer
   class:has-day={s.dayBar}
+  class:side-left={s.drawerSide === 'left'}
   class:quiet={hideBar}
-  style="--stage-bg:{theme.bg}; --stage-bg2:{theme.bg2}; --stage-ink:{theme.ink}; --stage-dot:{theme.dot}; --stage-font:{FONTS[s.font]}; --k:{SIZE[s.size]}"
+  style="--stage-bg:{theme.bg}; --stage-bg2:{theme.bg2}; --stage-ink:{theme.ink}; --stage-dot:{theme.dot}; --stage-font:{FONTS[s.font]}; --k:{k}"
 >
   {#if s.dayBar}
     <div class="day" role="img" aria-label={dayLabel}>
@@ -440,7 +480,7 @@
         <div class="slide in-{s.entrance}">
           {#if item.kind !== 'title'}
             <div class="vis idle-{s.idle}">
-              <Visual {item} {s} {color} {two} {still} {say} lang={s.words === 'es' ? 'es' : undefined} ink={theme.ink} />
+              <Visual {item} {s} {color} {two} {still} {say} {pics} lang={s.words === 'es' ? 'es' : undefined} ink={theme.ink} />
             </div>
           {/if}
           <!-- The words are made fresh for every slide, so the pause before them starts again. -->
@@ -538,7 +578,10 @@
     <aside class="drawer-panel" aria-label="Settings">
       <header>
         <h1>Looksee</h1>
-        <button class="btn small" onclick={() => (drawer = false)}>Close</button>
+        <span class="head-btns">
+          <button class="btn small" onclick={fullscreen}>Full screen</button>
+          <button class="btn small" onclick={() => (drawer = false)}>Close</button>
+        </span>
       </header>
 
       {#if update}
@@ -563,6 +606,21 @@
                   <label class:on={s.sets.includes(id)}><input type="checkbox" value={id} bind:group={s.sets} />{SETS.find((x) => x.id === id).label}</label>
                 {/each}
               </div>
+            {/if}
+            {#if g.id === 'things'}
+              <!-- Things come with no pictures: each device is given its own. -->
+              <p class="hint things">
+                Things need pictures added on this device. They are kept here and never uploaded.
+                {#if canKeep()}<b class="mono">{picsHave} of {THING_COUNT}</b> added.{:else}This browser cannot keep them.{/if}
+              </p>
+              {#if canKeep()}
+                <div class="files">
+                  <label class="btn small file">Choose a folder<input type="file" webkitdirectory multiple onchange={addPics} /></label>
+                  <label class="btn small file">Choose pictures<input type="file" multiple accept="image/*,.avif" onchange={addPics} /></label>
+                  {#if picsHave}<button class="btn small" onclick={removePics}>Remove them</button>{/if}
+                </div>
+                {#if picsNote}<p class="hint" role="status">{picsNote}</p>{/if}
+              {/if}
             {/if}
           </div>
         {/each}
@@ -647,6 +705,7 @@
       {@render seg('fill', 'Drawing')}
       {@render seg('colorMode', 'Color')}
       {@render seg('size', 'Size')}
+      {@render seg('drawerSide', 'Settings open on the')}
       {@render seg('font', 'Lettering')}
       {@render seg('entrance', 'Arrives with')}
       {@render seg('idle', 'While showing')}
@@ -720,23 +779,25 @@
 </div>
 
 <style>
-  .look { position: fixed; inset: 0; overflow: hidden; --inset-r: 0px; --inset-b: 0px; --bar-h: 0px; color: var(--stage-ink); background: var(--stage-bg); }
+  .look { position: fixed; inset: 0; overflow: hidden; --inset-l: 0px; --inset-r: 0px; --inset-b: 0px; --drawer-w: min(380px, 100vw); --bar-h: 0px; color: var(--stage-ink); background: var(--stage-bg); }
   .look.bg-glow { background: radial-gradient(circle at 50% 42%, var(--stage-bg2), var(--stage-bg) 70%); }
   .look.bg-dots { background: radial-gradient(var(--stage-dot) 3px, transparent 3.5px) 0 0 / 34px 34px var(--stage-bg); }
-  .look.drawer { --inset-r: min(380px, 100vw); }
+  /* Settings takes one side of the screen and everything else moves over. */
+  .look.drawer { --inset-r: var(--drawer-w); }
+  .look.drawer.side-left { --inset-r: 0px; --inset-l: var(--drawer-w); }
   .look.has-day { --bar-h: 50px; }
   .look.quiet { cursor: none; }
 
   /* School-day bar: one box per part, as wide as the part is long (never
      narrower than its pictures). Past parts are shaded; the line is now. */
-  .day { position: absolute; top: 0; left: 0; right: var(--inset-r); height: var(--bar-h); display: flex; gap: 3px; padding: 6px 8px 4px; }
+  .day { position: absolute; top: 0; left: var(--inset-l); right: var(--inset-r); height: var(--bar-h); display: flex; gap: 3px; padding: 6px 8px 4px; }
   .part { position: relative; flex: 1 0 3em; min-width: 0; display: grid; place-items: center; overflow: hidden; border-radius: 8px; font-size: 22px; line-height: 1; white-space: nowrap; background: color-mix(in srgb, var(--stage-ink) 9%, transparent); }
   .part.past { background: color-mix(in srgb, var(--stage-ink) 24%, transparent); }
   .part.past span { opacity: 0.5; }
   .part i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--stage-ink) 24%, transparent); border-right: 3px solid var(--stage-ink); }
   .part span { position: relative; }
 
-  .scene { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 70px) 0; container-type: size; display: grid; place-items: center; outline: none; cursor: pointer; }
+  .scene { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 70px) var(--inset-l); container-type: size; display: grid; place-items: center; outline: none; cursor: pointer; }
   .look.quiet .scene { cursor: none; }
   .slide { display: flex; flex-direction: column; align-items: center; gap: 2cqmin; }
   .vis { width: calc(var(--k) * 1cqmin); height: calc(var(--k) * 1cqmin); }
@@ -764,10 +825,10 @@
   @keyframes reveal { from { visibility: hidden; } }
   .nothing { font-size: 20px; max-width: 24em; text-align: center; padding: 16px; }
 
-  .prog { position: absolute; left: 0; right: var(--inset-r); bottom: var(--inset-b); height: 6px; background: color-mix(in srgb, var(--stage-ink) 12%, transparent); }
+  .prog { position: absolute; left: var(--inset-l); right: var(--inset-r); bottom: var(--inset-b); height: 6px; background: color-mix(in srgb, var(--stage-ink) 12%, transparent); }
   .prog i { display: block; height: 100%; background: color-mix(in srgb, var(--stage-ink) 55%, transparent); }
 
-  .ctl { position: absolute; left: 0; right: var(--inset-r); bottom: calc(var(--inset-b) + 18px); display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 12px; pointer-events: none; }
+  .ctl { position: absolute; left: var(--inset-l); right: var(--inset-r); bottom: calc(var(--inset-b) + 18px); display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 12px; pointer-events: none; }
   .ctl > * { pointer-events: auto; }
   .ctl .btn { min-height: 44px; padding-inline: 16px; }
   .ctl .play { min-width: 6.5em; }
@@ -775,14 +836,14 @@
   .look.quiet .ctl:not(:has(:focus-visible)) { opacity: 0; }
   .look.quiet .ctl:not(:has(:focus-visible)) > * { pointer-events: none; }
 
-  .pip { position: absolute; display: none; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; border: 3px solid var(--stage-ink); box-shadow: 0 6px 24px rgb(0 0 0 / 0.25); max-width: calc(100vw - var(--inset-r) - 32px); }
+  .pip { position: absolute; display: none; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; border: 3px solid var(--stage-ink); box-shadow: 0 6px 24px rgb(0 0 0 / 0.25); max-width: calc(100vw - var(--inset-r) - var(--inset-l) - 32px); }
   .pip.on { display: block; }
   .pip-small { width: 240px; }
   .pip-medium { width: 360px; }
   .pip-large { width: 500px; }
-  .pip-tl { top: calc(var(--bar-h) + 16px); left: 16px; }
+  .pip-tl { top: calc(var(--bar-h) + 16px); left: calc(var(--inset-l) + 16px); }
   .pip-tr { top: calc(var(--bar-h) + 16px); right: calc(var(--inset-r) + 16px); }
-  .pip-bl { bottom: calc(var(--inset-b) + 78px); left: 16px; }
+  .pip-bl { bottom: calc(var(--inset-b) + 78px); left: calc(var(--inset-l) + 16px); }
   .pip-br { bottom: calc(var(--inset-b) + 78px); right: calc(var(--inset-r) + 16px); }
   .pip-host { position: absolute; inset: 0; }
   .pip-host :global(iframe) { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; }
@@ -790,7 +851,7 @@
   .pip-shield { position: absolute; inset: 0; }
 
   /* Watch: the video in the middle, its words in a frame around it. */
-  .watch { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 78px) 0; container-type: size; display: grid;
+  .watch { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 78px) var(--inset-l); container-type: size; display: grid;
     grid-template: 'top top top' 1fr 'left video right' auto 'bottom bottom bottom' 1fr / 1fr minmax(0, 54cqw) 1fr; gap: 2cqmin; padding: 2cqmin; background: var(--stage-bg); z-index: 2; }
   .watch.bare { grid-template: '. . .' 1fr '. video .' auto '. . .' 1fr / 1fr minmax(0, 80cqw) 1fr; }
   .watch-video { grid-area: video; position: relative; aspect-ratio: 16 / 9; max-height: 62cqh; border-radius: 12px; overflow: hidden; background: #000; border: 3px solid var(--stage-ink); justify-self: center; width: 100%; }
@@ -818,8 +879,10 @@
   .tile.close { min-height: 160px; font-size: 18px; }
   .ctl .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
 
-  .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--inset-r); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
+  .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
+  .look.side-left .drawer-panel { right: auto; left: 0; border-left: 0; border-right: 1px solid var(--line); }
   .drawer-panel header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .head-btns { display: flex; gap: 6px; }
   h1 { font-size: 20px; margin: 0; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 22px 0 8px; padding-top: 14px; border-top: 1px solid var(--line); }
   .fld { display: block; border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
@@ -842,6 +905,12 @@
   .hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
   .hint.bad { color: var(--bad); }
   .grp { margin-bottom: 10px; }
+  .hint.things { margin: 8px 0; }
+  .files { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  /* A button that opens the device's file chooser: the real input lies over it, unseen. */
+  .file { position: relative; overflow: hidden; cursor: pointer; }
+  .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+  .file:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--ring); }
   .grp-head { display: block; width: 100%; min-height: 44px; text-align: left; font-size: 16px; margin-bottom: 6px; }
   .grp-head[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .grp-head[aria-pressed='mixed'] { border: 2px solid var(--brand); }
@@ -853,12 +922,12 @@
 
   /* Narrow screens: the drawer becomes a bottom sheet so the stage stays visible. */
   @media (max-width: 760px) {
-    .look.drawer { --inset-r: 0px; --inset-b: 58vh; }
+    .look.drawer, .look.drawer.side-left { --inset-r: 0px; --inset-l: 0px; --inset-b: 58vh; }
     .scene { bottom: calc(var(--inset-b) + 124px); }
     .ctl { gap: 6px; }
     .ctl .btn { padding-inline: 11px; font-size: 15px; }
     .ctl .count { display: none; }
-    .drawer-panel { top: auto; left: 0; width: auto; height: var(--inset-b); border-left: 0; border-top: 1px solid var(--line); }
+    .drawer-panel, .look.side-left .drawer-panel { top: auto; left: 0; right: 0; width: auto; height: var(--inset-b); border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
     .pip-small { width: 160px; }
     .pip-medium { width: 220px; }
     .pip-large { width: 300px; }
