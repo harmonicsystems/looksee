@@ -608,3 +608,5 @@ setting, which was checked). Any device other than one Mac.
 - **113 new Spanish words** for the things, as unchecked as the rest. Arguable ones: plátano for
   banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
   chile for pepper, palomitas for popcorn, panqueques for pancakes.
+
+- **Background music.** Planned in `docs/MUSIC-PLAN.md` (recorded PD/CC0 files, chosen in Tools, a bar button to stop). Waits on the 68 KB limit and the choice of recordings.
