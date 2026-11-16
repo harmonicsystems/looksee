@@ -12,7 +12,8 @@
   import { VIDEOS, sides } from './videos.js'
   import { speechLines, pickVoice } from './speech.js'
   import { speak, onVoices } from './speak.js'
-  import { linkQuery, linkSettings, setupName } from './share.js'
+  import { linkQuery, linkSettings, setupName, setsName } from './share.js'
+  import { MINUTES, PLAN_MAX, blockDone, minutesLeft, blockAfter } from './plan.js'
   import { setHome } from './home.js'
   import { videoId, startSeconds } from './link.js'
   import { thingFiles } from './things.js'
@@ -51,15 +52,24 @@
     location.href = new URL('./', document.baseURI).href
   }
 
+  // ---- plan ----
+  // With a plan, its blocks play in turn, each for its minutes (plan.js).
+  // `block` is the one playing now. `cur` is whose sets are playing and being
+  // chosen in Settings: the block's or, with no plan, the settings' own.
+  let blk = $state(0)
+  const bi = $derived(Math.min(blk, s.plan.length - 1))
+  const block = $derived(s.planOn && s.plan.length ? s.plan[bi] : null)
+  const cur = $derived(block ?? s)
+
   // ---- deck ----
-  const deckKey = $derived(deckKeyOf(s))
+  const deckKey = $derived(deckKeyOf({ ...s, sets: cur.sets }) + (block ? bi : ''))
   // `round` goes up each time the deck starts over, which deals it again:
   // new skin tones, and a new order when it is mixed up.
   let round = $state(0)
   const deck = $derived.by(() => {
     deckKey
     round
-    return untrack(() => buildDeck($state.snapshot(s)))
+    return untrack(() => buildDeck({ ...$state.snapshot(s), sets: [...cur.sets] }))
   })
   let index = $state(0)
   let playing = $state(false)
@@ -104,7 +114,11 @@
     motionQuery.addEventListener('change', f)
     return () => motionQuery.removeEventListener('change', f)
   })
-  const still = $derived(reduced || s.feelingMotion === 'still')
+  // Safari, and every browser on an iPhone or iPad, draws the moving pictures
+  // on a black square (it loses their clear background), so those get the
+  // still ones.
+  const APPLE = navigator.vendor.startsWith('Apple')
+  const still = $derived(APPLE || reduced || s.feelingMotion === 'still')
   // Have the next picture ready before its slide arrives.
   $effect(() => {
     const next = deck[(index + 1) % deck.length]
@@ -144,10 +158,55 @@
   // slide is made fresh, which is what plays its entrance.
   const slideKey = $derived((s.morph && !reduced && item?.pts ? 'run' + runStart(deck, index) : index) + deckKey)
 
+  // A block's minutes are minutes of playing: `spent` is what it had played
+  // before `since`, the moment playing last began (0 while paused).
+  let spent = 0
+  let since = 0
+  const played = () => spent + (since && Date.now() - since)
+  $effect(() => {
+    if (!playing) return
+    since = Date.now()
+    return () => {
+      spent += Date.now() - since
+      since = 0
+    }
+  })
+  // Make block `i` the one that plays, from its start.
+  function goBlock(i) {
+    blk = i
+    spent = 0
+    if (since) since = Date.now()
+  }
+  function addBlock() {
+    s.plan.push({ sets: [...cur.sets], min: 10 })
+    goBlock(s.plan.length - 1)
+  }
+  function removeBlock(i) {
+    s.plan.splice(i, 1)
+    goBlock(Math.max(0, i - 1))
+  }
+  // One place earlier in the plan.
+  function moveBlock(i) {
+    s.plan.splice(i - 1, 0, ...s.plan.splice(i, 1))
+    goBlock(i - 1)
+  }
+
   function step(by) {
     if (!deck.length) return
+    // A block that has had its minutes hands over to the next at a slide's end.
+    if (by > 0 && block && blockDone(block.min, played())) {
+      const was = bi
+      const to = blockAfter(s.plan, was, s.loop)
+      if (to < 0) {
+        playing = false
+        index = 0
+      }
+      goBlock(Math.max(0, to))
+      if (to !== was) return
+    }
     const n = index + by
-    if (n >= deck.length && !s.loop) {
+    // Inside a block the slides always start over: the block decides when to stop.
+    if (n >= deck.length && !s.loop && !block) {
       playing = false
       index = 0
     } else {
@@ -204,6 +263,13 @@
     return () => clearInterval(t)
   })
   const parts = $derived(s.dayBar ? daySegments(s.day, s.dayEnd, now) : [])
+  // Minutes the block playing now still has, for the control bar.
+  const left = $derived.by(() => {
+    now
+    index
+    playing
+    return block ? minutesLeft(block.min, played()) : 0
+  })
   const dayLabel = $derived.by(() => {
     const i = parts.findIndex((p) => p.state === 'now')
     if (i >= 0) return `School day, part ${i + 1} of ${parts.length}: ${parts[i].icon}`
@@ -387,20 +453,22 @@
     e.preventDefault()
   }
 
-  // A whole group of sets on or off, keeping the order of SETS.
+  // A whole group of sets on or off, keeping the order of SETS. With a plan
+  // it is the sets of the block playing now that change.
   function toggleGroup(g, allOn) {
-    const want = new Set(s.sets)
+    const want = new Set(cur.sets)
     for (const id of g.sets) allOn ? want.delete(id) : want.add(id)
-    s.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
+    cur.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
   }
+  const toggleSet = (id) => toggleGroup({ sets: [id] }, cur.sets.includes(id))
 
   function fixRange() {
     Object.assign(s, normalizeSettings($state.snapshot(s)))
   }
-  // Back to the defaults, but the video link and the school day are kept:
-  // those are set up once and are not part of the look.
+  // Back to the defaults, but the video link, the school day and the plan are
+  // kept: those are set up once and are not part of the look.
   function reset() {
-    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd })
+    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, planOn: s.planOn, plan: s.plan })
     Object.assign(s, normalizeSettings(keep))
   }
 
@@ -568,6 +636,7 @@
     <button class="btn primary play" onclick={toggle} disabled={!deck.length}>{playing ? 'Pause' : 'Play'}</button>
     <button class="btn" onclick={() => step(1)} disabled={!deck.length}>Next</button>
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
+    {#if block}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
     <button class="btn" onclick={toggleVideo} disabled={!vid} aria-pressed={pipOn}>{pipOn ? 'Hide video' : 'Video'}</button>
     <button class="btn" onclick={() => (picking = true)} aria-haspopup="dialog">Watch</button>
     <button class="btn" onclick={() => (drawer = !drawer)} aria-expanded={drawer}>Settings</button>
@@ -589,11 +658,33 @@
       {/if}
 
       <h2>What to show</h2>
+      <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && !s.plan.length && addBlock()} /> A plan: different sets in turn, a few minutes each</label>
+      {#if s.planOn}
+        <div class="fld" role="group" aria-label="Plan">
+          {#each s.plan as b, i (b)}
+            <div class="grp">
+              <button class="btn grp-head" aria-pressed={i === bi} onclick={() => goBlock(i)}>{i + 1}. {setsName(b.sets) || 'No sets yet'} · {b.min} min</button>
+              <div class="seg">
+                {#each MINUTES as m}
+                  <label class:on={b.min === m}><input type="radio" name="min{i}" value={m} bind:group={b.min} aria-label="{m} minutes" />{m}</label>
+                {/each}
+                <button class="btn small" onclick={() => moveBlock(i)} disabled={!i} aria-label="Move block {i + 1} earlier">↑</button>
+                <button class="btn small" onclick={() => removeBlock(i)} disabled={s.plan.length < 2} aria-label="Remove block {i + 1}">Remove</button>
+              </div>
+            </div>
+          {/each}
+          <button class="btn small" onclick={addBlock} disabled={s.plan.length >= PLAN_MAX}>Add a block</button>
+        </div>
+        <p class="hint">
+          Each block plays for its minutes, then the next one begins. The minutes count only while the slides are playing.
+          Click a block to play it now and to choose its sets below.
+        </p>
+      {/if}
       <fieldset class="fld">
-        <legend>Sets</legend>
+        <legend>{block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
         <!-- One click on a group turns it all on, or all off when it is all on. -->
         {#each GROUPS as g}
-          {@const on = g.sets.filter((id) => s.sets.includes(id)).length}
+          {@const on = g.sets.filter((id) => cur.sets.includes(id)).length}
           <div class="grp">
             <button
               class="btn grp-head"
@@ -603,27 +694,25 @@
             {#if g.sets.length > 1}
               <div class="seg">
                 {#each g.sets as id}
-                  <label class:on={s.sets.includes(id)}><input type="checkbox" value={id} bind:group={s.sets} />{SETS.find((x) => x.id === id).label}</label>
+                  <label class:on={cur.sets.includes(id)}><input type="checkbox" checked={cur.sets.includes(id)} onchange={() => toggleSet(id)} />{SETS.find((x) => x.id === id).label}</label>
                 {/each}
               </div>
             {/if}
-            {#if g.id === 'things'}
-              <!-- Things come with no pictures: each device is given its own. -->
-              <p class="hint things">
-                Things need pictures added on this device. They are kept here and never uploaded.
-                {#if canKeep()}<b class="mono">{picsHave} of {THING_COUNT}</b> added.{:else}This browser cannot keep them.{/if}
-              </p>
-              {#if canKeep()}
-                <div class="files">
-                  <label class="btn small file">Choose a folder<input type="file" webkitdirectory multiple onchange={addPics} /></label>
-                  <label class="btn small file">Choose pictures<input type="file" multiple accept="image/*,.avif" onchange={addPics} /></label>
-                  {#if picsHave}<button class="btn small" onclick={removePics}>Remove them</button>{/if}
-                </div>
-                {#if picsNote}<p class="hint" role="status">{picsNote}</p>{/if}
-              {/if}
-            {/if}
           </div>
         {/each}
+        <!-- Animals, Food and Things come with no pictures: each device is given its own. -->
+        <p class="hint things">
+          Animals, Food and Things need pictures added on this device. They are kept here and never uploaded.
+          {#if canKeep()}<b class="mono">{picsHave} of {THING_COUNT}</b> added.{:else}This browser cannot keep them.{/if}
+        </p>
+        {#if canKeep()}
+          <div class="files">
+            <label class="btn small file">Choose a folder<input type="file" webkitdirectory multiple onchange={addPics} /></label>
+            <label class="btn small file">Choose pictures<input type="file" multiple accept="image/*,.avif" onchange={addPics} /></label>
+            {#if picsHave}<button class="btn small" onclick={removePics}>Remove them</button>{/if}
+          </div>
+          {#if picsNote}<p class="hint" role="status">{picsNote}</p>{/if}
+        {/if}
       </fieldset>
       {@render seg('words', 'Words')}
       {#if s.words !== 'en'}{@render seg('esGender', 'Spanish feelings')}{/if}
@@ -646,6 +735,7 @@
       </div>
       {@render seg('mathTo', 'Adding and subtracting')}
       {@render seg('feelingMotion', 'Faces and hands')}
+      {#if APPLE}<p class="hint">Safari, and any browser on an iPad or iPhone, shows them still: it cannot draw the moving ones cleanly.</p>{/if}
       {@render seg('skin', 'Skin tone')}
 
       <h2>Speech</h2>
@@ -671,7 +761,7 @@
         <input type="range" min="1" max="15" bind:value={s.seconds} />
       </label>
       {@render seg('order', 'Order')}
-      <label class="chk"><input type="checkbox" bind:checked={s.loop} /> Start over at the end</label>
+      <label class="chk"><input type="checkbox" bind:checked={s.loop} /> Start over at the end{block ? ' of the plan' : ''}</label>
 
       <h2>School day</h2>
       <label class="chk"><input type="checkbox" bind:checked={s.dayBar} /> Show the day bar at the top</label>

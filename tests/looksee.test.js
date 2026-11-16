@@ -9,7 +9,8 @@ import { POINTS, mix, ease, pathOf } from '../src/morph.js'
 import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait, upgrade } from '../src/settings.js'
 import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
-import { linkQuery, linkSettings, setupName } from '../src/share.js'
+import { linkQuery, linkSettings, setupName, setsName } from '../src/share.js'
+import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter } from '../src/plan.js'
 import { VIDEOS, sides } from '../src/videos.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
@@ -636,8 +637,9 @@ describe('for a classroom', () => {
 // the repo. Each device is given its own copies (local.js).
 describe('things', () => {
   const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
-  it('is one group of sets, each a run of single still pictures', () => {
-    expect(GROUPS.find((g) => g.id === 'things').sets).toEqual(Object.keys(THINGS))
+  it('is three groups of sets, each set a run of single still pictures', () => {
+    expect(GROUPS.filter((g) => g.own).map((g) => g.id)).toEqual(['animals', 'food', 'things'])
+    expect(GROUPS.filter((g) => g.own).flatMap((g) => g.sets)).toEqual(Object.keys(THINGS))
     for (const id of Object.keys(THINGS)) {
       const d = deck({ sets: [id] })
       expect(d.map((x) => x.label), id).toEqual(THINGS[id].map((x) => x.label))
@@ -682,5 +684,71 @@ describe('things', () => {
     if (!existsSync(dir)) return
     const have = readdirSync(dir).filter((n) => !n.startsWith('.'))
     expect(have.sort()).toEqual(thingFiles().map((x) => `${x.file}.avif`).sort())
+  })
+})
+
+describe('a plan: sets in timed blocks', () => {
+  const plan = [
+    { sets: ['letters', 'numbers'], min: 10 },
+    { sets: ['adding'], min: 15 },
+    { sets: ['feelings'], min: 5 }
+  ]
+  it('is off and empty for a new visitor, and adds nothing to a link', () => {
+    expect(DEFAULTS.planOn).toBe(false)
+    expect(DEFAULTS.plan).toEqual([])
+    expect(linkQuery(DEFAULTS)).toBe('v=1')
+  })
+  it('offers blocks of 5 to 25 minutes', () => {
+    expect(MINUTES).toEqual([5, 10, 15, 20, 25])
+  })
+  it('keeps only blocks that can be played', () => {
+    const raw = [{ sets: ['numbers', 'letters', 'nope'], min: 15 }, { sets: [], min: 5 }, { sets: ['feelings'], min: 7 }, 'x', null]
+    expect(normalizePlan(raw)).toEqual([{ sets: ['letters', 'numbers'], min: 15 }, { sets: ['feelings'], min: 10 }])
+    expect(normalizePlan('x')).toEqual([])
+    expect(normalizePlan(Array(20).fill({ sets: ['letters'], min: 5 }))).toHaveLength(PLAN_MAX)
+    // Editing one device's plan must never edit the defaults.
+    normalizeSettings({}).plan.push(plan[0])
+    expect(DEFAULTS.plan).toEqual([])
+    expect(normalizeSettings({ planOn: true, plan }).plan).toEqual(plan)
+  })
+  it('counts a block down in minutes of playing', () => {
+    expect(minutesLeft(10, 0)).toBe(10)
+    expect(minutesLeft(10, 60000)).toBe(9)
+    expect(minutesLeft(10, 9.5 * 60000)).toBe(1)
+    expect(minutesLeft(10, 11 * 60000)).toBe(0)
+    expect(blockDone(10, 10 * 60000 - 1)).toBe(false)
+    expect(blockDone(10, 10 * 60000)).toBe(true)
+  })
+  it('goes from block to block, and starts over or stops after the last', () => {
+    expect(blockAfter(plan, 0, true)).toBe(1)
+    expect(blockAfter(plan, 2, true)).toBe(0)
+    expect(blockAfter(plan, 2, false)).toBe(-1)
+    expect(blockAfter([plan[0]], 0, true)).toBe(0)
+  })
+  it('travels in a settings link, readable in the address bar', () => {
+    const q = linkQuery({ ...DEFAULTS, planOn: true, plan })
+    expect(q).toBe('v=1&planOn=1&plan=letters.numbers-10_adding-15_feelings-5')
+    const back = linkSettings('?' + q)
+    expect(back.planOn).toBe(true)
+    expect(back.plan).toEqual(plan)
+    expect(linkSettings('?v=1&plan=nope-10_letters-99').plan).toEqual([{ sets: ['letters'], min: 10 }])
+    expect(linkSettings('?v=1&plan=').plan).toEqual([])
+  })
+  it('is not a deck key: a block plays by lending the deck its sets', () => {
+    expect(deckKey({ ...DEFAULTS, planOn: true, plan })).toBe(deckKey(DEFAULTS))
+    expect(deckKey({ ...DEFAULTS, sets: plan[1].sets })).not.toBe(deckKey(DEFAULTS))
+  })
+  it('names a block by its sets', () => {
+    expect(setsName(['letters', 'numbers'])).toBe('🔤 Letters & Numbers')
+    expect(setsName(['adding'])).toBe('➕ Adding')
+    expect(setsName(SETS.map((x) => x.id))).toBe('All')
+    expect(setsName([])).toBe('')
+  })
+  it('names a bookmark after the groups it plays, in order, and its length', () => {
+    expect(setupName({ ...DEFAULTS, planOn: true, plan })).toBe('🔤➕😊 Plan, 30 min · EN')
+    expect(setupName({ ...DEFAULTS, planOn: true, plan: [plan[2], plan[0]], words: 'both' })).toBe('😊🔤 Plan, 15 min · EN+ES')
+    // A plan that is switched off, or has no blocks, is named after the sets as before.
+    expect(setupName({ ...DEFAULTS, plan, sets: ['adding', 'subtracting'] })).toBe('➕ Math · EN')
+    expect(setupName({ ...DEFAULTS, planOn: true, sets: ['adding', 'subtracting'] })).toBe('➕ Math · EN')
   })
 })

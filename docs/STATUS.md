@@ -18,7 +18,9 @@ letter, and five smaller language features. They are described under "2026-11-11
 `looksee` → `harmonicsystems.github.io`) and the custom domain set in the repo's Pages settings.
 Nothing in the code has to change: the deploy builds for whichever address Pages is using.
 
-**It has only been used on one Mac.** No child, teacher or clinician has used it yet.
+**It is in use in one classroom,** on a Chromebook with a projector and a mouse (bookmarks
+confirmed there on 2026-11-12; the class's notes came back on 2026-11-15). Everything else has
+been checked on one Mac.
 
 ## How it got here
 
@@ -271,6 +273,45 @@ reload, and Remove took them away again. Nothing was written to the saved settin
 the dev server shows David's own pictures, it stops once pictures are added, and nothing else is
 affected.
 
+## 2026-11-15, later: a plan of timed blocks, 161 pictures, the licence, and Safari
+
+**A plan.** The teacher asked to "program different sets throughout the day in 5 to 25 minute
+chunks". Settings ▸ What to show ▸ "A plan" now holds up to 12 blocks, each with its own sets and
+5, 10, 15, 20 or 25 minutes. The blocks play in turn; a block's minutes count only while the
+slides are playing; after the last block the plan starts over, or stops if "Start over at the
+end" is off. The control bar shows the block and the minutes left. A plan travels in a settings
+link, so one bookmark can hold a morning. **It follows playing time, not the clock:** whether she
+meant blocks that begin at set times of day has not been asked.
+
+**More pictures.** The Things sets grew from 4 sets and 48 pictures to 13 sets and 161, in three
+groups: Animals (Pets and farm, Wild animals, Sea animals, Birds and bugs), Food (Food and drink,
+Fruit, Vegetables) and Things (Clothes, Toys, At home, At school, Transportation, Outside). Every
+picture was looked at first; one was refused for a brand mark. The folder David hands to a
+classroom device is `~/Desktop/things` (161 files, 1.7 MB).
+
+**The Thiings licence.** David showed his billing page: "Lifetime Access (Legacy)", which the
+terms honour as the Indie tier, so using the pictures in Looksee is licensed and the note asking
+permission is not needed. The terms still forbid making the icons available as standalone
+downloads and say nothing about public repos. David chose to keep the pictures local: each device
+adds its own, and none is in the repo or on the site.
+
+**Safari.** David saw the moving faces drawn on black squares in Safari, which loses an animated
+AVIF's clear background. Apple's browsers now get the still pictures. **Not checked in Safari:**
+the test browser is Chromium, where the check is simply off.
+
+**Checked on 2026-11-15, locally.** 88 tests pass and the build passes its gates at 58.1 KB of
+60. In a browser with the clock moved forward by hand: a three-block plan hands over at the end
+of each block's minutes and starts over after the last; with "Start over" off it stops on block
+1; 30 minutes spent paused do not count. In Settings: turning the plan on makes a first block
+from the sets chosen; clicking a block plays it and puts its sets in the picker; changing its
+minutes and sets changes the link; Add, ↑ and Remove work. All 161 pictures load and no picture
+or word is clipped or overlapping, in both languages, at 1366 × 768 and at a phone's size. The
+console is clean. On a built copy with no pictures in it: the plan hands over and stops as above,
+and pictures given under the new names ("octopus.png", "Ice Cream.png", the library's own
+"blue-whale.png") are kept and shown while the rest of the set shows its words alone. **Not
+checked:** the plan over a real 20 minutes (the clock was faked), the
+plan or the new sets on the Chromebook, and the new Spanish words.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -352,3 +393,13 @@ setting, which was checked). Any device other than one Mac.
 - **What Clip Choice has learned since.** Its repo has newer handling for pre-roll ads and for
   pasted embed code and share links. Looksee now waits out pre-roll ads the same way; `src/link.js` still reads plain links only.
 - **A license for the code.** The repo is public and has none yet.
+- **A plan by the clock?** Blocks follow playing time. If the teacher meant "letters at 9:15",
+  blocks need start times, probably shared with the school-day bar.
+- **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
+  choice. Putting them on the site for every visitor (from a private source at deploy time, or in
+  the repo after asking Thiings) is open.
+- **The size budget.** 58.1 KB of 60. The 161 things cost about 1.9 KB; more of them, or another
+  feature, needs the words loaded apart from the app or a bigger budget.
+- **113 new Spanish words** for the things, as unchecked as the rest. Arguable ones: plátano for
+  banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
+  chile for pepper, palomitas for popcorn, panqueques for pancakes.

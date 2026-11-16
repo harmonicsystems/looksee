@@ -9,8 +9,11 @@ A calm screen that plays first concepts, one picture at a time.
 - **Words in English, Spanish or both** under each picture, with the first letter picked out, el
   or la on Spanish nouns, and an optional pause so a child can say the word first.
 - **Two-word slides** that put a color with a shape: "red circle / círculo rojo".
-- **Things**: animals, food, transportation and things at home. These sets come with no
-  pictures; you add your own picture files on each device, and they stay on that device.
+- **Animals, Food and Things**: 13 sets of everyday pictures, from pets and fruit to clothes and
+  the weather. These sets come with no pictures; you add your own picture files on each device,
+  and they stay on that device.
+- **A plan**: blocks of 5 to 25 minutes, each with its own sets, that play one after another, so
+  the screen can change what it shows through the day by itself.
 - **A bar for the school day** along the top: one box per part of the day, with the emoji you
   choose, shaded as the day goes by. You set when the day starts and ends and the parts in between.
 - **A corner video**: a YouTube link can play in any corner with no controls, suggestions or end

@@ -366,10 +366,19 @@ export const SETS = [
   { id: 'feelings', label: 'Feelings', es: 'Emociones' },
   { id: 'gestures', label: 'Gestures', es: 'Gestos' },
   { id: 'body', label: 'Body', es: 'Cuerpo' },
-  { id: 'animals', label: 'Animals', es: 'Animales' },
-  { id: 'food', label: 'Food', es: 'Comida' },
+  { id: 'animals', label: 'Pets and farm', es: 'Mascotas y granja' },
+  { id: 'wild', label: 'Wild animals', es: 'Animales salvajes' },
+  { id: 'sea', label: 'Sea animals', es: 'Animales del mar' },
+  { id: 'birds', label: 'Birds and bugs', es: 'Aves e insectos' },
+  { id: 'food', label: 'Food and drink', es: 'Comida y bebida' },
+  { id: 'fruit', label: 'Fruit', es: 'Frutas' },
+  { id: 'vegetables', label: 'Vegetables', es: 'Verduras' },
+  { id: 'clothes', label: 'Clothes', es: 'Ropa' },
+  { id: 'toys', label: 'Toys', es: 'Juguetes' },
+  { id: 'home', label: 'At home', es: 'En casa' },
+  { id: 'school', label: 'At school', es: 'En la escuela' },
   { id: 'transport', label: 'Transportation', es: 'Transporte' },
-  { id: 'home', label: 'At home', es: 'En casa' }
+  { id: 'outside', label: 'Outside', es: 'Afuera' }
 ]
 
 // The sets in groups, for Settings and for naming a bookmark. Every set is in
@@ -380,7 +389,10 @@ export const GROUPS = [
   { id: 'art', label: 'Shapes & Colors', emoji: '🎨', sets: ['shapes', 'colors', 'colorShapes', 'mixing'] },
   { id: 'opposites', label: 'Opposites', emoji: '↔️', sets: ['opposites'] },
   { id: 'people', label: 'Feelings & Body', emoji: '😊', sets: ['feelings', 'gestures', 'body'] },
-  { id: 'things', label: 'Things', emoji: '🧸', sets: ['animals', 'food', 'transport', 'home'] }
+  // `own`: these come with no pictures, each device adds its own (things.js).
+  { id: 'animals', label: 'Animals', emoji: '🐾', own: true, sets: ['animals', 'wild', 'sea', 'birds'] },
+  { id: 'food', label: 'Food', emoji: '🍎', own: true, sets: ['food', 'fruit', 'vegetables'] },
+  { id: 'things', label: 'Things', emoji: '🧸', own: true, sets: ['clothes', 'toys', 'home', 'school', 'transport', 'outside'] }
 ]
 
 export function shuffle(list, rng = Math.random) {
