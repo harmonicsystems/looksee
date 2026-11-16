@@ -483,6 +483,16 @@ bar in the corner clock, the hourglass and the dots filling the screen in the st
 **Not checked:** a real timer run to its end, the other three stage themes, reduced motion, a
 screen reader, Safari, and anything on the Chromebook.
 
+**Checked on 2026-11-15, on the live site, after publishing (`fd5825e`).** The deploy passed with
+113 tests at 64.8 KB of 66. The site serves the new build and no picture. A browser on the
+version before was offered this one in Settings, and Reload brought it in. A timer that the old
+version had saved, with nothing about faces in it, came through: it had ended, said "Time's up",
+and Done dismissed it. After that, at 1366 × 768 with the clock moved forward by hand: the sheet
+offers Disc, Bar, Dots and Hourglass with the disc chosen; a 3-minute hourglass filling the
+screen sat between the day bar and the control bar in the stage's colors, with half its sand
+down at 1:29; its buttons were Pause, +1 min, End and Smaller; Smaller put it back in the corner;
+End cleared it. No request failed and the console was clean.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
