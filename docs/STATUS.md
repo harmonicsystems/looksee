@@ -22,17 +22,9 @@ Nothing in the code has to change: the deploy builds for whichever address Pages
 confirmed there on 2026-11-12; the class's notes came back on 2026-11-15). Everything else has
 been checked on one Mac.
 
-**Weather was added on 2026-11-15 and is not yet on `main`** (branch `claude/hello-6317eb`, with
-`main`'s timer and plan merged into it). Weather in Tools, off by default, shows the temperature in
-Rhinebeck as a big slide with a word and color for how it feels and an emoji for the sky. It is the
-first thing besides YouTube that Looksee asks of an outside service (Open-Meteo); `CLAUDE.md` ▸
-Weather has the rules. Checked on David's Mac in the dev server with a live reading, in English,
-Spanish and both, in the calm and high-contrast themes, at laptop and phone shapes, with the mouse
-and with the keys (`O` opens and closes it; `T` stayed the timer's when `main` was merged in). The
-size gate was raised from 62 KB to 64 KB by David for it: the app is 63.2 KB. **Not checked:** hearing it read aloud, the "could not be reached" slide with
-the network really off, whether the classroom Chromebook's network allows `api.open-meteo.com`,
-and the Spanish weather words (helado, fresco, cálido, caluroso, algo nublado, con niebla, con
-llovizna, con nieve, tormentoso, despejado) by a Spanish speaker.
+**Weather went out on 2026-11-15** (`5fff5f8`): the temperature outside as a big slide, off unless
+a teacher turns it on. It is the first thing besides YouTube that Looksee asks of an outside
+service. It is described under "2026-11-15, night" below.
 
 ## How it got here
 
@@ -384,6 +376,37 @@ ran together: after 5 minutes of playing the plan was on its second block and th
 not pause the timer; Done put the Timer button back. The only failed requests were for things
 pictures the device does not have. The list under "Not checked" above still stands.
 
+## 2026-11-15, night: the weather
+
+**Weather in Tools (or `O`) shows the temperature in Rhinebeck as its own big slide,** for circle
+time: the sky as an emoji, the temperature in °F, a word under each in the languages the slides
+use, and a cold-to-hot scale with today's band marked. A click on it, or `R`, says it. It is off by
+default; Settings ▸ Weather turns it on, and a settings link carries it (`&weather=1`).
+
+**It is the one exception to "nothing leaves the device except YouTube", and David chose it.** The
+reading comes from Open-Meteo, asked only when the weather is opened with the setting on. The
+request names the place and nothing else. `CLAUDE.md` ▸ Weather has the rules, and a test fails if
+any file but `outside.js` gains a `fetch`.
+
+**It was built on a branch and merged with the timer and the plan** (pull request 8). The timer
+kept `T`, so the weather's key is `O`; Weather went into Tools with Watch and Settings, and the
+Timer button stays in the bar on the weather slide.
+
+**The size gate was raised from 62 KB to 64 KB** by David, for this: the app is 63.2 KB.
+
+**Checked on 2026-11-15, locally.** 107 tests pass and the build passes its gates at 63.2 KB of
+64. In the dev server with a live reading: English, Spanish and both; the calm and high-contrast
+themes; laptop and phone shapes; with the mouse and with the keys. After the merge: opening from
+Tools and with `O`, the timer opened over the weather with `T`, and `Esc` closing each in turn.
+
+**Checked on 2026-11-15, on the live site, after the merge (`5fff5f8`).** A settings link with
+`&weather=1` opened the weather with `O` and showed a live reading (37°F, "partly cloudy / algo
+nublado", "cold / frío"), with Back to slides and Timer in the bar.
+
+**Not checked.** Hearing it read aloud. The "could not be reached" slide with the network really
+off. Whether the classroom Chromebook's network allows `api.open-meteo.com`. Anything on the
+Chromebook.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -474,6 +497,11 @@ setting, which was checked). Any device other than one Mac.
   64 for the weather, which cost 2.1 KB). The 161
   things cost about 1.9 KB; more of them, or another feature, needs the words loaded apart from
   the app or a bigger budget again.
+- **The weather.** The place is fixed in the code (Rhinebeck), the temperature is °F only, and the
+  bands (freezing below 32, cold to 49, cool to 64, warm to 79, hot from 80) were chosen without
+  the class. Its ten Spanish words (helado, fresco, cálido, caluroso, algo nublado, con niebla,
+  con llovizna, con nieve, tormentoso, despejado) are unchecked. "Partly cloudy" shows a sun in
+  its picture even after dark. Not built: a chip on the day bar, and what to wear.
 - **Settings under Tools.** One more click than before. If the class misses it, Settings can go
   back on the bar beside Tools.
 - **The rest of the Codex handoff.** Settings split into quick and advanced, a Routine strip
