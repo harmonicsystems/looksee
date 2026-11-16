@@ -42,9 +42,9 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 64 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 63.9 KB now, 116 bytes under, so the limit is reached.
-  David raised it on 2026-11-15 from 60 to 62 for the timer, then to 64 for the weather) and WCAG AA on both control palettes
+- Build gates (`npm run build`): app JS ≤ 65 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 64.8 KB now, so the limit is reached again.
+  David raised it on 2026-11-15 from 60 to 62 for the timer, to 64 for the weather, then to 65 for five more sets of things) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -122,10 +122,10 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
 
 ## Things: sets whose pictures each device adds for itself
 
-Thirteen sets of everyday pictures (`src/things.js`), 161 in all, in three groups marked `own` in
+Eighteen sets of everyday pictures (`src/things.js`), 223 in all, in four groups marked `own` in
 `GROUPS`: 🐾 Animals (Pets and farm, Wild animals, Sea animals, Birds and bugs), 🍎 Food (Food and
-drink, Fruit, Vegetables) and 🧸 Things (Clothes, Toys, At home, At school, Transportation,
-Outside). **The code is published; the pictures are not.**
+drink, Fruit, Vegetables), 🧸 Things (Clothes, Toys, At home, At school, Transportation,
+Outside, Music, Sports, Tools) and 🌍 Places (Around town, Space). **The code is published; the pictures are not.**
 
 - **The pictures are from the Thiings library (thiings.co). David holds a paid licence for it**
   ("Lifetime Access (Legacy)", honoured as the Indie tier; seen on his billing page on
@@ -147,8 +147,8 @@ Outside). **The code is published; the pictures are not.**
   whatever is new in it.
 - `npm run things` (`scripts/things.mjs`) makes those files: it copies the pictures listed in
   `src/things.js` out of David's own copy of the library (`~/Code/thiings-demo`, or
-  `THIINGS_DIR`), crops each to the thing itself and saves a 512 px AVIF of about 11 KB (161
-  pictures, 1.7 MB) in `public/things/`. It contacts nobody and needs ImageMagick. The dev server
+  `THIINGS_DIR`), crops each to the thing itself and saves a 512 px AVIF of about 11 KB (223
+  pictures, 2.4 MB) in `public/things/`. It contacts nobody and needs ImageMagick. The dev server
   serves that folder, so on David's Mac the pictures show without being added. **David keeps a
   copy of the folder at `~/Desktop/things` to hand to a classroom device**: after `npm run
   things`, bring it up to date with `rsync -a public/things/ ~/Desktop/things/`.
@@ -164,11 +164,16 @@ Outside). **The code is published; the pictures are not.**
   the same in both languages is left out (mango, kiwi, piano, taco, pizza). People are drawn as
   faceless uniforms with no skin tones, so the emoji sets stay the ones for people.
 - **Each thing is a line of text** in `things.js` (`dog,perro,el`, with the library's file name
-  fourth when it is not the English word), and they count toward the size gate: the 161 cost
-  about 1.75 KB gzipped, 125 bytes less than as lines of code. A much bigger library needs its
+  fourth when it is not the English word), and they count toward the size gate: the 223 cost
+  about 2.5 KB gzipped, less than as lines of code. A much bigger library needs its
   words loaded apart from the app.
-- Not built: "goes together" slides from the library's tags, a Music set (the instruments are
-  good), and its pictures for letter words and Watch words.
+- **Some pictures have an English word on them** (the library and the store in Around town say
+  LIBRARY and SHOP), which shows even when the words are Spanish only. The restaurant, café,
+  museum and bank were left out for that. A thing already in another set is not used twice
+  (rocket, moon, sun, star), and the church was left out as religious.
+- Not built: "goes together" slides from the library's tags, and its pictures for letter words
+  and Watch words. Runners-up for more sets: getting ready (toothpaste, towel, mirror), the
+  kitchen, and more animals.
 
 ## Seen from across a classroom
 
@@ -385,7 +390,7 @@ needs each thing, and folded:
 - **The order is by use.** What changes in class comes first: What to show, Words and speech,
   Pace. Then Options for these sets. Then, under the label "Set up once": School day, Weather,
   Pictures, Videos, Look, Share this setup, and Keys, reset and credits. At 1366 × 768 the first screen
-  holds the plan's checkbox, the eight groups, Words and speech, and Pace, with no scrolling.
+  holds the plan's checkbox, the nine groups, Words and speech, and Pace, with no scrolling.
 - **What to show lists the groups, one click each.** The sets inside them appear with "Choose
   single sets" (`single`), which starts on when a group is only partly on.
 - **A set's own options show only while that set is in use** (`setsInUse` in plan.js: with a plan
@@ -423,9 +428,9 @@ fits the bar. "➕ Math · EN+ES"; part of a group lists its sets with commas ("
 Math · ES"; three or more "🔤➕🎨 Mix · EN"; every set "Looksee · All · EN". A bookmark keeps the
 name it was saved with.
 
-`GROUPS` (concepts.js) puts every set in one of eight groups, in `SETS` order (a test): 🔤 Letters &
-Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, and the three whose pictures
-a device adds for itself, 🐾 Animals, 🍎 Food and 🧸 Things. Settings lists the sets under
+`GROUPS` (concepts.js) puts every set in one of nine groups, in `SETS` order (a test): 🔤 Letters &
+Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, and the four whose pictures
+a device adds for itself, 🐾 Animals, 🍎 Food, 🧸 Things and 🌍 Places. Settings lists the sets under
 their groups; a group's heading turns the whole group on, or off when it is all on (`toggleGroup`),
 and shows "mixed" when part of it is on. For
 installing one as an app, `home.js` swaps in a `data:` manifest whose `start_url` is the link

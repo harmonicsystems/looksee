@@ -1,4 +1,4 @@
-// Things: sets of everyday pictures, in three groups (Animals, Food, Things).
+// Things: sets of everyday pictures, in four groups (Animals, Food, Things, Places).
 //
 // These sets come with NO pictures. The pictures they were made for are from
 // the Thiings library (thiings.co), whose terms do not allow redistribution,
@@ -17,10 +17,11 @@
 // The Spanish follows the rest of Looksee (Latin American, as heard in US
 // classrooms: carro, not coche) and has not been checked by a Spanish speaker.
 
-const t = (label, es, art, from = label.replace(/ /g, '-')) => ({ label, es, art, file: label.replace(/ /g, '-'), from })
+const from0 = (label) => label.toLowerCase().replace(/ /g, '-')
+const t = (label, es, art, from = from0(label)) => ({ label, es, art, file: from0(label), from })
 // One thing per line: its word in English, in Spanish, the article and, when
 // it is not just the English word, the library's file name. Kept as text
-// because 161 things as lines of code cost more of the size budget.
+// because 223 things as lines of code cost more of the size budget.
 const set = (lines) => lines.split('\n').map((line) => t(...line.split(',')))
 
 export const THINGS = {
@@ -184,7 +185,69 @@ tree,árbol,el
 flower,flor,la,rose
 leaf,hoja,la
 mountain,montaña,la
-river,río,el`)
+river,río,el`),
+  music: set(`guitar,guitarra,la
+violin,violín,el
+cello,violonchelo,el
+drums,batería,la,drum-kit
+drum,tambor,el,kettle-drum
+trumpet,trompeta,la
+trombone,trombón,el
+saxophone,saxofón,el
+flute,flauta,la
+clarinet,clarinete,el
+microphone,micrófono,el,karaoke-microphone
+headphones,audífonos,los`),
+  sports: set(`baseball,béisbol,el
+bat,bate,el,baseball-bat
+basketball,básquetbol,el
+football,fútbol americano,el
+tennis ball,pelota de tenis,la
+racket,raqueta,la,tennis-racket
+volleyball,voleibol,el
+bowling,boliche,el
+roller skate,patín,el,rollerskate
+whistle,silbato,el
+trophy,trofeo,el
+medal,medalla,la,gold-medal`),
+  tools: set(`hammer,martillo,el
+saw,sierra,la,hand-saw
+screwdriver,destornillador,el
+wrench,llave inglesa,la
+pliers,pinzas,las
+ladder,escalera,la,worksite-ladder
+toolbox,caja de herramientas,la
+tape measure,cinta métrica,la,measuring-tape
+hard hat,casco,el
+bucket,cubeta,la
+broom,escoba,la
+flashlight,linterna,la
+nail,clavo,el
+watering can,regadera,la`),
+  town: set(`house,casa,la
+barn,granero,el
+library,biblioteca,la
+store,tienda,la,shop
+park,parque,el
+playground,patio de juegos,el
+bridge,puente,el
+castle,castillo,el
+lighthouse,faro,el
+beach,playa,la
+pool,piscina,la,swimming-pool
+fountain,fuente,la
+city,ciudad,la
+road,camino,el`),
+  space: set(`Earth,Tierra,la,earth
+astronaut,astronauta,el
+planet,planeta,el,rings-of-saturn
+comet,cometa,el
+telescope,telescopio,el
+satellite,satélite,el
+space shuttle,transbordador,el
+solar system,sistema solar,el
+alien,extraterrestre,el
+flying saucer,platillo volador,el`)
 }
 
 // Where the pictures live, under public/. One still AVIF each.

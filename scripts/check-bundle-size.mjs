@@ -1,11 +1,11 @@
-// Bundle budget (CLAUDE.md): app JS ≤ 64 KB gzipped — everything a visitor
+// Bundle budget (CLAUDE.md): app JS ≤ 65 KB gzipped — everything a visitor
 // downloads to run Looksee, service worker included. Runs in every
 // `npm run build`, so CI fails on regressions.
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
-const LIMIT = 64 * 1024
+const LIMIT = 65 * 1024
 const rows = []
 let total = 0
 function walk(dir) {
@@ -24,7 +24,7 @@ rows.sort((a, b) => b[1] - a[1])
 for (const [p, gz] of rows) console.log(`${(gz / 1024).toFixed(1).padStart(7)} KB  ${p}`)
 console.log(`\nApp JS (gzipped): ${(total / 1024).toFixed(1)} KB — budget ${LIMIT / 1024} KB`)
 if (total > LIMIT) {
-  console.error('\n✗ Bundle budget exceeded (CLAUDE.md: app JS ≤ 64 KB gzipped)')
+  console.error('\n✗ Bundle budget exceeded (CLAUDE.md: app JS ≤ 65 KB gzipped)')
   process.exit(1)
 }
 console.log('✓ Within budget')
