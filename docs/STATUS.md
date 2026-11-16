@@ -324,6 +324,43 @@ test pictures made in the page ("octopus.png", "Jump Rope.png") were kept, a tex
 used, the octopus showed at 79% of the stage, and Remove took them away. Nothing was written to
 the saved settings. The only failed requests were for things pictures the device does not have.
 
+## 2026-11-15, evening: a timer, and a shorter control bar
+
+**Not published.** This is on the branch `claude/looksee-timer-planning-554b83`, two commits and
+this note, not on `main` and not on the site.
+
+**A timer.** From a handoff David wrote with Codex. The control bar has a Timer button (`T`): a
+sheet starts 1, 3, 5, 10 or 15 minutes in one click, or any length from 1 to 60 with − and +.
+While it runs a clock sits in a top corner and stays when the bar fades; clicking it gives Pause,
++1 min and End. At the end it says "Time's up", with Done and +2 min and an optional chime. It is
+apart from the slides, Watch, the plan and the school day, and is kept on the device under its
+own name, not in the settings or a link.
+
+**The control bar** is now Back, Play, Next, Timer, Tools. Watch, the corner video and Settings
+are under Tools, one click further away than before; the video is offered only when there is a
+link. **The class has not seen this**, and Settings is now two clicks with a mouse.
+
+**The wake lock** is shared by the slides and the timer, and two faults in it are fixed: a lock
+granted just after pausing was never let go, and it was not asked for again after the tab had
+been hidden.
+
+**The size gate was raised from 60 KB to 62 KB** by David, for this: the app is 61.1 KB.
+
+**Checked on 2026-11-15, locally.** 99 tests pass and the build passes its gates at 61.1 KB of
+62; a build for `/looksee/` has the right paths and no new outside address. In a browser at
+1366 × 768 and at a phone's size, with mouse clicks and with keys: a 5-minute timer starts in
+two clicks; Pause holds the time and Resume goes on; +1 min, End, Done and +2 min work; a reload
+mid-run carries on, and "10 seconds left" and "Time's up" are announced; the clock stays while
+the bar fades and during Watch, clear of the words around the video; the slides went on playing
+through the end; `T`, Enter, Tab and Esc work and focus goes back to the Timer button; the timer
+sheet and Tools never show together; the clock moves to the top left when the video's corner is
+the top right; on a phone the sheet stays on screen with Settings open. The console is clean.
+
+**Not checked.** The chime by ear. Reduced motion. The night and high-contrast themes (the timer
+uses the control colors, not the stage's). An offline reload. A settings-link window. Whether the
+wake lock really holds, and for a whole 15 minutes. A screen reader. A real timer run to its end
+(the end time was moved by hand). Anything on the Chromebook.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -410,8 +447,13 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 58.1 KB of 60. The 161 things cost about 1.9 KB; more of them, or another
-  feature, needs the words loaded apart from the app or a bigger budget.
+- **The size budget.** 61.1 KB of 62 (raised from 60 for the timer, which cost 3 KB). The 161
+  things cost about 1.9 KB; more of them, or another feature, needs the words loaded apart from
+  the app or a bigger budget again.
+- **Settings under Tools.** One more click than before. If the class misses it, Settings can go
+  back on the bar beside Tools.
+- **The rest of the Codex handoff.** Settings split into quick and advanced, a Routine strip
+  (Now / Next, moved on by hand), and a private file of Things pictures. None is started.
 - **113 new Spanish words** for the things, as unchecked as the rest. Arguable ones: plátano for
   banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
   chile for pepper, palomitas for popcorn, panqueques for pancakes.
