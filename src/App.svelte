@@ -778,7 +778,7 @@
            class first and open, what is set up once below. A closed section says
            what it is set to. -->
       <details class="sec" open>
-        <summary><h2>What to show</h2><span class="sum">{block ? `Plan, ${s.plan.length} blocks` : setsName(s.sets) || 'Nothing'}</span></summary>
+        <summary><h2>What to show</h2><span class="sum">{block ? `${s.plan.length}-block plan` : setsName(s.sets) || 'Nothing'}</span></summary>
         <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && !s.plan.length && addBlock()} /> A plan: different sets in turn, a few minutes each</label>
         {#if s.planOn}
           <div class="fld" role="group" aria-label="Plan">

@@ -436,6 +436,20 @@ lines of text (the same data, checked), which gave back 125 bytes. It is now 63.
 under, with 108 tests passing. The deploy measures what a build here measures: the published
 version built here has the same file names and the same sizes as the deploy's log.
 
+**Checked on 2026-11-15, on the live site, after publishing (`0fc7f84`).** The deploy passed with
+108 tests at 63.8 KB. The site serves the new build and no picture. A browser on the timer's
+version was offered the new one in Settings, and Reload brought it in. After Reload the panel
+opens on the left with its sections folded: What to show open, then Words and speech and Pace,
+and under "Set up once" School day, Weather (Off), Pictures (0 of 161 added), Videos, Look, Share
+this setup, and Keys, reset and credits; with only Things playing there is no options section,
+and Pace ends above the bottom of a 768-pixel screen. David was trying the same tab at the time,
+so the rest was checked on a production build served on the Mac, which is the same code: Weather
+appears in Tools once it is ticked in Settings, and its slide read 37°F in Rhinebeck from
+Open-Meteo, the only outside address contacted; the options follow the sets; the seconds choices
+change the link; the sea animals' Spanish words came through the new text format. Found on the
+live site and fixed afterwards: a closed "What to show" said "Plan, 1 blocks"; it now says
+"1-block plan".
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
