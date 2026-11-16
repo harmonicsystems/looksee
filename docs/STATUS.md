@@ -312,6 +312,18 @@ and pictures given under the new names ("octopus.png", "Ice Cream.png", the libr
 checked:** the plan over a real 20 minutes (the clock was faked), the
 plan or the new sets on the Chromebook, and the new Spanish words.
 
+**Checked on 2026-11-15, on the live site, after publishing (`65b94e7`).** The site serves the new
+build and still no picture (`things/dog.avif` and `things/octopus.avif` answer 404; the service
+worker lists none). A browser that had the version before was offered this one in Settings and
+Reload brought it in; until then a plan link opened as the default sets, because the old version
+does not know plans. After Reload, at 1366 × 768 with the clock moved forward by hand: the link
+`?v=1&planOn=1&plan=letters-5_sea-10_fruit-5` is titled "🔤🐾🍎 Plan, 20 min · EN+ES", hands over
+from letters to sea animals to fruit, starts over, and does not count 30 minutes spent paused.
+Settings lists the three blocks and the eight groups, and says 0 of 161 pictures are added. Two
+test pictures made in the page ("octopus.png", "Jump Rope.png") were kept, a text file was not
+used, the octopus showed at 79% of the stage, and Remove took them away. Nothing was written to
+the saved settings. The only failed requests were for things pictures the device does not have.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
