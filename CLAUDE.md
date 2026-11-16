@@ -32,8 +32,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   and shows still pictures.
 - **Mouse-only must work too.** The classroom it is made for has a Chromebook with a mouse and no
   keyboard: everything a teacher needs during class takes only clicks on large targets, no typing.
-- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `R` read aloud, `S` settings, `V` video, `W` watch, `T` weather, `M` sound,
-  `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
+- **Keyboard-only must work.** `Space` play/pause, `←` `→`, `R` read aloud, `S` settings, `V` video, `W` watch, `T` timer,
+  `O` weather, `M` sound, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
   loops by seeking back just before the end.
@@ -42,8 +42,9 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 60 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`, 57.2 KB now) and WCAG AA on both control palettes
+- Build gates (`npm run build`): app JS ≤ 64 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 63.2 KB now, so little room is left. David raised it on
+  2026-11-15 from 60 to 62 for the timer, then to 64 for the weather) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -54,8 +55,8 @@ Svelte 5 (runes, plain Svelte) + Vite 6 (Node 20.17 here, 22 in CI) · `vite-plu
 
 ## File map
 
-Everything in `src/` except the two `.svelte` files, `main.svelte.js`, `pip.js`, `youtube.js`,
-`speak.js`, `home.js`, `local.js` and `outside.js` is pure logic and tested.
+Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js`, `youtube.js`,
+`awake.js`, `chime.js`, `speak.js`, `home.js`, `local.js` and `outside.js` is pure logic and tested.
 
 - `index.html` → `src/main.svelte.js` → `App.svelte`: the stage, the control bar that fades while
   playing, the settings drawer, the school-day bar, the corner video and the **window-level
@@ -69,7 +70,10 @@ Everything in `src/` except the two `.svelte` files, `main.svelte.js`, `pip.js`,
   exactly when the deck must be rebuilt (and reshuffled): `DECK_KEYS`, plus set names when they
   would actually appear. Look-only settings must never be in it.
 - `day.js` — the school-day schedule (below).
-- `share.js` — settings as a link (`linkQuery`, `linkSettings`, `setupName`). `home.js` — `setHome`,
+- `plan.js` — a plan of timed blocks (below): `normalizePlan`, `blockDone`, `minutesLeft`, `blockAfter`.
+- `timer.js` — the timer's state and arithmetic (below). `Timer.svelte` — its sheet, clock and
+  "Time's up". `chime.js` — its two notes. `awake.js` — `keepAwake`, the one screen wake lock.
+- `share.js` — settings as a link (`linkQuery`, `linkSettings`, `setupName`, `setsName`). `home.js` — `setHome`,
   the per-link title and manifest (not pure).
 - `speech.js` — `speechLines` (what to say for a slide) and `pickVoice` (pure). `speak.js` — `speak`,
   the Web Speech API (not pure).
@@ -100,6 +104,10 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
   SVG → the device's own emoji as text, in the same skin tone. Still is also used for the "Still"
   setting and for `prefers-reduced-motion`. The still is a separate file because an animation's
   first frame is often a neutral face, not the feeling.
+- **Safari shows them still.** Safari, and every browser on an iPhone or iPad, draws an animated
+  AVIF on a black square: it loses the clear background (David saw it on 2026-11-15). So
+  `App.svelte` treats `navigator.vendor` starting with "Apple" like the Still setting, and Settings
+  says so there. Not seen in Safari since the change; if Apple fixes it, remove `APPLE`.
 - **Skin tones:** hands and body parts come in the five tones (`TONES`; `plain: true` marks the
   ones with none). `buildDeck` deals them like cards — shuffle five, hand out, reshuffle — so the
   mix is random but even. `round` in `App.svelte` rebuilds the deck each time it starts over, so
@@ -113,40 +121,51 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
 
 ## Things: sets whose pictures each device adds for itself
 
-Four sets of everyday pictures in a fifth group, "Things": Animals, Food, Transportation and At
-home, twelve slides each (`src/things.js`). **The code is published; the pictures are not, and
-must never be.**
+Thirteen sets of everyday pictures (`src/things.js`), 161 in all, in three groups marked `own` in
+`GROUPS`: 🐾 Animals (Pets and farm, Wild animals, Sea animals, Birds and bugs), 🍎 Food (Food and
+drink, Fruit, Vegetables) and 🧸 Things (Clothes, Toys, At home, At school, Transportation,
+Outside). **The code is published; the pictures are not.**
 
-- **The pictures are from the Thiings library (thiings.co), whose terms say "You may not
-  redistribute the icons or make them available for download as standalone assets".** Looksee's
-  repo is public and its site serves every file in it, so the pictures are in neither.
-  `public/things/` is ignored by git (in `.gitignore`, and in this checkout's `.git/info/exclude`
-  so that no branch can add them), and it is left out of the offline store (`globIgnores` in
-  `vite.config.js`). A test fails if either guard is removed. Putting them in the repo or on the
-  site needs written permission from Thiings (hello@thiings.co) first.
-- **A device is given its own copies.** Settings ▸ Sets ▸ Things has "Choose a folder" and
-  "Choose pictures": the files are read on the device, kept in the browser's Cache Storage
-  (`looksee-things`) and shown from there (`src/local.js`). Nothing is uploaded, so "nothing
-  leaves the device" still holds; Chrome's own folder dialog says "upload", which is its word for
-  handing files to a page. A file is matched to a thing by its name (`thingName`: `dog.avif`,
-  `Fire Truck.png`, or the library's own `horse-domestic.png`). The pictures stay until the
-  browser's data for the site is cleared, and work offline.
+- **The pictures are from the Thiings library (thiings.co). David holds a paid licence for it**
+  ("Lifetime Access (Legacy)", honoured as the Indie tier; seen on his billing page on
+  2026-11-15): commercial use, "apps, platforms, and tools", web use, no attribution. So showing
+  them in Looksee is licensed. What every tier forbids is making the icons "available for
+  download as standalone assets", and the terms say nothing about a public source repo.
+  **David chose to keep them out of this public repo and off the site** (2026-11-15): each device
+  adds its own. `public/things/` is ignored by git (in `.gitignore`, and in this checkout's
+  `.git/info/exclude` so that no branch can add them), and it is left out of the offline store
+  (`globIgnores` in `vite.config.js`). A test fails if either guard is removed. Committing them
+  is David's decision to make, not a default: ask first.
+- **A device is given its own copies.** Settings ▸ Sets has "Choose a folder" and "Choose
+  pictures" under the groups: the files are read on the device, kept in the browser's Cache
+  Storage (`looksee-things`) and shown from there (`src/local.js`). Nothing is uploaded, so
+  "nothing leaves the device" still holds; Chrome's own folder dialog says "upload", which is its
+  word for handing files to a page. A file is matched to a thing by its name (`thingName`:
+  `dog.avif`, `Fire Truck.png`, or the library's own `horse-domestic.png`). The pictures stay
+  until the browser's data for the site is cleared, and work offline. Adding a folder again adds
+  whatever is new in it.
 - `npm run things` (`scripts/things.mjs`) makes those files: it copies the pictures listed in
   `src/things.js` out of David's own copy of the library (`~/Code/thiings-demo`, or
-  `THIINGS_DIR`), crops each to the thing itself and saves a 512 px AVIF of about 11 KB (48
-  pictures, 525 KB) in `public/things/`. It contacts nobody and needs ImageMagick. The dev server
-  serves that folder, so on David's Mac the pictures show without being added.
+  `THIINGS_DIR`), crops each to the thing itself and saves a 512 px AVIF of about 11 KB (161
+  pictures, 1.7 MB) in `public/things/`. It contacts nobody and needs ImageMagick. The dev server
+  serves that folder, so on David's Mac the pictures show without being added. **David keeps a
+  copy of the folder at `~/Desktop/things` to hand to a classroom device**: after `npm run
+  things`, bring it up to date with `rsync -a public/things/ ~/Desktop/things/`.
 - A thing is a `picture` slide with `one: true`: a single still file, no SVG and no emoji behind
   it. `Visual.svelte` shows the device's own copy when there is one (`pics`), else the file under
-  `things/`, else nothing but the word.
+  `things/`, else nothing but the word. On the live site that second step is a 404 for each thing
+  with no picture on the device (harmless; the console reports it).
 - The sets are off for a new visitor, who has no pictures for them.
-- **Sets are picked by hand.** The library's own categories include alcohol, weapons, military
-  vehicles, underwear and brand names, 41 titles appear twice, and its tags are machine-made (the
-  giant anteater is tagged "insect"). Its "Water" is a waterfall, so look at a picture before
-  using it. People are drawn as faceless uniforms with no skin tones, so the emoji sets stay the
-  ones for people.
-- Not built: "goes together" slides from the library's tags, and its pictures for letter words
-  and Watch words.
+- **Sets are picked by hand, and every picture is looked at first.** The library's own categories
+  include alcohol, weapons, military vehicles, underwear and brand names, 41 titles appear twice,
+  and its tags are machine-made (the giant anteater is tagged "insect"). Its "Water" is a
+  waterfall and its "shoes" carry a sports brand's mark, so neither is used. A thing whose word is
+  the same in both languages is left out (mango, kiwi, piano, taco, pizza). People are drawn as
+  faceless uniforms with no skin tones, so the emoji sets stay the ones for people.
+- **Each thing is a line of JavaScript, and they count toward the size gate**: the 161 cost about
+  1.9 KB gzipped. A much bigger library needs its words loaded apart from the app.
+- Not built: "goes together" slides from the library's tags, a Music set (the instruments are
+  good), and its pictures for letter words and Watch words.
 
 ## Seen from across a classroom
 
@@ -285,6 +304,68 @@ video back and YouTube starts the video itself when the ad ends. So only a playe
 probably an ad" and is left to finish (Clip Choice's approach). The ad can't be skipped: the player
 takes no clicks, which also keeps YouTube's suggestions out of reach.
 
+## A plan: sets in timed blocks
+
+A teacher asked to "program different sets throughout the day in 5 to 25 minute chunks"
+(2026-11-15). `planOn` and `plan` (`[{ sets, min }]`, up to 12 blocks, `min` one of 5, 10, 15, 20,
+25): with a plan on, the blocks play in turn instead of `sets`, each for its minutes.
+
+- **A block's minutes are minutes of playing.** Its clock stops while the slides are paused
+  (`spent` and `since` in `App.svelte`, plain variables read through `played()`). When the time is
+  up the next block begins at the next slide, never mid-slide. Inside a block the slides start
+  over as often as needed, whatever `loop` says; `loop` decides what happens after the last block:
+  the first again, or stop.
+- **It is not by the clock.** A block starts when the one before it ends, not at 9:15. Blocks that
+  begin at set times of day (tied to the school-day bar) would be a different feature; ask the
+  teacher which she meant before building it.
+- **The plan is not a deck key.** `App.svelte` plays a block by lending the deck its sets: `cur`
+  is the block playing now or, with no plan, the settings themselves, and `deckKey` and
+  `buildDeck` are given `cur.sets`. The Sets picker in Settings edits `cur.sets` too, so with a
+  plan on it shows and changes the sets of the block that is playing ("Sets in block 2").
+- **Settings ▸ What to show ▸ "A plan"**: turning it on makes a first block from the sets chosen.
+  Each block is a button (click to play it now and edit its sets), five minute choices, ↑ to move
+  it earlier and Remove. All of it works with a mouse alone. Turning the plan off keeps the blocks.
+- The control bar shows "Block 2/3 · 8 min" (minutes left, rounded up) beside the slide count.
+- "Reset look and pace" keeps the plan, like the school day.
+- In a link: `planOn=1&plan=letters.numbers-10_feelings-5` (`planQuery`, `queryPlan`). A plan's
+  bookmark is named after its groups in the order they play and its length: "🔤➕😊 Plan, 30 min · EN".
+- Where the plan is (block, minutes played) is not saved: a reload starts at block 1.
+
+## The timer, and the control bar
+
+The bar is **Back, Play, Next, the slide count, Timer, Tools** (2026-11-15). Tools opens a small
+panel above the bar with Watch, the corner video (offered only when Settings has a link) and
+Settings, so those take one more click; `W`, `V` and `S` still go straight there. In Watch the bar
+is Back to slides, Sound, Other video, Timer.
+
+**One timer, apart from everything else.** It never starts, stops or advances the slides, Watch,
+the plan or the school day, and none of them touch it.
+
+- **Starting:** the Timer button (or `T`) opens a sheet over the lesson. 1, 3, 5, 10 or 15 minutes
+  start with one click; − and + set another length (1 to 60) and Start begins it. The sheet opens
+  on the minutes used last, with focus on Start, so `T` then Enter repeats the last timer.
+- **Running:** a clock with a ring in the top right corner (top left when the corner video has
+  the top right). It is outside the bar, so it stays when the bar fades. Clicking it, or `T`,
+  shows exactly Pause/Resume, +1 min and End. The bar's Timer button shows the time left.
+- **The end:** "Time's up" with Done and +2 min, and two soft notes when "Chime at the end" is on
+  (`chime.js`, Web Audio, no file). Nothing flashes or moves and nothing else on screen changes.
+- **A timer is the moment it ends** (`endsAt`), never a number counted down: `remaining(t, now)`
+  works it out from the clock, so it is right after the tab was hidden or the page reloaded.
+  Paused, it holds what was `left`. `Timer.svelte` ticks four times a second only to redraw.
+- **It is not a setting.** It is kept under its own name, `looksee-timer-v1`, and is in no link,
+  bookmark name or deck key (a test checks `DEFAULTS` has nothing of it). A link window and the
+  plain app on one device therefore share the one timer.
+- **A screen reader** hears "1 minute left", "10 seconds left" and "Time's up" from one polite
+  live region (`milestone`), never each second. Under reduced motion the ring moves in tenths.
+- **Awake:** `keepAwake(playing || timer running)` in `awake.js` is the only wake lock. A lock
+  granted after it stopped being wanted is let go, and it is asked for again when the tab returns.
+- **A hidden tab ticks slowly,** so the chime can be late there; the clock is right the moment
+  the tab is back. A timer that ended while the page was closed shows "Time's up" without a chime.
+- Left out on purpose: Undo after a preset (End is one click), and turning the video down for
+  the chime.
+- Not built, from the same handoff (Codex, 2026-11-15): Settings split into quick and advanced,
+  a Routine strip (Now / Next with "Done · next activity"), and a private Things pack file.
+
 ## Settings links
 
 `?v=1&sets=adding.subtracting&mathTo=10` (`share.js`): `v=1` marks a Looksee link, then only the
@@ -302,8 +383,9 @@ fits the bar. "➕ Math · EN+ES"; part of a group lists its sets with commas ("
 Math · ES"; three or more "🔤➕🎨 Mix · EN"; every set "Looksee · All · EN". A bookmark keeps the
 name it was saved with.
 
-`GROUPS` (concepts.js) puts every set in one of five groups, in `SETS` order (a test): 🔤 Letters &
-Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body. Settings lists the sets under
+`GROUPS` (concepts.js) puts every set in one of eight groups, in `SETS` order (a test): 🔤 Letters &
+Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, and the three whose pictures
+a device adds for itself, 🐾 Animals, 🍎 Food and 🧸 Things. Settings lists the sets under
 their groups; a group's heading turns the whole group on, or off when it is all on (`toggleGroup`),
 and shows "mixed" when part of it is on. For
 installing one as an app, `home.js` swaps in a `data:` manifest whose `start_url` is the link
@@ -313,13 +395,13 @@ has the link, Copy link, and Open as its own page.
 
 ## Weather
 
-A **Weather** button (or `T`) shows the temperature outside as its own big slide, for circle time:
+**Weather** in Tools (or `O`) shows the temperature outside as its own big slide, for circle time:
 the sky as an emoji, the temperature in °F, a word under each ("cloudy / nublado", "cold / frío"),
 and a cold-to-hot scale with today's band marked. A click on it (or `R`) says it: "42 degrees.
-cold. cloudy." **Back to slides**, `T` or `Esc` closes it. Opening it pauses the slides.
+cold. cloudy." **Back to slides**, `O` or `Esc` closes it. `T` is the timer, which stays in the bar. Opening it pauses the slides.
 
 - **Off by default (`weather` setting), and David chose this exception to "nothing leaves the
-  device" on 2026-11-15.** The button exists only when the setting is on, and the request is made
+  device" on 2026-11-15.** Tools offers it only when the setting is on, and the request is made
   only when the weather is opened, never on load. It goes to Open-Meteo (free, no key, no account,
   no cookies; free for non-commercial use, attribution in Settings ▸ Weather): `weatherUrl()`
   carries the place's coordinates and nothing else, with `credentials: 'omit'` and no referrer.

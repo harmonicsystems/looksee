@@ -5,6 +5,7 @@
   // corner video.
   import { untrack } from 'svelte'
   import Visual from './Visual.svelte'
+  import Timer from './Timer.svelte'
   import { SETS, GROUPS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart, rowsText } from './concepts.js'
   import { THEMES, OPTIONS, deckKey as deckKeyOf, wordWait, loadSettings, saveSettings, normalizeSettings } from './settings.js'
   import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
@@ -12,8 +13,10 @@
   import { VIDEOS, sides } from './videos.js'
   import { speechLines, pickVoice } from './speech.js'
   import { speak, onVoices } from './speak.js'
-  import { linkQuery, linkSettings, setupName } from './share.js'
+  import { linkQuery, linkSettings, setupName, setsName } from './share.js'
+  import { MINUTES, PLAN_MAX, blockDone, minutesLeft, blockAfter } from './plan.js'
   import { setHome } from './home.js'
+  import { keepAwake } from './awake.js'
   import { videoId, startSeconds } from './link.js'
   import { thingFiles } from './things.js'
   import { canKeep, localPictures, addPictures, removePictures } from './local.js'
@@ -53,15 +56,24 @@
     location.href = new URL('./', document.baseURI).href
   }
 
+  // ---- plan ----
+  // With a plan, its blocks play in turn, each for its minutes (plan.js).
+  // `block` is the one playing now. `cur` is whose sets are playing and being
+  // chosen in Settings: the block's or, with no plan, the settings' own.
+  let blk = $state(0)
+  const bi = $derived(Math.min(blk, s.plan.length - 1))
+  const block = $derived(s.planOn && s.plan.length ? s.plan[bi] : null)
+  const cur = $derived(block ?? s)
+
   // ---- deck ----
-  const deckKey = $derived(deckKeyOf(s))
+  const deckKey = $derived(deckKeyOf({ ...s, sets: cur.sets }) + (block ? bi : ''))
   // `round` goes up each time the deck starts over, which deals it again:
   // new skin tones, and a new order when it is mixed up.
   let round = $state(0)
   const deck = $derived.by(() => {
     deckKey
     round
-    return untrack(() => buildDeck($state.snapshot(s)))
+    return untrack(() => buildDeck({ ...$state.snapshot(s), sets: [...cur.sets] }))
   })
   let index = $state(0)
   let playing = $state(false)
@@ -106,7 +118,11 @@
     motionQuery.addEventListener('change', f)
     return () => motionQuery.removeEventListener('change', f)
   })
-  const still = $derived(reduced || s.feelingMotion === 'still')
+  // Safari, and every browser on an iPhone or iPad, draws the moving pictures
+  // on a black square (it loses their clear background), so those get the
+  // still ones.
+  const APPLE = navigator.vendor.startsWith('Apple')
+  const still = $derived(APPLE || reduced || s.feelingMotion === 'still')
   // Have the next picture ready before its slide arrives.
   $effect(() => {
     const next = deck[(index + 1) % deck.length]
@@ -146,10 +162,55 @@
   // slide is made fresh, which is what plays its entrance.
   const slideKey = $derived((s.morph && !reduced && item?.pts ? 'run' + runStart(deck, index) : index) + deckKey)
 
+  // A block's minutes are minutes of playing: `spent` is what it had played
+  // before `since`, the moment playing last began (0 while paused).
+  let spent = 0
+  let since = 0
+  const played = () => spent + (since && Date.now() - since)
+  $effect(() => {
+    if (!playing) return
+    since = Date.now()
+    return () => {
+      spent += Date.now() - since
+      since = 0
+    }
+  })
+  // Make block `i` the one that plays, from its start.
+  function goBlock(i) {
+    blk = i
+    spent = 0
+    if (since) since = Date.now()
+  }
+  function addBlock() {
+    s.plan.push({ sets: [...cur.sets], min: 10 })
+    goBlock(s.plan.length - 1)
+  }
+  function removeBlock(i) {
+    s.plan.splice(i, 1)
+    goBlock(Math.max(0, i - 1))
+  }
+  // One place earlier in the plan.
+  function moveBlock(i) {
+    s.plan.splice(i - 1, 0, ...s.plan.splice(i, 1))
+    goBlock(i - 1)
+  }
+
   function step(by) {
     if (!deck.length) return
+    // A block that has had its minutes hands over to the next at a slide's end.
+    if (by > 0 && block && blockDone(block.min, played())) {
+      const was = bi
+      const to = blockAfter(s.plan, was, s.loop)
+      if (to < 0) {
+        playing = false
+        index = 0
+      }
+      goBlock(Math.max(0, to))
+      if (to !== was) return
+    }
     const n = index + by
-    if (n >= deck.length && !s.loop) {
+    // Inside a block the slides always start over: the block decides when to stop.
+    if (n >= deck.length && !s.loop && !block) {
       playing = false
       index = 0
     } else {
@@ -163,13 +224,27 @@
     const t = setTimeout(() => step(1), s.seconds * 1000)
     return () => clearTimeout(t)
   })
-  // Keep the screen awake while the deck plays, where the browser allows it.
-  $effect(() => {
-    if (!playing || !navigator.wakeLock) return
-    let lock
-    navigator.wakeLock.request('screen').then((l) => (lock = l)).catch(() => {})
-    return () => lock?.release().catch(() => {})
-  })
+  // Keep the screen awake while the deck plays or a timer runs (awake.js).
+  $effect(() => keepAwake(playing || timerStatus === 'running'))
+
+  // ---- timer and tools ----
+  // The timer is its own thing (Timer.svelte); the bar only has its button.
+  // Tools holds what is used less often: Watch, the corner video, Settings.
+  let timerOpen = $state(false)
+  let timerStatus = $state('idle')
+  let timerText = $state('')
+  let timerBtn = $state()
+  let tools = $state(false)
+  let toolsBtn = $state()
+  function toggleTimer() {
+    tools = false
+    timerOpen = !timerOpen
+  }
+  // One thing from Tools, which closes it.
+  function tool(f) {
+    tools = false
+    f()
+  }
 
   let stageEl = $state()
   function toggle() {
@@ -188,7 +263,7 @@
     clearTimeout(quietTimer)
     quietTimer = setTimeout(() => (quiet = true), 2500)
   }
-  const hideBar = $derived(playing && quiet && !drawer)
+  const hideBar = $derived(playing && quiet && !drawer && !tools && !timerOpen)
 
   function fullscreen() {
     if (document.fullscreenElement) document.exitFullscreen?.()
@@ -206,6 +281,13 @@
     return () => clearInterval(t)
   })
   const parts = $derived(s.dayBar ? daySegments(s.day, s.dayEnd, now) : [])
+  // Minutes the block playing now still has, for the control bar.
+  const left = $derived.by(() => {
+    now
+    index
+    playing
+    return block ? minutesLeft(block.min, played()) : 0
+  })
   const dayLabel = $derived.by(() => {
     const i = parts.findIndex((p) => p.state === 'now')
     if (i >= 0) return `School day, part ${i + 1} of ${parts.length}: ${parts[i].icon}`
@@ -361,13 +443,13 @@
 
   // ---- weather ----
   // The temperature outside as its own big slide, for circle time. Nothing is
-  // asked until someone opens it (the Weather button, or T), and the button
+  // asked until someone opens it (Weather in Tools, or O), and the button
   // is there only when the Weather setting is on.
   let wx = $state(null)
   function showWeather() {
     if (!s.weather || watching) return
     playing = false
-    picking = false
+    picking = tools = timerOpen = false
     wx = { status: 'loading' }
     getWeather().then(
       (w) => wx && (wx = { status: 'ok', ...w }),
@@ -393,7 +475,13 @@
     if (e.metaKey || e.ctrlKey || e.altKey) return
     const tag = e.target?.tagName
     if (e.key === 'Escape') {
-      if (picking) picking = false
+      if (timerOpen) {
+        timerOpen = false
+        timerBtn?.focus()
+      } else if (tools) {
+        tools = false
+        toolsBtn?.focus()
+      } else if (picking) picking = false
       else if (wx) stopWeather()
       else if (watching) stopWatch()
       else if (drawer) {
@@ -405,40 +493,42 @@
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
     if (tag === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return
     const k = e.key.toLowerCase()
-    if (k === 't') wx ? stopWeather() : showWeather()
-    else if (wx) {
-      // The weather is on screen instead of the slides: only R (say it) applies.
-      if (k === 'r') speakWeather()
-      else if (k === 'f') fullscreen()
-      else if (k === 's') drawer = !drawer
-      else return
-    } else if (k === ' ') toggle()
+    if (k === 'o') wx ? stopWeather() : showWeather()
+    // The weather is on screen instead of the slides: their keys wait.
+    else if (wx && [' ', 'arrowright', 'arrowleft', 'v', 'w', 'm'].includes(k)) return
+    else if (k === ' ') toggle()
     else if (k === 'arrowright') step(1)
     else if (k === 'arrowleft') step(-1)
     else if (k === 's') drawer = !drawer
     else if (k === 'v') toggleVideo()
-    else if (k === 'r') speakSlide()
+    else if (k === 'r') wx ? speakWeather() : speakSlide()
     else if (k === 'w') watching ? stopWatch() : (picking = !picking)
     else if (k === 'm') s.videoMuted = !s.videoMuted
     else if (k === 'f') fullscreen()
+    else if (k === 't') {
+      toggleTimer()
+      if (!timerOpen) timerBtn?.focus()
+    }
     else return
     e.preventDefault()
   }
 
-  // A whole group of sets on or off, keeping the order of SETS.
+  // A whole group of sets on or off, keeping the order of SETS. With a plan
+  // it is the sets of the block playing now that change.
   function toggleGroup(g, allOn) {
-    const want = new Set(s.sets)
+    const want = new Set(cur.sets)
     for (const id of g.sets) allOn ? want.delete(id) : want.add(id)
-    s.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
+    cur.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
   }
+  const toggleSet = (id) => toggleGroup({ sets: [id] }, cur.sets.includes(id))
 
   function fixRange() {
     Object.assign(s, normalizeSettings($state.snapshot(s)))
   }
-  // Back to the defaults, but the video link and the school day are kept:
-  // those are set up once and are not part of the look.
+  // Back to the defaults, but the video link, the school day and the plan are
+  // kept: those are set up once and are not part of the look.
   function reset() {
-    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, weather: s.weather })
+    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, planOn: s.planOn, plan: s.plan, weather: s.weather })
     Object.assign(s, normalizeSettings(keep))
   }
 
@@ -638,12 +728,29 @@
     <button class="btn primary play" onclick={toggle} disabled={!deck.length}>{playing ? 'Pause' : 'Play'}</button>
     <button class="btn" onclick={() => step(1)} disabled={!deck.length}>Next</button>
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
-    <button class="btn" onclick={toggleVideo} disabled={!vid} aria-pressed={pipOn}>{pipOn ? 'Hide video' : 'Video'}</button>
-    <button class="btn" onclick={() => (picking = true)} aria-haspopup="dialog">Watch</button>
-    {#if s.weather}<button class="btn" onclick={showWeather}>Weather</button>{/if}
-    <button class="btn" onclick={() => (drawer = !drawer)} aria-expanded={drawer}>Settings</button>
+    {#if block}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
+    {/if}
+    <button class="btn big" class:primary={timerStatus !== 'idle'} bind:this={timerBtn} onclick={toggleTimer} aria-expanded={timerOpen}>
+      <span aria-hidden="true">⏱️</span> <span class:mono={timerStatus !== 'idle' && timerStatus !== 'done'}>{timerText || 'Timer'}</span>
+    </button>
+    {#if !watching && !wx}
+      <button class="btn big" bind:this={toolsBtn} onclick={() => ((timerOpen = false), (tools = !tools))} aria-expanded={tools}><span aria-hidden="true">🧰</span> Tools</button>
     {/if}
   </nav>
+
+  <!-- Tools: what is used less often than the timer. A video with no link is not offered. -->
+  {#if tools}
+    <div class="tools" role="group" aria-label="Tools">
+      {#if s.weather}<button class="btn big" onclick={() => tool(showWeather)}><span aria-hidden="true">🌡️</span> Weather</button>{/if}
+      <button class="btn big" onclick={() => tool(() => (picking = true))} aria-haspopup="dialog"><span aria-hidden="true">📺</span> Watch</button>
+      {#if vid}
+        <button class="btn big" onclick={() => tool(toggleVideo)}><span aria-hidden="true">🎬</span> {pipOn ? 'Hide video' : 'Corner video'}</button>
+      {/if}
+      <button class="btn big" onclick={() => tool(() => (drawer = !drawer))}><span aria-hidden="true">⚙️</span> {drawer ? 'Close settings' : 'Settings'}</button>
+    </div>
+  {/if}
+
+  <Timer bind:open={timerOpen} bind:status={timerStatus} bind:text={timerText} anchor={timerBtn} onLeft={s.corner === 'tr'} {reduced} />
 
   {#if drawer}
     <aside class="drawer-panel" aria-label="Settings">
@@ -660,11 +767,33 @@
       {/if}
 
       <h2>What to show</h2>
+      <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && !s.plan.length && addBlock()} /> A plan: different sets in turn, a few minutes each</label>
+      {#if s.planOn}
+        <div class="fld" role="group" aria-label="Plan">
+          {#each s.plan as b, i (b)}
+            <div class="grp">
+              <button class="btn grp-head" aria-pressed={i === bi} onclick={() => goBlock(i)}>{i + 1}. {setsName(b.sets) || 'No sets yet'} · {b.min} min</button>
+              <div class="seg">
+                {#each MINUTES as m}
+                  <label class:on={b.min === m}><input type="radio" name="min{i}" value={m} bind:group={b.min} aria-label="{m} minutes" />{m}</label>
+                {/each}
+                <button class="btn small" onclick={() => moveBlock(i)} disabled={!i} aria-label="Move block {i + 1} earlier">↑</button>
+                <button class="btn small" onclick={() => removeBlock(i)} disabled={s.plan.length < 2} aria-label="Remove block {i + 1}">Remove</button>
+              </div>
+            </div>
+          {/each}
+          <button class="btn small" onclick={addBlock} disabled={s.plan.length >= PLAN_MAX}>Add a block</button>
+        </div>
+        <p class="hint">
+          Each block plays for its minutes, then the next one begins. The minutes count only while the slides are playing.
+          Click a block to play it now and to choose its sets below.
+        </p>
+      {/if}
       <fieldset class="fld">
-        <legend>Sets</legend>
+        <legend>{block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
         <!-- One click on a group turns it all on, or all off when it is all on. -->
         {#each GROUPS as g}
-          {@const on = g.sets.filter((id) => s.sets.includes(id)).length}
+          {@const on = g.sets.filter((id) => cur.sets.includes(id)).length}
           <div class="grp">
             <button
               class="btn grp-head"
@@ -674,27 +803,25 @@
             {#if g.sets.length > 1}
               <div class="seg">
                 {#each g.sets as id}
-                  <label class:on={s.sets.includes(id)}><input type="checkbox" value={id} bind:group={s.sets} />{SETS.find((x) => x.id === id).label}</label>
+                  <label class:on={cur.sets.includes(id)}><input type="checkbox" checked={cur.sets.includes(id)} onchange={() => toggleSet(id)} />{SETS.find((x) => x.id === id).label}</label>
                 {/each}
               </div>
             {/if}
-            {#if g.id === 'things'}
-              <!-- Things come with no pictures: each device is given its own. -->
-              <p class="hint things">
-                Things need pictures added on this device. They are kept here and never uploaded.
-                {#if canKeep()}<b class="mono">{picsHave} of {THING_COUNT}</b> added.{:else}This browser cannot keep them.{/if}
-              </p>
-              {#if canKeep()}
-                <div class="files">
-                  <label class="btn small file">Choose a folder<input type="file" webkitdirectory multiple onchange={addPics} /></label>
-                  <label class="btn small file">Choose pictures<input type="file" multiple accept="image/*,.avif" onchange={addPics} /></label>
-                  {#if picsHave}<button class="btn small" onclick={removePics}>Remove them</button>{/if}
-                </div>
-                {#if picsNote}<p class="hint" role="status">{picsNote}</p>{/if}
-              {/if}
-            {/if}
           </div>
         {/each}
+        <!-- Animals, Food and Things come with no pictures: each device is given its own. -->
+        <p class="hint things">
+          Animals, Food and Things need pictures added on this device. They are kept here and never uploaded.
+          {#if canKeep()}<b class="mono">{picsHave} of {THING_COUNT}</b> added.{:else}This browser cannot keep them.{/if}
+        </p>
+        {#if canKeep()}
+          <div class="files">
+            <label class="btn small file">Choose a folder<input type="file" webkitdirectory multiple onchange={addPics} /></label>
+            <label class="btn small file">Choose pictures<input type="file" multiple accept="image/*,.avif" onchange={addPics} /></label>
+            {#if picsHave}<button class="btn small" onclick={removePics}>Remove them</button>{/if}
+          </div>
+          {#if picsNote}<p class="hint" role="status">{picsNote}</p>{/if}
+        {/if}
       </fieldset>
       {@render seg('words', 'Words')}
       {#if s.words !== 'en'}{@render seg('esGender', 'Spanish feelings')}{/if}
@@ -717,6 +844,7 @@
       </div>
       {@render seg('mathTo', 'Adding and subtracting')}
       {@render seg('feelingMotion', 'Faces and hands')}
+      {#if APPLE}<p class="hint">Safari, and any browser on an iPad or iPhone, shows them still: it cannot draw the moving ones cleanly.</p>{/if}
       {@render seg('skin', 'Skin tone')}
 
       <h2>Speech</h2>
@@ -742,7 +870,7 @@
         <input type="range" min="1" max="15" bind:value={s.seconds} />
       </label>
       {@render seg('order', 'Order')}
-      <label class="chk"><input type="checkbox" bind:checked={s.loop} /> Start over at the end</label>
+      <label class="chk"><input type="checkbox" bind:checked={s.loop} /> Start over at the end{block ? ' of the plan' : ''}</label>
 
       <h2>School day</h2>
       <label class="chk"><input type="checkbox" bind:checked={s.dayBar} /> Show the day bar at the top</label>
@@ -771,10 +899,10 @@
       {/if}
 
       <h2>Weather</h2>
-      <label class="chk"><input type="checkbox" bind:checked={s.weather} /> A Weather button: the temperature in {PLACE.name}</label>
+      <label class="chk"><input type="checkbox" bind:checked={s.weather} /> Weather in Tools: the temperature in {PLACE.name}</label>
       <p class="hint">
         The temperature outside as a big slide, with a word and a color for how it feels and a picture of the sky. The
-        reading comes from Open-Meteo when the button is clicked. It is the only thing besides YouTube that this app
+        reading comes from Open-Meteo when Weather is clicked. It is the only thing besides YouTube that this app
         contacts: the request names {PLACE.name} and nothing about this device or class, and it is never made while this
         is off.
         <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather data by Open-Meteo.com</a>
@@ -847,7 +975,7 @@
 
       <h2>Keys</h2>
       <p class="hint keyhelp">
-        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>T</kbd> weather · <kbd>R</kbd> read aloud ·
+        <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>T</kbd> timer · <kbd>O</kbd> weather outside · <kbd>R</kbd> read aloud ·
         <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
       </p>
       <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
@@ -911,7 +1039,7 @@
 
   .ctl { position: absolute; left: var(--inset-l); right: var(--inset-r); bottom: calc(var(--inset-b) + 18px); display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 12px; pointer-events: none; }
   .ctl > * { pointer-events: auto; }
-  .ctl .btn { min-height: 44px; padding-inline: 16px; }
+  .ctl .btn { min-height: 52px; padding-inline: 16px; }
   .ctl .play { min-width: 6.5em; }
   .count { font-size: 13px; padding: 4px 8px; border-radius: 6px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
   .look.quiet .ctl:not(:has(:focus-visible)) { opacity: 0; }
@@ -972,7 +1100,9 @@
   .tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 160px; font-size: 20px; text-align: center; }
   .tile-pic { font-size: 64px; line-height: 1; }
   .tile.close { min-height: 160px; font-size: 18px; }
-  .ctl .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
+  .ctl .big, .tools .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
+  /* Tools rises from the control bar, like the timer's sheet. */
+  .tools { position: absolute; z-index: 3; left: var(--inset-l); right: var(--inset-r); bottom: calc(var(--inset-b) + 84px); width: max-content; max-width: calc(100vw - var(--inset-l) - var(--inset-r) - 24px); margin: 0 auto; padding: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.22); }
 
   .drawer-panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--drawer-w); overflow-y: auto; padding: 14px 16px 40px; background: var(--surface); color: var(--ink); border-left: 1px solid var(--line); font-size: 15px; }
   .look.side-left .drawer-panel { right: auto; left: 0; border-left: 0; border-right: 1px solid var(--line); }
@@ -1022,6 +1152,7 @@
     .ctl { gap: 6px; }
     .ctl .btn { padding-inline: 11px; font-size: 15px; }
     .ctl .count { display: none; }
+    .tools { bottom: calc(var(--inset-b) + 142px); }
     .drawer-panel, .look.side-left .drawer-panel { top: auto; left: 0; right: 0; width: auto; height: var(--inset-b); border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
     .pip-small { width: 160px; }
     .pip-medium { width: 220px; }

@@ -9,7 +9,9 @@ import { POINTS, mix, ease, pathOf } from '../src/morph.js'
 import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait, upgrade } from '../src/settings.js'
 import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
-import { linkQuery, linkSettings, setupName } from '../src/share.js'
+import { linkQuery, linkSettings, setupName, setsName } from '../src/share.js'
+import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter } from '../src/plan.js'
+import { PRESETS, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone } from '../src/timer.js'
 import { VIDEOS, sides } from '../src/videos.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
@@ -637,8 +639,9 @@ describe('for a classroom', () => {
 // the repo. Each device is given its own copies (local.js).
 describe('things', () => {
   const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
-  it('is one group of sets, each a run of single still pictures', () => {
-    expect(GROUPS.find((g) => g.id === 'things').sets).toEqual(Object.keys(THINGS))
+  it('is three groups of sets, each set a run of single still pictures', () => {
+    expect(GROUPS.filter((g) => g.own).map((g) => g.id)).toEqual(['animals', 'food', 'things'])
+    expect(GROUPS.filter((g) => g.own).flatMap((g) => g.sets)).toEqual(Object.keys(THINGS))
     for (const id of Object.keys(THINGS)) {
       const d = deck({ sets: [id] })
       expect(d.map((x) => x.label), id).toEqual(THINGS[id].map((x) => x.label))
@@ -683,6 +686,169 @@ describe('things', () => {
     if (!existsSync(dir)) return
     const have = readdirSync(dir).filter((n) => !n.startsWith('.'))
     expect(have.sort()).toEqual(thingFiles().map((x) => `${x.file}.avif`).sort())
+  })
+})
+
+describe('a plan: sets in timed blocks', () => {
+  const plan = [
+    { sets: ['letters', 'numbers'], min: 10 },
+    { sets: ['adding'], min: 15 },
+    { sets: ['feelings'], min: 5 }
+  ]
+  it('is off and empty for a new visitor, and adds nothing to a link', () => {
+    expect(DEFAULTS.planOn).toBe(false)
+    expect(DEFAULTS.plan).toEqual([])
+    expect(linkQuery(DEFAULTS)).toBe('v=1')
+  })
+  it('offers blocks of 5 to 25 minutes', () => {
+    expect(MINUTES).toEqual([5, 10, 15, 20, 25])
+  })
+  it('keeps only blocks that can be played', () => {
+    const raw = [{ sets: ['numbers', 'letters', 'nope'], min: 15 }, { sets: [], min: 5 }, { sets: ['feelings'], min: 7 }, 'x', null]
+    expect(normalizePlan(raw)).toEqual([{ sets: ['letters', 'numbers'], min: 15 }, { sets: ['feelings'], min: 10 }])
+    expect(normalizePlan('x')).toEqual([])
+    expect(normalizePlan(Array(20).fill({ sets: ['letters'], min: 5 }))).toHaveLength(PLAN_MAX)
+    // Editing one device's plan must never edit the defaults.
+    normalizeSettings({}).plan.push(plan[0])
+    expect(DEFAULTS.plan).toEqual([])
+    expect(normalizeSettings({ planOn: true, plan }).plan).toEqual(plan)
+  })
+  it('counts a block down in minutes of playing', () => {
+    expect(minutesLeft(10, 0)).toBe(10)
+    expect(minutesLeft(10, 60000)).toBe(9)
+    expect(minutesLeft(10, 9.5 * 60000)).toBe(1)
+    expect(minutesLeft(10, 11 * 60000)).toBe(0)
+    expect(blockDone(10, 10 * 60000 - 1)).toBe(false)
+    expect(blockDone(10, 10 * 60000)).toBe(true)
+  })
+  it('goes from block to block, and starts over or stops after the last', () => {
+    expect(blockAfter(plan, 0, true)).toBe(1)
+    expect(blockAfter(plan, 2, true)).toBe(0)
+    expect(blockAfter(plan, 2, false)).toBe(-1)
+    expect(blockAfter([plan[0]], 0, true)).toBe(0)
+  })
+  it('travels in a settings link, readable in the address bar', () => {
+    const q = linkQuery({ ...DEFAULTS, planOn: true, plan })
+    expect(q).toBe('v=1&planOn=1&plan=letters.numbers-10_adding-15_feelings-5')
+    const back = linkSettings('?' + q)
+    expect(back.planOn).toBe(true)
+    expect(back.plan).toEqual(plan)
+    expect(linkSettings('?v=1&plan=nope-10_letters-99').plan).toEqual([{ sets: ['letters'], min: 10 }])
+    expect(linkSettings('?v=1&plan=').plan).toEqual([])
+  })
+  it('is not a deck key: a block plays by lending the deck its sets', () => {
+    expect(deckKey({ ...DEFAULTS, planOn: true, plan })).toBe(deckKey(DEFAULTS))
+    expect(deckKey({ ...DEFAULTS, sets: plan[1].sets })).not.toBe(deckKey(DEFAULTS))
+  })
+  it('names a block by its sets', () => {
+    expect(setsName(['letters', 'numbers'])).toBe('🔤 Letters & Numbers')
+    expect(setsName(['adding'])).toBe('➕ Adding')
+    expect(setsName(SETS.map((x) => x.id))).toBe('All')
+    expect(setsName([])).toBe('')
+  })
+  it('names a bookmark after the groups it plays, in order, and its length', () => {
+    expect(setupName({ ...DEFAULTS, planOn: true, plan })).toBe('🔤➕😊 Plan, 30 min · EN')
+    expect(setupName({ ...DEFAULTS, planOn: true, plan: [plan[2], plan[0]], words: 'both' })).toBe('😊🔤 Plan, 15 min · EN+ES')
+    // A plan that is switched off, or has no blocks, is named after the sets as before.
+    expect(setupName({ ...DEFAULTS, plan, sets: ['adding', 'subtracting'] })).toBe('➕ Math · EN')
+    expect(setupName({ ...DEFAULTS, planOn: true, sets: ['adding', 'subtracting'] })).toBe('➕ Math · EN')
+  })
+})
+
+describe('a timer', () => {
+  const MIN = 60000
+  const T0 = 1_700_000_000_000
+  const fresh = normalizeTimer(null, T0)
+  it('is idle for a new visitor, at five minutes, with the chime on', () => {
+    expect(fresh).toEqual({ last: 5, chime: true, total: 0, endsAt: 0, left: 0 })
+    expect(timerState(fresh, T0)).toBe('idle')
+    expect(remaining(fresh, T0)).toBe(0)
+    expect(PRESETS).toEqual([1, 3, 5, 10, 15])
+  })
+  it('starts, and remembers the minutes for next time', () => {
+    const t = startTimer(fresh, 3, T0)
+    expect(t.endsAt).toBe(T0 + 3 * MIN)
+    expect(t.last).toBe(3)
+    expect(timerState(t, T0)).toBe('running')
+    expect(remaining(t, T0 + MIN)).toBe(2 * MIN)
+    expect(share(t, T0)).toBe(1)
+    expect(share(t, T0 + 1.5 * MIN)).toBe(0.5)
+    // Between 1 and 60 whole minutes, whatever is asked for.
+    expect(startTimer(fresh, 0, T0).last).toBe(1)
+    expect(startTimer(fresh, 500, T0).last).toBe(60)
+  })
+  it('is the moment it ends, so time that passed in the background has passed', () => {
+    const t = startTimer(fresh, 5, T0)
+    expect(remaining(t, T0 + 4 * MIN + 59000)).toBe(1000)
+    expect(timerState(t, T0 + 5 * MIN - 1)).toBe('running')
+    expect(timerState(t, T0 + 5 * MIN)).toBe('done')
+    expect(remaining(t, T0 + 99 * MIN)).toBe(0)
+  })
+  it('pauses and goes on from where it was', () => {
+    const p = pauseTimer(startTimer(fresh, 5, T0), T0 + 2 * MIN)
+    expect(timerState(p, T0 + 50 * MIN)).toBe('paused')
+    expect(remaining(p, T0 + 50 * MIN)).toBe(3 * MIN)
+    const r = resumeTimer(p, T0 + 50 * MIN)
+    expect(timerState(r, T0 + 50 * MIN)).toBe('running')
+    expect(r.endsAt).toBe(T0 + 53 * MIN)
+    // Pausing an idle or ended timer, or resuming a running one, changes nothing.
+    expect(pauseTimer(fresh, T0)).toBe(fresh)
+    expect(resumeTimer(r, T0)).toBe(r)
+  })
+  it('takes more time while running, paused or after the end', () => {
+    const t = startTimer(fresh, 1, T0)
+    expect(remaining(addTime(t, MIN, T0 + 30000), T0 + 30000)).toBe(1.5 * MIN)
+    const p = addTime(pauseTimer(t, T0 + 30000), MIN, T0 + 40000)
+    expect(timerState(p, T0 + 40000)).toBe('paused')
+    expect(remaining(p, T0 + 40000)).toBe(1.5 * MIN)
+    const again = addTime(t, 2 * MIN, T0 + 10 * MIN)
+    expect(timerState(again, T0 + 10 * MIN)).toBe('running')
+    expect(remaining(again, T0 + 10 * MIN)).toBe(2 * MIN)
+    expect(share(again, T0 + 10 * MIN)).toBe(1)
+    expect(addTime(fresh, MIN, T0)).toBe(fresh)
+    // Never more than 99 minutes, and the ring never shows more than full.
+    let long = startTimer(fresh, 60, T0)
+    for (let i = 0; i < 80; i++) long = addTime(long, MIN, T0)
+    expect(remaining(long, T0)).toBe(99 * MIN)
+    expect(share(long, T0)).toBeLessThanOrEqual(1)
+  })
+  it('ends, keeping the minutes and the chime choice', () => {
+    expect(endTimer({ ...startTimer(fresh, 10, T0), chime: false })).toEqual({ last: 10, chime: false, total: 0, endsAt: 0, left: 0 })
+  })
+  it('comes back after a reload: running, paused, or ended while away', () => {
+    const back = (t, now) => normalizeTimer(JSON.parse(JSON.stringify(t)), now)
+    const t = startTimer(fresh, 5, T0)
+    expect(back(t, T0 + MIN)).toEqual(t)
+    expect(timerState(back(t, T0 + 60 * MIN), T0 + 60 * MIN)).toBe('done')
+    const p = pauseTimer(t, T0 + MIN)
+    expect(back(p, T0 + 9 * MIN)).toEqual(p)
+  })
+  it('drops stored state that makes no sense', () => {
+    for (const raw of ['x', 7, [], { endsAt: 'soon' }, { total: -5, endsAt: T0 + MIN }, { total: MIN, endsAt: T0 + 9 * MIN }, { total: MIN, left: NaN }]) {
+      expect(timerState(normalizeTimer(raw, T0), T0)).toBe('idle')
+    }
+    expect(normalizeTimer({ last: 'many', chime: false }, T0)).toEqual({ ...fresh, chime: false })
+    expect(remaining(normalizeTimer({ total: MIN, left: 5 * MIN }, T0), T0)).toBe(MIN)
+  })
+  it('reads as minutes and seconds, 0:00 only when the time is up', () => {
+    expect(clockText(5 * MIN)).toBe('5:00')
+    expect(clockText(4 * MIN + 31001)).toBe('4:32')
+    expect(clockText(1)).toBe('0:01')
+    expect(clockText(0)).toBe('0:00')
+    expect(clockText(99 * MIN)).toBe('99:00')
+  })
+  it('announces one minute, ten seconds and the end, and nothing else', () => {
+    expect(milestone(60250, 60000)).toBe('minute')
+    expect(milestone(60000, 59750)).toBe(null)
+    expect(milestone(10100, 9900)).toBe('ten')
+    expect(milestone(200, 0)).toBe('done')
+    expect(milestone(0, 0)).toBe(null)
+    expect(milestone(5 * MIN, 5 * MIN - 250)).toBe(null)
+    // A tab that slept through all three says only the last.
+    expect(milestone(3 * MIN, 0)).toBe('done')
+  })
+  it('is not a setting: it is in no link and no bookmark name', () => {
+    expect(Object.keys(DEFAULTS).filter((k) => /timer|chime/i.test(k))).toEqual([])
   })
 })
 

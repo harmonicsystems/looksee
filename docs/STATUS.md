@@ -18,15 +18,18 @@ letter, and five smaller language features. They are described under "2026-11-11
 `looksee` → `harmonicsystems.github.io`) and the custom domain set in the repo's Pages settings.
 Nothing in the code has to change: the deploy builds for whichever address Pages is using.
 
-**It has only been used on one Mac.** No child, teacher or clinician has used it yet.
+**It is in use in one classroom,** on a Chromebook with a projector and a mouse (bookmarks
+confirmed there on 2026-11-12; the class's notes came back on 2026-11-15). Everything else has
+been checked on one Mac.
 
-**Weather was added on 2026-11-15 and is not yet on `main`** (branch `claude/hello-6317eb`,
-uncommitted when this was written). A Weather button, off by default, shows the temperature in
+**Weather was added on 2026-11-15 and is not yet on `main`** (branch `claude/hello-6317eb`, with
+`main`'s timer and plan merged into it). Weather in Tools, off by default, shows the temperature in
 Rhinebeck as a big slide with a word and color for how it feels and an emoji for the sky. It is the
 first thing besides YouTube that Looksee asks of an outside service (Open-Meteo); `CLAUDE.md` ▸
 Weather has the rules. Checked on David's Mac in the dev server with a live reading, in English,
 Spanish and both, in the calm and high-contrast themes, at laptop and phone shapes, with the mouse
-and with `T` / `Esc`. **Not checked:** hearing it read aloud, the "could not be reached" slide with
+and with the keys (`O` opens and closes it; `T` stayed the timer's when `main` was merged in). The
+size gate was raised from 62 KB to 64 KB by David for it: the app is 63.2 KB. **Not checked:** hearing it read aloud, the "could not be reached" slide with
 the network really off, whether the classroom Chromebook's network allows `api.open-meteo.com`,
 and the Spanish weather words (helado, fresco, cálido, caluroso, algo nublado, con niebla, con
 llovizna, con nieve, tormentoso, despejado) by a Spanish speaker.
@@ -282,6 +285,105 @@ reload, and Remove took them away again. Nothing was written to the saved settin
 the dev server shows David's own pictures, it stops once pictures are added, and nothing else is
 affected.
 
+## 2026-11-15, later: a plan of timed blocks, 161 pictures, the licence, and Safari
+
+**A plan.** The teacher asked to "program different sets throughout the day in 5 to 25 minute
+chunks". Settings ▸ What to show ▸ "A plan" now holds up to 12 blocks, each with its own sets and
+5, 10, 15, 20 or 25 minutes. The blocks play in turn; a block's minutes count only while the
+slides are playing; after the last block the plan starts over, or stops if "Start over at the
+end" is off. The control bar shows the block and the minutes left. A plan travels in a settings
+link, so one bookmark can hold a morning. **It follows playing time, not the clock:** whether she
+meant blocks that begin at set times of day has not been asked.
+
+**More pictures.** The Things sets grew from 4 sets and 48 pictures to 13 sets and 161, in three
+groups: Animals (Pets and farm, Wild animals, Sea animals, Birds and bugs), Food (Food and drink,
+Fruit, Vegetables) and Things (Clothes, Toys, At home, At school, Transportation, Outside). Every
+picture was looked at first; one was refused for a brand mark. The folder David hands to a
+classroom device is `~/Desktop/things` (161 files, 1.7 MB).
+
+**The Thiings licence.** David showed his billing page: "Lifetime Access (Legacy)", which the
+terms honour as the Indie tier, so using the pictures in Looksee is licensed and the note asking
+permission is not needed. The terms still forbid making the icons available as standalone
+downloads and say nothing about public repos. David chose to keep the pictures local: each device
+adds its own, and none is in the repo or on the site.
+
+**Safari.** David saw the moving faces drawn on black squares in Safari, which loses an animated
+AVIF's clear background. Apple's browsers now get the still pictures. **Not checked in Safari:**
+the test browser is Chromium, where the check is simply off.
+
+**Checked on 2026-11-15, locally.** 88 tests pass and the build passes its gates at 58.1 KB of
+60. In a browser with the clock moved forward by hand: a three-block plan hands over at the end
+of each block's minutes and starts over after the last; with "Start over" off it stops on block
+1; 30 minutes spent paused do not count. In Settings: turning the plan on makes a first block
+from the sets chosen; clicking a block plays it and puts its sets in the picker; changing its
+minutes and sets changes the link; Add, ↑ and Remove work. All 161 pictures load and no picture
+or word is clipped or overlapping, in both languages, at 1366 × 768 and at a phone's size. The
+console is clean. On a built copy with no pictures in it: the plan hands over and stops as above,
+and pictures given under the new names ("octopus.png", "Ice Cream.png", the library's own
+"blue-whale.png") are kept and shown while the rest of the set shows its words alone. **Not
+checked:** the plan over a real 20 minutes (the clock was faked), the
+plan or the new sets on the Chromebook, and the new Spanish words.
+
+**Checked on 2026-11-15, on the live site, after publishing (`65b94e7`).** The site serves the new
+build and still no picture (`things/dog.avif` and `things/octopus.avif` answer 404; the service
+worker lists none). A browser that had the version before was offered this one in Settings and
+Reload brought it in; until then a plan link opened as the default sets, because the old version
+does not know plans. After Reload, at 1366 × 768 with the clock moved forward by hand: the link
+`?v=1&planOn=1&plan=letters-5_sea-10_fruit-5` is titled "🔤🐾🍎 Plan, 20 min · EN+ES", hands over
+from letters to sea animals to fruit, starts over, and does not count 30 minutes spent paused.
+Settings lists the three blocks and the eight groups, and says 0 of 161 pictures are added. Two
+test pictures made in the page ("octopus.png", "Jump Rope.png") were kept, a text file was not
+used, the octopus showed at 79% of the stage, and Remove took them away. Nothing was written to
+the saved settings. The only failed requests were for things pictures the device does not have.
+
+## 2026-11-15, evening: a timer, and a shorter control bar
+
+**Published on 2026-11-15** as pull request #7 (merge `43ddbf0`), on top of the plan and the 13
+picture sets, and its deploy succeeded.
+
+**A timer.** From a handoff David wrote with Codex. The control bar has a Timer button (`T`): a
+sheet starts 1, 3, 5, 10 or 15 minutes in one click, or any length from 1 to 60 with − and +.
+While it runs a clock sits in a top corner and stays when the bar fades; clicking it gives Pause,
++1 min and End. At the end it says "Time's up", with Done and +2 min and an optional chime. It is
+apart from the slides, Watch, the plan and the school day, and is kept on the device under its
+own name, not in the settings or a link.
+
+**The control bar** is now Back, Play, Next, Timer, Tools. Watch, the corner video and Settings
+are under Tools, one click further away than before; the video is offered only when there is a
+link. **The class has not seen this**, and Settings is now two clicks with a mouse.
+
+**The wake lock** is shared by the slides and the timer, and two faults in it are fixed: a lock
+granted just after pausing was never let go, and it was not asked for again after the tab had
+been hidden.
+
+**The size gate was raised from 60 KB to 62 KB** by David, for this: the app is 61.1 KB.
+
+**Checked on 2026-11-15, locally.** 99 tests pass and the build passes its gates at 61.1 KB of
+62; a build for `/looksee/` has the right paths and no new outside address. In a browser at
+1366 × 768 and at a phone's size, with mouse clicks and with keys: a 5-minute timer starts in
+two clicks; Pause holds the time and Resume goes on; +1 min, End, Done and +2 min work; a reload
+mid-run carries on, and "10 seconds left" and "Time's up" are announced; the clock stays while
+the bar fades and during Watch, clear of the words around the video; the slides went on playing
+through the end; `T`, Enter, Tab and Esc work and focus goes back to the Timer button; the timer
+sheet and Tools never show together; the clock moves to the top left when the video's corner is
+the top right; on a phone the sheet stays on screen with Settings open. The console is clean.
+
+**Not checked.** The chime by ear. Reduced motion. The night and high-contrast themes (the timer
+uses the control colors, not the stage's). An offline reload. A settings-link window. Whether the
+wake lock really holds, and for a whole 15 minutes. A screen reader. A real timer run to its end
+(the end time was moved by hand). Anything on the Chromebook.
+
+**Checked on 2026-11-15, on the live site, after the merge (`43ddbf0`).** The site serves the
+merged build and still no picture. A browser that had the version before was offered this one in
+Settings, and Reload brought it in. After Reload, at 1366 × 768 with the clock moved forward by
+hand: the control bar is Back, Play, Next, the slide count, the plan's block, Timer and Tools, on
+one row with Settings open or closed, and clear of the words. Tools holds Watch and Settings (no
+video link was set), and Settings opens on the left. A plan of two blocks and a 10-minute timer
+ran together: after 5 minutes of playing the plan was on its second block and the timer read
+4:58; after 15 the plan had started over and the timer said "Time's up"; pausing the slides did
+not pause the timer; Done put the Timer button back. The only failed requests were for things
+pictures the device does not have. The list under "Not checked" above still stands.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -363,3 +465,19 @@ setting, which was checked). Any device other than one Mac.
 - **What Clip Choice has learned since.** Its repo has newer handling for pre-roll ads and for
   pasted embed code and share links. Looksee now waits out pre-roll ads the same way; `src/link.js` still reads plain links only.
 - **A license for the code.** The repo is public and has none yet.
+- **A plan by the clock?** Blocks follow playing time. If the teacher meant "letters at 9:15",
+  blocks need start times, probably shared with the school-day bar.
+- **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
+  choice. Putting them on the site for every visitor (from a private source at deploy time, or in
+  the repo after asking Thiings) is open.
+- **The size budget.** 63.2 KB of 64 (raised from 60 to 62 for the timer, which cost 3 KB, and to
+  64 for the weather, which cost 2.1 KB). The 161
+  things cost about 1.9 KB; more of them, or another feature, needs the words loaded apart from
+  the app or a bigger budget again.
+- **Settings under Tools.** One more click than before. If the class misses it, Settings can go
+  back on the bar beside Tools.
+- **The rest of the Codex handoff.** Settings split into quick and advanced, a Routine strip
+  (Now / Next, moved on by hand), and a private file of Things pictures. None is started.
+- **113 new Spanish words** for the things, as unchecked as the rest. Arguable ones: plátano for
+  banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
+  chile for pepper, palomitas for popcorn, panqueques for pancakes.

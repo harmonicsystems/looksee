@@ -2,6 +2,7 @@
 // themes. normalizeSettings() makes anything read from storage safe to use.
 import { SETS, TONES, namesSets } from './concepts.js'
 import { normalizeDay } from './day.js'
+import { normalizePlan } from './plan.js'
 
 // Stage themes. `colors` are what letters, numbers and shapes are drawn in;
 // tests/look.test.js holds each to 3:1 against `bg` (large graphics) and
@@ -58,6 +59,9 @@ export const OPTIONS = {
 
 export const DEFAULTS = {
   sets: ['letters', 'numbers', 'adding', 'subtracting', 'shapes', 'colors', 'colorShapes', 'mixing', 'feelings', 'gestures', 'body'],
+  // A plan plays its blocks in turn instead of `sets` (plan.js).
+  planOn: false,
+  plan: [],
   order: 'inOrder',
   loop: true,
   seconds: 4,
@@ -111,13 +115,14 @@ export function normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const s = { ...DEFAULTS }
   for (const k of Object.keys(OPTIONS)) if (OPTIONS[k].includes(r[k])) s[k] = r[k]
-  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'weather']) if (typeof r[k] === 'boolean') s[k] = r[k]
+  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'planOn', 'weather']) if (typeof r[k] === 'boolean') s[k] = r[k]
   // Fresh arrays every time, so editing settings never edits DEFAULTS.
   s.sets = [...s.sets]
   if (Array.isArray(r.sets)) {
     const ids = SETS.map((x) => x.id).filter((id) => r.sets.includes(id))
     if (ids.length) s.sets = ids
   }
+  s.plan = normalizePlan(r.plan)
   Object.assign(s, normalizeDay(r.day, r.dayEnd))
   s.seconds = int(r.seconds, 1, 30, DEFAULTS.seconds)
   s.wordDelay = int(r.wordDelay, 0, 5, DEFAULTS.wordDelay)
