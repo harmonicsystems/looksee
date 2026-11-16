@@ -758,7 +758,7 @@
     </div>
   {/if}
 
-  <Timer bind:open={timerOpen} bind:status={timerStatus} bind:text={timerText} anchor={timerBtn} onLeft={s.corner === 'tr'} {reduced} />
+  <Timer bind:open={timerOpen} bind:status={timerStatus} bind:text={timerText} anchor={timerBtn} onLeft={s.corner === 'tr'} {reduced} color={theme.colors[3]} />
 
   {#if drawer}
     <aside class="drawer-panel" aria-label="Settings">

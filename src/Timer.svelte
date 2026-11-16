@@ -5,14 +5,15 @@
   // kept on the device under its own name, not in the settings, so it is
   // never in a settings link.
   import { tick } from 'svelte'
-  import { PRESETS, MAX_MIN, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone } from './timer.js'
+  import { PRESETS, FACES, MAX_MIN, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone, faceTrack, faceFill } from './timer.js'
   import { chime } from './chime.js'
 
   // `open`: the sheet (no timer yet) or the clock's buttons (a timer on).
   // `status` and `text` tell the control bar what its Timer button shows.
   // `anchor` is that button: focus goes back to it. `onLeft` puts the clock
-  // in the top left corner, when the corner video has the top right.
-  let { open = $bindable(false), status = $bindable('idle'), text = $bindable(''), anchor = null, onLeft = false, reduced = false } = $props()
+  // in the top left corner, when the corner video has the top right. `color`
+  // is one of the stage theme's colors, for the timer that fills the screen.
+  let { open = $bindable(false), status = $bindable('idle'), text = $bindable(''), anchor = null, onLeft = false, reduced = false, color = '' } = $props()
 
   const KEY = 'looksee-timer-v1'
   const load = () => {
@@ -31,8 +32,12 @@
   const st = $derived(timerState(t, now))
   const ms = $derived(remaining(t, now))
   const digits = $derived(clockText(ms))
-  // Under reduced motion the ring moves in tenths, not all the time.
-  const ring = $derived(reduced ? Math.ceil(share(t, now) * 10) * 10 : share(t, now) * 100)
+  // The share of the time still to go, which the picture shows. Under reduced
+  // motion it moves in tenths, not all the time.
+  const part = $derived(reduced ? Math.ceil(share(t, now) * 10) / 10 : share(t, now))
+  // The timer's length in whole minutes: the dots are one each.
+  const mins = $derived(Math.max(1, Math.round(t.total / 60000)))
+  const NAMES = { disc: 'Disc', bar: 'Bar', dots: 'Dots', glass: 'Hourglass' }
   $effect(() => {
     status = st
     text = st === 'idle' ? '' : st === 'done' ? 'Time’s up' : digits
@@ -110,6 +115,11 @@
   })
 </script>
 
+<!-- A face (timer.js): the whole shape in outline, and over it the part that is time left. -->
+{#snippet pic(face, share, n)}
+  <svg viewBox="0 0 100 100" aria-hidden="true"><path d={faceTrack(face, n)} /><path class="arc" d={faceFill(face, share, n)} /></svg>
+{/snippet}
+
 <div bind:this={root}>
   {#if st === 'idle'}
     {#if open}
@@ -125,6 +135,16 @@
           <button class="btn big rnd" onclick={() => pick++} disabled={pick >= MAX_MIN} aria-label="One minute more">+</button>
           <button class="btn primary big" data-first onclick={() => start(pick)}>Start</button>
         </div>
+        <!-- How it looks: picked by its picture, and kept with the timer. -->
+        <div class="row" role="group" aria-label="How the timer looks">
+          {#each FACES as f}
+            <button class="btn big pic" aria-pressed={t.face === f} aria-label={NAMES[f]} title={NAMES[f]} onclick={() => (t.face = f)}>{@render pic(f, 0.65, 5)}</button>
+          {/each}
+        </div>
+        <div class="row">
+          <label class="chk"><input type="checkbox" bind:checked={t.big} /> Fill the screen</label>
+          <label class="chk"><input type="checkbox" bind:checked={t.nums} /> Show the numbers</label>
+        </div>
         <div class="row">
           <label class="chk"><input type="checkbox" bind:checked={t.chime} /> Chime at the end</label>
           <button class="btn" onclick={close}>Close</button>
@@ -133,7 +153,7 @@
     {/if}
   {:else}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-    <section class="tm" class:left={onLeft} class:done={st === 'done'} aria-label="Timer" onpointermove={() => poke++} onpointerdown={() => poke++} onkeydown={() => poke++}>
+    <section class="tm" class:left={onLeft} class:fill={t.big} class:done={st === 'done'} style="--tc:{color}" aria-label="Timer" onpointermove={() => poke++} onpointerdown={() => poke++} onkeydown={() => poke++}>
       {#if st === 'done'}
         <b class="up">Time’s up</b>
         <div class="row">
@@ -142,12 +162,10 @@
         </div>
       {:else}
         <button class="face" onclick={() => (open = !open)} aria-expanded={open}>
-          <svg viewBox="0 0 40 40" aria-hidden="true">
-            <circle cx="20" cy="20" r="16" />
-            <circle class="arc" class:smooth={!reduced} cx="20" cy="20" r="16" pathLength="100" stroke-dasharray="{ring} 100" />
-          </svg>
+          {@render pic(t.face, part, mins)}
           <span>
-            <span class="digits" role="timer" aria-live="off">{digits}</span>
+            <!-- With the numbers off they are still there for a screen reader. -->
+            <span class="digits" class:sr={!t.nums} role="timer" aria-live="off">{digits}</span>
             {#if st === 'paused'}<span class="word">Paused</span>{/if}
           </span>
         </button>
@@ -160,6 +178,7 @@
             {/if}
             <button class="btn big" onclick={() => set((x, n) => addTime(x, 60000, n))}>+1 min</button>
             <button class="btn big" onclick={end}>End</button>
+            <button class="btn big" onclick={() => (t.big = !t.big)}>{t.big ? 'Smaller' : 'Bigger'}</button>
           </div>
         {/if}
       {/if}
@@ -177,6 +196,10 @@
   .rnd { border-radius: 50%; padding: 0; font-size: 26px; line-height: 1; }
   .pick { min-width: 3.2em; text-align: center; font-size: 34px; font-variant-numeric: tabular-nums; }
   .chk { display: flex; align-items: center; gap: 8px; margin-right: auto; }
+  /* The same edge on all four, so choosing one does not move the others. */
+  .pic { padding: 6px; border-width: 3px; }
+  .pic[aria-pressed='true'] { border-color: var(--brand); }
+  .pic svg { display: block; width: 36px; height: 36px; }
   .chk input { width: 20px; height: 20px; accent-color: var(--brand); }
 
   /* The clock: a top corner under the day bar, away from the corner video. */
@@ -185,15 +208,24 @@
   .face { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 2px 12px 2px 6px; border: 0; border-radius: 10px; background: none; color: inherit; cursor: pointer; font: inherit; text-align: left; }
   .face:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--ring); }
   .face > span { display: grid; }
-  svg { width: 46px; height: 46px; transform: rotate(-90deg); }
-  circle { fill: none; stroke: var(--line); stroke-width: 5; }
-  .arc { stroke: var(--brand); stroke-linecap: round; }
+  svg { width: 46px; height: 46px; }
+  path { fill: none; stroke: var(--muted); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+  .arc { fill: var(--brand); stroke: none; }
   .digits { font-size: 34px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
   .word { font-size: 14px; font-weight: 700; color: var(--muted); }
   /* Time's up: bigger and edged, in the same calm colors. It does not move. */
   .tm.done { padding: 16px 20px; border: 4px solid var(--brand); text-align: center; }
   .up { font-size: 34px; line-height: 1.1; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; }
+  /* Filling the screen: the same clock over the whole stage, for a class to
+     see from across the room, in the stage's own colors like a slide. The
+     day bar and the control bar stay. */
+  .tm.fill { inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 78px) var(--inset-l); max-width: none; border: 0; border-radius: 0; box-shadow: none; container-type: size; place-content: center; justify-items: center; background: var(--stage-bg); color: var(--stage-ink); font-family: var(--stage-font); }
+  .fill path { stroke: var(--stage-ink); }
+  .fill .arc { fill: var(--tc); stroke: none; }
+  .fill .face { flex-direction: column; gap: 3cqh; text-align: center; }
+  .fill svg { display: block; width: min(60cqh, 70cqw); height: min(60cqh, 70cqw); }
+  .fill .digits, .fill .up { font-size: min(14cqh, 12cqw); }
 
   @media (max-width: 760px) {
     /* Little room here, least of all with Settings open below: the sheet hangs from the top. */
@@ -201,8 +233,7 @@
     svg { display: none; }
     .face { padding-left: 12px; }
     .digits, .up { font-size: 26px; }
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .smooth { transition: stroke-dasharray 0.25s linear; }
+    /* The control bar is two rows here: leave it room. */
+    .tm.fill { bottom: calc(var(--inset-b) + 132px); }
   }
 </style>
