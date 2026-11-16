@@ -326,8 +326,8 @@ the saved settings. The only failed requests were for things pictures the device
 
 ## 2026-11-15, evening: a timer, and a shorter control bar
 
-**Not published.** This is on the branch `claude/looksee-timer-planning-554b83`, two commits and
-this note, not on `main` and not on the site.
+**Published on 2026-11-15** as pull request #7 (merge `43ddbf0`), on top of the plan and the 13
+picture sets, and its deploy succeeded.
 
 **A timer.** From a handoff David wrote with Codex. The control bar has a Timer button (`T`): a
 sheet starts 1, 3, 5, 10 or 15 minutes in one click, or any length from 1 to 60 with − and +.
@@ -360,6 +360,17 @@ the top right; on a phone the sheet stays on screen with Settings open. The cons
 uses the control colors, not the stage's). An offline reload. A settings-link window. Whether the
 wake lock really holds, and for a whole 15 minutes. A screen reader. A real timer run to its end
 (the end time was moved by hand). Anything on the Chromebook.
+
+**Checked on 2026-11-15, on the live site, after the merge (`43ddbf0`).** The site serves the
+merged build and still no picture. A browser that had the version before was offered this one in
+Settings, and Reload brought it in. After Reload, at 1366 × 768 with the clock moved forward by
+hand: the control bar is Back, Play, Next, the slide count, the plan's block, Timer and Tools, on
+one row with Settings open or closed, and clear of the words. Tools holds Watch and Settings (no
+video link was set), and Settings opens on the left. A plan of two blocks and a 10-minute timer
+ran together: after 5 minutes of playing the plan was on its second block and the timer read
+4:58; after 15 the plan had started over and the timer said "Time's up"; pausing the slides did
+not pause the timer; Done put the Timer button back. The only failed requests were for things
+pictures the device does not have. The list under "Not checked" above still stands.
 
 ## Checked, and not checked
 
