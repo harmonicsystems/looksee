@@ -361,6 +361,8 @@ the plan or the school day, and none of them touch it.
   granted after it stopped being wanted is let go, and it is asked for again when the tab returns.
 - **A hidden tab ticks slowly,** so the chime can be late there; the clock is right the moment
   the tab is back. A timer that ended while the page was closed shows "Time's up" without a chime.
+- The clock's three buttons close by themselves 6 s after the clock was last touched (pointer or
+  key), because the bar does not fade while they are open. The sheet does not: it has Close.
 - Left out on purpose: Undo after a preset (End is one click), and turning the video down for
   the chime.
 - Not built, from the same handoff (Codex, 2026-11-15): Settings split into quick and advanced,

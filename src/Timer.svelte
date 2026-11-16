@@ -84,6 +84,21 @@
     close()
   }
 
+  // The clock's buttons close by themselves once nobody has touched the clock
+  // for a few seconds, so the control bar can fade again while the slides
+  // play. Focus that was on one of them goes to the clock, not away.
+  let poke = $state(0)
+  $effect(() => {
+    poke
+    if (!open || st === 'idle' || st === 'done') return
+    const id = setTimeout(() => {
+      const face = root?.contains(document.activeElement) && root.querySelector('.face')
+      open = false
+      face?.focus()
+    }, 6000)
+    return () => clearTimeout(id)
+  })
+
   // Opening puts focus on the first thing to press: Start, or the clock's
   // first button.
   let root = $state()
@@ -117,7 +132,8 @@
       </div>
     {/if}
   {:else}
-    <section class="tm" class:left={onLeft} class:done={st === 'done'} aria-label="Timer">
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <section class="tm" class:left={onLeft} class:done={st === 'done'} aria-label="Timer" onpointermove={() => poke++} onpointerdown={() => poke++} onkeydown={() => poke++}>
       {#if st === 'done'}
         <b class="up">Time’s up</b>
         <div class="row">
