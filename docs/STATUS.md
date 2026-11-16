@@ -456,6 +456,33 @@ The site now serves the build of `313119b`: 63.9 KB of 64, 116 bytes under, with
 passing. A build of that commit here has the same file name as the one the site serves, and the
 fix ("1-block plan") is in it.
 
+## 2026-11-15, late: four faces for the timer
+
+David asked whether the timer could be an hourglass, "and other visual ways of representing
+durations". The clock can now be drawn four ways, picked by their pictures in the timer's sheet:
+a disc that closes (the default; it replaced the ring), a bar that empties, a dot for each
+minute, and an hourglass whose sand is in proportion to the time. In every one, color is the
+time left. "Fill the screen" draws the clock over the whole stage in the stage's colors, for a
+class to see, and Bigger / Smaller switch while it runs. "Show the numbers" can hide the minutes
+and seconds. The three choices are kept with the timer, not in the settings.
+
+**The size gate went from 64 to 66 KB** for this, by David's choice; the app is 64.8 KB.
+
+**Checked on 2026-11-15, locally.** 113 tests pass (the shapes are tested: where the disc's
+wedge ends, the bar's length, how many dots are lit, that they fit for 1 to 99 minutes, and that
+the hourglass's sand areas match the time). The build passes its gates at 64.8 KB of 66. In a
+browser at 1366 × 768 with the clock moved forward by hand: each face shows the right share in
+the corner clock and filling the screen; the full-screen clock sits between the day bar and the
+control bar, moves over when Settings opens, and uses the stage's colors; with the numbers off
+they are hidden but still there for a screen reader; Bigger and Smaller switch while it runs;
+"Time's up" fills the screen too; the choices come back after a reload. At a phone's size the
+sheet stays on screen with its pictures, and the full-screen clock stops above the control bar's
+two rows (it covered the first row until that was fixed). The console is clean.
+A production build served on the Mac did the same: the four faces in the sheet, the disc and the
+bar in the corner clock, the hourglass and the dots filling the screen in the stage's colors.
+**Not checked:** a real timer run to its end, the other three stage themes, reduced motion, a
+screen reader, Safari, and anything on the Chromebook.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -542,12 +569,10 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 63.9 KB of 64, 116 bytes under, with Settings folded and the timer's
-  buttons closing by themselves (63.2 before those two; raised from 60 to
-  62 for the timer, which cost 3 KB, and to 64 for the weather, which cost 2.1 KB). The limit is
-  reached: the next feature needs something trimmed or a bigger limit. The 161
-  things cost about 1.9 KB; more of them, or another feature, needs the words loaded apart from
-  the app or a bigger budget again.
+- **The size budget.** 64.8 KB of 66, so about 1.2 KB is left. David raised the limit three times
+  on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
+  for the timer's faces (0.9 KB). The 161 things cost about 1.75 KB; many more of them need their
+  words loaded apart from the app.
 - **The weather.** The place is fixed in the code (Rhinebeck), the temperature is °F only, and the
   bands (freezing below 32, cold to 49, cool to 64, warm to 79, hot from 80) were chosen without
   the class. Its ten Spanish words (helado, fresco, cálido, caluroso, algo nublado, con niebla,

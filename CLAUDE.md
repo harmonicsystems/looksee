@@ -42,9 +42,9 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 64 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 63.9 KB now, 116 bytes under, so the limit is reached.
-  David raised it on 2026-11-15 from 60 to 62 for the timer, then to 64 for the weather) and WCAG AA on both control palettes
+- Build gates (`npm run build`): app JS ≤ 66 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 64.8 KB now. David raised it on 2026-11-15 from 60 to 62 for
+  the timer, to 64 for the weather, then to 66 for the timer's faces) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -347,9 +347,29 @@ the plan or the school day, and none of them touch it.
 - **Starting:** the Timer button (or `T`) opens a sheet over the lesson. 1, 3, 5, 10 or 15 minutes
   start with one click; − and + set another length (1 to 60) and Start begins it. The sheet opens
   on the minutes used last, with focus on Start, so `T` then Enter repeats the last timer.
-- **Running:** a clock with a ring in the top right corner (top left when the corner video has
-  the top right). It is outside the bar, so it stays when the bar fades. Clicking it, or `T`,
-  shows exactly Pause/Resume, +1 min and End. The bar's Timer button shows the time left.
+- **Running:** a clock in the top right corner (top left when the corner video has the top
+  right): a picture of the time left, and the minutes and seconds. It is outside the bar, so it
+  stays when the bar fades. Clicking it, or `T`, shows exactly Pause/Resume, +1 min, End, and
+  Bigger or Smaller. The bar's Timer button shows the time left.
+- **Four faces, and in every one color is the time left** (`FACES` in `timer.js`; David asked
+  for hourglasses "and other visual ways of representing durations", 2026-11-15). A disc that
+  closes clockwise from twelve (the default; it replaced the ring), a bar that empties, a dot for
+  each minute that goes out as its minute ends, and an hourglass. They are picked by their
+  pictures in the sheet. `faceTrack(face, n)` and `faceFill(face, part, n)` are pure: two outlines
+  in a box of 100 by 100, the whole shape and the part that is time left, so `Timer.svelte` draws
+  any face as two `<path>`s and the tests can check them. **The hourglass's sand is by area**
+  (a square root), so half the time is half the sand, which a real one does not do. The picture
+  is redrawn four times a second with no transition; under reduced motion it moves in tenths.
+- **Fill the screen** (`big`): the same clock over the whole stage, between the day bar and the
+  control bar, for a class to see from across the room. It is drawn like a slide, in the stage's
+  colors: `App.svelte` hands it `theme.colors[3]`, which the theme tests hold to 3:1 on the
+  stage. The slides underneath go on doing whatever they were doing: the timer still never
+  touches them. On a phone it stops above the two rows of the control bar.
+- **Show the numbers** (`nums`): off hides the minutes and seconds from the clock, for children
+  who watch the seconds. They stay for a screen reader, and on the bar's Timer button for the
+  teacher.
+- `face`, `big` and `nums` are kept with the timer in `looksee-timer-v1`, like the minutes and
+  the chime: they are not settings and are in no link.
 - **The end:** "Time's up" with Done and +2 min, and two soft notes when "Chime at the end" is on
   (`chime.js`, Web Audio, no file). Nothing flashes or moves and nothing else on screen changes.
 - **A timer is the moment it ends** (`endsAt`), never a number counted down: `remaining(t, now)`
@@ -359,7 +379,7 @@ the plan or the school day, and none of them touch it.
   bookmark name or deck key (a test checks `DEFAULTS` has nothing of it). A link window and the
   plain app on one device therefore share the one timer.
 - **A screen reader** hears "1 minute left", "10 seconds left" and "Time's up" from one polite
-  live region (`milestone`), never each second. Under reduced motion the ring moves in tenths.
+  live region (`milestone`), never each second.
 - **Awake:** `keepAwake(playing || timer running)` in `awake.js` is the only wake lock. A lock
   granted after it stopped being wanted is let go, and it is asked for again when the tab returns.
 - **A hidden tab ticks slowly,** so the chime can be late there; the clock is right the moment

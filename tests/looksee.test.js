@@ -11,7 +11,7 @@ import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
 import { linkQuery, linkSettings, setupName, setsName } from '../src/share.js'
 import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter, setsInUse } from '../src/plan.js'
-import { PRESETS, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone } from '../src/timer.js'
+import { PRESETS, FACES, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone, faceTrack, faceFill } from '../src/timer.js'
 import { VIDEOS, sides } from '../src/videos.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
@@ -766,8 +766,8 @@ describe('a timer', () => {
   const MIN = 60000
   const T0 = 1_700_000_000_000
   const fresh = normalizeTimer(null, T0)
-  it('is idle for a new visitor, at five minutes, with the chime on', () => {
-    expect(fresh).toEqual({ last: 5, chime: true, total: 0, endsAt: 0, left: 0 })
+  it('is idle for a new visitor, at five minutes, with the chime on, drawn as a small disc with its numbers', () => {
+    expect(fresh).toEqual({ last: 5, chime: true, face: 'disc', big: false, nums: true, total: 0, endsAt: 0, left: 0 })
     expect(timerState(fresh, T0)).toBe('idle')
     expect(remaining(fresh, T0)).toBe(0)
     expect(PRESETS).toEqual([1, 3, 5, 10, 15])
@@ -819,8 +819,75 @@ describe('a timer', () => {
     expect(remaining(long, T0)).toBe(99 * MIN)
     expect(share(long, T0)).toBeLessThanOrEqual(1)
   })
-  it('ends, keeping the minutes and the chime choice', () => {
-    expect(endTimer({ ...startTimer(fresh, 10, T0), chime: false })).toEqual({ last: 10, chime: false, total: 0, endsAt: 0, left: 0 })
+  it('ends, keeping the minutes, the chime choice and how it is drawn', () => {
+    expect(endTimer({ ...startTimer(fresh, 10, T0), chime: false })).toEqual({ ...fresh, last: 10, chime: false })
+    expect(endTimer({ ...startTimer(fresh, 10, T0), face: 'glass', big: true, nums: false })).toEqual({ ...fresh, last: 10, face: 'glass', big: true, nums: false })
+  })
+  it('keeps how it is drawn through a reload, and drops a face it does not know', () => {
+    const drawn = normalizeTimer({ face: 'dots', big: true, nums: false }, T0)
+    expect(drawn).toMatchObject({ face: 'dots', big: true, nums: false })
+    expect(normalizeTimer(JSON.parse(JSON.stringify(startTimer(drawn, 3, T0))), T0 + MIN)).toMatchObject({ face: 'dots', big: true, nums: false })
+    expect(normalizeTimer({ face: 'sundial', big: 'yes', nums: 0 }, T0)).toMatchObject({ face: 'disc', big: false, nums: true })
+    expect(FACES).toEqual(['disc', 'bar', 'dots', 'glass'])
+  })
+  it('draws the time left as a disc that closes, clockwise from twelve', () => {
+    expect(faceFill('disc', 1, 5)).toBe(faceTrack('disc', 5))
+    expect(faceFill('disc', 0.75, 5)).toBe('M50,50V5A45,45 0 1,1 5,50z')
+    expect(faceFill('disc', 0.5, 5)).toBe('M50,50V5A45,45 0 0,1 50,95z')
+    expect(faceFill('disc', 0.25, 5)).toBe('M50,50V5A45,45 0 0,1 95,50z')
+    expect(faceFill('disc', 0, 5)).toBe('M50,50V5A45,45 0 0,1 50,5z')
+  })
+  it('draws it as a bar that empties from the right', () => {
+    expect(faceTrack('bar', 5)).toBe('M5,35h90v30h-90z')
+    expect(faceFill('bar', 1, 5)).toBe('M5,35h90v30h-90z')
+    expect(faceFill('bar', 0.5, 5)).toBe('M5,35h45v30h-45z')
+    expect(faceFill('bar', 0, 5)).toBe('M5,35h0v30h0z')
+    // Never more than full or less than empty, whatever it is handed.
+    expect(faceFill('bar', 7, 5)).toBe(faceFill('bar', 1, 5))
+    expect(faceFill('bar', -1, 5)).toBe(faceFill('bar', 0, 5))
+  })
+  it('draws it as a dot for each minute, one going out as its minute ends', () => {
+    const count = (d) => d.split('M').length - 1
+    expect(count(faceTrack('dots', 10))).toBe(10)
+    expect(count(faceFill('dots', 1, 10))).toBe(10)
+    expect(count(faceFill('dots', 0.95, 10))).toBe(10)
+    expect(count(faceFill('dots', 0.9, 10))).toBe(9)
+    expect(count(faceFill('dots', 0.01, 10))).toBe(1)
+    expect(faceFill('dots', 0, 10)).toBe('')
+    // The dots that are lit are the first of the dots that are drawn.
+    expect(faceTrack('dots', 10).startsWith(faceFill('dots', 0.3, 10))).toBe(true)
+    // Any length fits in the box: 1 minute to 99.
+    for (const n of [1, 3, 5, 6, 15, 20, 21, 60, 99]) {
+      const d = faceTrack('dots', n)
+      expect(count(d), n).toBe(n)
+      for (const [, x, y] of d.matchAll(/M([\d.]+),([\d.]+)/g)) {
+        expect(+x >= 0 && +x <= 100 && +y >= 0 && +y <= 100, `${n}: ${x},${y}`).toBe(true)
+      }
+    }
+  })
+  it('draws it as an hourglass whose sand is the time: half the time, half the sand', () => {
+    // The area of a path made of straight lines, one closed piece at a time.
+    const area = (d) =>
+      d.split('z').filter(Boolean).reduce((sum, piece) => {
+        const pts = []
+        let x = 0, y = 0
+        for (const [, c, a, b] of piece.matchAll(/([MLh])(-?[\d.]+)(?:,(-?[\d.]+))?/g)) {
+          if (c === 'h') x += +a
+          else [x, y] = [+a, +b]
+          pts.push([x, y])
+        }
+        return sum + Math.abs(pts.reduce((s, [px, py], i) => s + px * pts[(i + 1) % pts.length][1] - pts[(i + 1) % pts.length][0] * py, 0)) / 2
+      }, 0)
+    const bulb = (38 * 2 * 42) / 2
+    const [top, bottom] = [0, 1].map((i) => (d) => area(d.split('z')[i] + 'z'))
+    expect(top(faceFill('glass', 1, 5))).toBeCloseTo(bulb, 0)
+    expect(bottom(faceFill('glass', 1, 5))).toBeCloseTo(0, 0)
+    expect(top(faceFill('glass', 0, 5))).toBeCloseTo(0, 0)
+    expect(bottom(faceFill('glass', 0, 5))).toBeCloseTo(bulb, 0)
+    for (const p of [0.25, 0.5, 0.75]) {
+      expect(top(faceFill('glass', p, 5)) / bulb, `top at ${p}`).toBeCloseTo(p, 1)
+      expect(bottom(faceFill('glass', p, 5)) / bulb, `bottom at ${p}`).toBeCloseTo(1 - p, 1)
+    }
   })
   it('comes back after a reload: running, paused, or ended while away', () => {
     const back = (t, now) => normalizeTimer(JSON.parse(JSON.stringify(t)), now)
