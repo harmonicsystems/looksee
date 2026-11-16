@@ -1175,7 +1175,7 @@
   .chk input { width: 18px; height: 18px; accent-color: var(--brand); }
   .hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
   .hint.bad { color: var(--bad); }
-  .grp { margin-bottom: 8px; }
+  .grp { margin-bottom: 6px; }
   .grp .seg { margin-top: 6px; }
   .hint.things { margin: 8px 0; }
   .files { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
@@ -1183,7 +1183,7 @@
   .file { position: relative; overflow: hidden; cursor: pointer; }
   .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
   .file:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--ring); }
-  .grp-head { display: block; width: 100%; min-height: 44px; text-align: left; font-size: 16px; }
+  .grp-head { display: block; width: 100%; min-height: 40px; text-align: left; font-size: 16px; }
   .grp-head[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .grp-head[aria-pressed='mixed'] { border: 2px solid var(--brand); }
   a.btn { text-decoration: none; display: inline-flex; align-items: center; }
