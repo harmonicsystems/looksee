@@ -515,6 +515,17 @@ dip, then comes back; Save for this device stored all nine and the next tune pla
 saved copy. Not checked: a real corner or Watch video with sound (the dip was driven directly),
 an iPad (where a dip is a pause), and offline in the built app.
 
+## 2026-11-17: Quiet classical
+
+A second playlist, 🌙 Quiet classical: Satie's Gymnopédie No. 1, Bach's Prelude in C, Schumann's
+Träumerei, Bach's Air, Chopin's Nocturne Op. 9 No. 2, Bach's Cello Suite No. 1 Prelude, Grieg's
+Morning Mood and Schumann's Child Falling Asleep (25 minutes, 12.3 MB). David approved the eight
+recordings; their licences were checked again on Commons before use (five PD, three CC0), and each
+is credited in `NOTICE.txt`. The app is 67.8 KB of 68. Checked in the dev server: both tiles show,
+the playlist plays from Gymnopédie and moves on to the Prelude, every file is served, Stop works.
+**Not listened to by anyone yet**: how they sound together, and whether Morning Mood's loud
+middle is too much for the room, is for David to hear.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -621,5 +632,5 @@ setting, which was checked). Any device other than one Mac.
   banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
   chile for pepper, palomitas for popcorn, panqueques for pancakes.
 
-- **Background music: the classical playlist.** Nursery tunes are built; Quiet classical waits on
-  David approving recordings (PD or CC0 recordings only). The budget has 0.4 KB left.
+- **Background music: listen to both playlists.** Nobody has heard them yet. Morning Mood grows
+  loud in the middle; drop it if it is too much. The budget has 0.2 KB left.

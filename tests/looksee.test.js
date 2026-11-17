@@ -1011,6 +1011,14 @@ describe('music', () => {
     }
     expect(readFileSync(at('public/NOTICE.txt'), 'utf8')).toMatch(/music/i)
   })
+  it('credits every recording it did not make, by file, with its source', () => {
+    const notice = readFileSync(at('public/NOTICE.txt'), 'utf8')
+    for (const p of PLAYLISTS.filter((p) => !/made for Looksee/.test(p.credit)))
+      for (const t of p.tracks) expect(notice, t.file).toMatch(new RegExp(`- ${t.file}\\.m4a: [^]*?https://commons\\.wikimedia\\.org/`))
+  })
+  it('never splits a title on a comma', () => {
+    for (const p of PLAYLISTS) for (const t of p.tracks) expect(t.file, t.title).toMatch(/^[a-z0-9-]+$/)
+  })
   it('is off for a new visitor, soft, and kept out of the offline store', () => {
     expect(DEFAULTS.music).toBe(false)
     expect(DEFAULTS.musicVol).toBe('soft')

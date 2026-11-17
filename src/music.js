@@ -28,6 +28,20 @@ macdonald,Old MacDonald
 buns,Hot Cross Buns
 clair,Au Clair de la Lune
 joy,Ode to Joy`)
+  },
+  {
+    id: 'classical',
+    label: 'Quiet classical',
+    emoji: '🌙',
+    credit: 'Public domain and CC0 recordings from Wikimedia Commons',
+    tracks: tracks(`gymnopedie,Satie: Gymnopédie No. 1
+prelude-c,Bach: Prelude in C
+traumerei,Schumann: Träumerei
+air,Bach: Air
+nocturne,Chopin: Nocturne in E-flat
+cello,Bach: Prelude from Cello Suite No. 1
+morning,Grieg: Morning Mood
+asleep,Schumann: Child Falling Asleep`)
   }
 ]
 

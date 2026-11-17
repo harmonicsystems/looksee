@@ -33,3 +33,31 @@ public domain. These recordings were made for Looksee by
 scripts/music.mjs, a music-box sound written in code, and are dedicated to
 the public domain under CC0 1.0.
   https://creativecommons.org/publicdomain/zero/1.0/
+
+Quiet classical: recordings from Wikimedia Commons, each marked there as
+public domain or CC0, made mono, the same loudness and AAC for Looksee. The
+compositions are all in the public domain.
+- gymnopedie.m4a: Satie, Gymnopédie No. 1. Robin Alciatore, piano (Musopen).
+  Public domain.
+  https://commons.wikimedia.org/wiki/File:Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg
+- prelude-c.m4a: Bach, Prelude in C major, BWV 846. Kimiko Ishizaka, piano
+  (Open Well-Tempered Clavier). CC0.
+  https://commons.wikimedia.org/wiki/File:Kimiko_Ishizaka_-_Bach_-_Well-Tempered_Clavier,_Book_1_-_01_Prelude_No._1_in_C_major,_BWV_846.ogg
+- traumerei.m4a: Schumann, Träumerei (Scenes from Childhood, Op. 15 No. 7).
+  Musopen. Public domain.
+  https://commons.wikimedia.org/wiki/File:Robert_Schumann_-_scenes_from_childhood,_op._15_-_vii._dreaming.ogg
+- air.m4a: Bach, Air from Orchestral Suite No. 3. United States Air Force
+  Band strings. Public domain (a work of the US government).
+  https://commons.wikimedia.org/wiki/File:Air.ogg
+- nocturne.m4a: Chopin, Nocturne in E-flat major, Op. 9 No. 2. Peter
+  Johnston, piano (Musopen). CC0.
+  https://commons.wikimedia.org/wiki/File:Chopin_Nocturne_No._2_in_E_Flat_Major,_Op._9.ogg
+- cello.m4a: Bach, Prelude from Cello Suite No. 1, BWV 1007. Played by Chris
+  (Wikimedia Commons user Fopseh). CC0.
+  https://commons.wikimedia.org/wiki/File:Bach_Cello_Suite_1_Prelude_(BWV_1007)_Played_by_Chris.ogg
+- morning.m4a: Grieg, Morning Mood (Peer Gynt). Musopen Symphony Orchestra.
+  Public domain.
+  https://commons.wikimedia.org/wiki/File:Musopen_-_Morning.ogg
+- asleep.m4a: Schumann, Child Falling Asleep (Scenes from Childhood, Op. 15
+  No. 12). Musopen. Public domain.
+  https://commons.wikimedia.org/wiki/File:Robert_Schumann_-_scenes_from_childhood,_op._15_-_xii._child_falling_asleep.ogg

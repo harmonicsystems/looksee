@@ -43,7 +43,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 68 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 67.6 KB now, 0.4 KB under. David raised it on 2026-11-15 from 60 to 62 for
+  (`scripts/check-bundle-size.mjs`; 67.8 KB now, 0.2 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, and on 2026-11-16 to 68 for background music) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
@@ -511,12 +511,19 @@ only when Settings ▸ Music is on (off for a new visitor). Asked for on 2026-11
   the playlists exactly. The Nursery tunes (nine, 9 minutes, 4.4 MB) are made by
   `scripts/music.mjs`: the notes are written there, played by a music-box sound in code, so they
   are ours (CC0). To add a tune: its notes and chords there, a line in `PLAYLISTS`, `npm run music`.
+- **Quiet classical** (eight pieces, 25 minutes, 12.3 MB; David approved them on 2026-11-17) are
+  recordings from Wikimedia Commons, each marked there PD or CC0 (Musopen, Kimiko Ishizaka, the
+  US Air Force Band, a Commons cellist). Each is in `NOTICE.txt` by its file name with its Commons
+  page (a test checks). They were made mono and AAC with a two-pass `loudnorm` (`linear=true`,
+  so a piece keeps its own soft and loud), so they land between −23 and −26 LUFS; the Air is the
+  quietest. Only these: Clair de lune and The Swan had no clean PD/CC0 piano recording, and
+  Brahms's Lullaby on Commons names no performer. A recording someone else made needs David's
+  OK before it is downloaded.
 - **Offline:** the files are not precached (`globIgnores` has `music/**`). Settings ▸ Music has
   "Save for this device", which puts every track in Cache Storage (`looksee-music`, with
   `cache.add`: the site's own files, so no `fetch` and nothing outside). A saved track is played
   from a blob URL, so the service worker never has to answer an `<audio>`'s range requests.
-- Not built: the Quiet classical playlist (recordings are being chosen; each needs David's OK),
-  a choice of track, and fading out at the end of the timer.
+- Not built: a choice of track, and fading out at the end of the timer.
 
 ## School-day bar
 
