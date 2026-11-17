@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "pictures": "node scripts/fetch-pictures.mjs",
-    "things": "node scripts/things.mjs"
+    "things": "node scripts/things.mjs",
+    "music": "node scripts/music.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.1.0",

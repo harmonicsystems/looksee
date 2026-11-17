@@ -15,6 +15,7 @@ import { PRESETS, FACES, normalizeTimer, timerState, remaining, share, startTime
 import { VIDEOS, sides } from '../src/videos.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
+import { PLAYLISTS, MUSIC_DIR, VOLUMES, duckLevel } from '../src/music.js'
 import { PLACE, TEMPS, weatherUrl, tempBand, sky, readWeather, weatherLines } from '../src/weather.js'
 
 // Set names are off here unless a test asks for them, so decks hold only their slides.
@@ -665,7 +666,7 @@ describe('things', () => {
   })
   it('keeps the pictures out of the repo and out of what is stored offline', () => {
     expect(readFileSync(at('.gitignore'), 'utf8').split('\n')).toContain(`public/${THINGS_DIR}/`)
-    expect(readFileSync(at('vite.config.js'), 'utf8')).toContain(`globIgnores: ['${THINGS_DIR}/**']`)
+    expect(readFileSync(at('vite.config.js'), 'utf8')).toContain(`globIgnores: ['${THINGS_DIR}/**', 'music/**']`)
     // None of them is one of the pictures the app ships and credits.
     expect(pictureFiles().some((f) => f.dir === THINGS_DIR)).toBe(false)
   })
@@ -993,5 +994,33 @@ describe('weather', () => {
     const cold = readWeather({ current: { temperature_2m: -1, weather_code: 71, is_day: 1 } })
     expect(weatherLines(cold, ['en'])[0].text).toBe('minus 1 degree. freezing. snowy.')
     expect(weatherLines(cold, ['es'])[0].text).toBe('menos 1 grado. helado. con nieve.')
+  })
+})
+
+// Background music: quiet playlists in public/music/, all free to publish,
+// off for a new visitor and never stored for offline use unless saved.
+describe('music', () => {
+  const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
+  it('has exactly the files its playlists play, each with a title and a credit', () => {
+    const files = PLAYLISTS.flatMap((p) => p.tracks.map((t) => `${t.file}.m4a`))
+    expect(new Set(files).size).toBe(files.length)
+    expect(readdirSync(at(`public/${MUSIC_DIR}/`)).filter((n) => !n.startsWith('.')).sort()).toEqual([...files].sort())
+    for (const p of PLAYLISTS) {
+      expect(p.credit, p.id).toMatch(/CC0|public domain/i)
+      for (const t of p.tracks) expect(t.title, t.file).toBeTruthy()
+    }
+    expect(readFileSync(at('public/NOTICE.txt'), 'utf8')).toMatch(/music/i)
+  })
+  it('is off for a new visitor, soft, and kept out of the offline store', () => {
+    expect(DEFAULTS.music).toBe(false)
+    expect(DEFAULTS.musicVol).toBe('soft')
+    expect(readFileSync(at('vite.config.js'), 'utf8')).toContain("'music/**'")
+  })
+  it('gives way: silent under a video, a third for speech or the chime', () => {
+    const v = VOLUMES.soft
+    expect(duckLevel(v, new Set())).toBe(v)
+    expect(duckLevel(v, new Set(['speak']))).toBeCloseTo(v * 0.3)
+    expect(duckLevel(v, new Set(['chime', 'speak']))).toBeCloseTo(v * 0.3)
+    expect(duckLevel(v, new Set(['video', 'speak']))).toBe(0)
   })
 })

@@ -17,6 +17,8 @@
   import { MINUTES, PLAN_MAX, blockDone, minutesLeft, blockAfter, setsInUse } from './plan.js'
   import { setHome } from './home.js'
   import { keepAwake } from './awake.js'
+  import { PLAYLISTS, VOLUMES } from './music.js'
+  import { playMusic, stopMusic, setMusicVolume, dip, onMusic, saveMusic, savedMusic } from './player.js'
   import { videoId, startSeconds } from './link.js'
   import { thingFiles } from './things.js'
   import { canKeep, localPictures, addPictures, removePictures } from './local.js'
@@ -225,7 +227,7 @@
     return () => clearTimeout(t)
   })
   // Keep the screen awake while the deck plays or a timer runs (awake.js).
-  $effect(() => keepAwake(playing || timerStatus === 'running'))
+  $effect(() => keepAwake(playing || timerStatus === 'running' || !!tune))
 
   // ---- timer and tools ----
   // The timer is its own thing (Timer.svelte); the bar only has its button.
@@ -441,6 +443,44 @@
     return { top: take(c.top), bottom: take(c.bottom), right: take(c.right), left: take(c.left) }
   })
 
+  // ---- background music (music.js, player.js) ----
+  // Chosen in Tools; while it plays, a button in the bar stops it. It is its
+  // own thing, like the timer: the slides, plans and the timer never start or
+  // stop it. It gives way to a video with sound, to speech and to the chime.
+  let tune = $state(null)
+  let choosing = $state(false)
+  let lastList = null
+  let musicNote = $state('')
+  let musicSaved = $state(0)
+  const MUSIC_COUNT = PLAYLISTS.reduce((n, p) => n + p.tracks.length, 0)
+  onMusic((id, err) => {
+    tune = id
+    if (err) musicNote = 'The music could not be played: offline, and not saved on this device.'
+  })
+  function startMusic(p) {
+    lastList = p
+    musicNote = ''
+    choosing = false
+    playMusic(p, VOLUMES[s.musicVol])
+  }
+  $effect(() => setMusicVolume(VOLUMES[s.musicVol]))
+  $effect(() => dip('video', (pipOn || !!watching) && !s.videoMuted))
+  $effect(() => {
+    if (!s.music) untrack(stopMusic)
+  })
+  $effect(() => {
+    if (s.music) savedMusic(PLAYLISTS).then((n) => (musicSaved = n))
+  })
+  async function keepMusic() {
+    musicNote = 'Saving…'
+    try {
+      await saveMusic(PLAYLISTS, (n) => (musicSaved = n))
+      musicNote = ''
+    } catch {
+      musicNote = 'Saving stopped: the site could not be reached.'
+    }
+  }
+
   // ---- weather ----
   // The temperature outside as its own big slide, for circle time. Nothing is
   // asked until someone opens it (Weather in Tools, or O), and the button
@@ -482,6 +522,7 @@
         tools = false
         toolsBtn?.focus()
       } else if (picking) picking = false
+      else if (choosing) choosing = false
       else if (wx) stopWeather()
       else if (watching) stopWatch()
       else if (drawer) {
@@ -504,6 +545,7 @@
     else if (k === 'r') wx ? speakWeather() : speakSlide()
     else if (k === 'w') watching ? stopWatch() : (picking = !picking)
     else if (k === 'm') s.videoMuted = !s.videoMuted
+    else if (k === 'b') tune ? stopMusic() : lastList ? startMusic(lastList) : s.music && (choosing = true)
     else if (k === 'f') fullscreen()
     else if (k === 't') {
       toggleTimer()
@@ -535,13 +577,14 @@
   // Back to the defaults, but the video link, the school day and the plan are
   // kept: those are set up once and are not part of the look.
   function reset() {
-    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, planOn: s.planOn, plan: s.plan, weather: s.weather })
+    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, planOn: s.planOn, plan: s.plan, weather: s.weather, music: s.music })
     Object.assign(s, normalizeSettings(keep))
   }
 
   const L = {
     order: { inOrder: 'In order', shuffle: 'Mixed up' },
     letterCase: { upper: 'A', lower: 'a', both: 'Aa' },
+    musicVol: { soft: 'Soft', medium: 'Medium' },
     numberStyle: { digit: 'Numeral', dots: 'Dots', both: 'Both' },
     mathTo: { 5: 'Up to 5', 10: 'Up to 10' },
     feelingMotion: { moving: 'Moving', still: 'Still' },
@@ -712,6 +755,20 @@
     </section>
   {/if}
 
+  {#if choosing}
+    <div class="pick" role="dialog" aria-modal="true" aria-label="Choose music">
+      <div class="pick-grid">
+        {#each PLAYLISTS as p (p.id)}
+          <button class="btn tile" aria-pressed={tune === p.id} onclick={() => startMusic(p)}><span class="tile-pic" aria-hidden="true">{p.emoji}</span>{p.label}</button>
+        {/each}
+        {#if tune}<button class="btn tile close" onclick={() => ((choosing = false), stopMusic())}>Stop music</button>{/if}
+        <button class="btn tile close" onclick={() => (choosing = false)}>Close</button>
+      </div>
+      <div class="vol">{@render seg('musicVol', 'Volume')}</div>
+      {#if musicNote}<p class="wx-msg" role="status">{musicNote}</p>{/if}
+    </div>
+  {/if}
+
   {#if picking}
     <div class="pick" role="dialog" aria-modal="true" aria-label="Choose a video">
       <div class="pick-grid">
@@ -741,6 +798,9 @@
     <button class="btn big" class:primary={timerStatus !== 'idle'} bind:this={timerBtn} onclick={toggleTimer} aria-expanded={timerOpen}>
       <span aria-hidden="true">⏱️</span> <span class:mono={timerStatus !== 'idle' && timerStatus !== 'done'}>{timerText || 'Timer'}</span>
     </button>
+    {#if tune}
+      <button class="btn big" onclick={stopMusic} aria-label="Stop music: {PLAYLISTS.find((p) => p.id === tune)?.label}"><span aria-hidden="true">🎵</span> Stop</button>
+    {/if}
     {#if !watching && !wx}
       <button class="btn big corner" bind:this={toolsBtn} onclick={() => ((timerOpen = false), (tools = !tools))} aria-expanded={tools}><span aria-hidden="true">🧰</span> Tools</button>
     {/if}
@@ -751,6 +811,7 @@
     <div class="tools" role="group" aria-label="Tools">
       {#if s.weather}<button class="btn big" onclick={() => tool(showWeather)}><span aria-hidden="true">🌡️</span> Weather</button>{/if}
       <button class="btn big" onclick={() => tool(() => (picking = true))} aria-haspopup="dialog"><span aria-hidden="true">📺</span> Watch</button>
+      {#if s.music}<button class="btn big" onclick={() => tool(() => (choosing = true))} aria-haspopup="dialog"><span aria-hidden="true">🎵</span> Music</button>{/if}
       {#if vid}
         <button class="btn big" onclick={() => tool(toggleVideo)}><span aria-hidden="true">🎬</span> {pipOn ? 'Hide video' : 'Corner video'}</button>
       {/if}
@@ -922,6 +983,20 @@
         </p>
       </details>
 
+      <details class="sec">
+        <summary><h2>Music</h2><span class="sum">{s.music ? 'On' : 'Off'}</span></summary>
+        <label class="chk"><input type="checkbox" bind:checked={s.music} /> Music in Tools: quiet tunes under the slides</label>
+        {#if s.music}
+          <p class="hint">
+            It plays until stopped, softly, and goes quiet for a video with sound, for words read aloud and for the timer's
+            chime. <b class="mono">{musicSaved} of {MUSIC_COUNT}</b> tunes are saved on this device for offline use.
+          </p>
+          {#if musicSaved < MUSIC_COUNT}<p><button class="btn small" onclick={keepMusic}>Save for this device</button></p>{/if}
+          {#if musicNote}<p class="hint" role="status">{musicNote}</p>{/if}
+        {/if}
+        <p class="hint">{PLAYLISTS.map((p) => `${p.label}: ${p.credit}.`).join(' ')}</p>
+      </details>
+
       <!-- Animals, Food, Things and Places come with no pictures: each device is given its own. -->
       <details class="sec">
         <summary><h2>Pictures</h2><span class="sum">{picsHave} of {THING_COUNT} added</span></summary>
@@ -1010,7 +1085,7 @@
         <summary><h2>Keys, reset and credits</h2></summary>
         <p class="hint keyhelp">
           <kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> back / next · <kbd>S</kbd> settings · <kbd>V</kbd> video · <kbd>W</kbd> watch · <kbd>T</kbd> timer · <kbd>O</kbd> weather outside · <kbd>R</kbd> read aloud ·
-          <kbd>M</kbd> sound · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
+          <kbd>M</kbd> sound · <kbd>B</kbd> music · <kbd>F</kbd> full screen · <kbd>Esc</kbd> close
         </p>
         <p><button class="btn small" onclick={reset}>Reset look and pace</button></p>
         <p class="hint">
@@ -1135,6 +1210,8 @@
   .tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 160px; font-size: 20px; text-align: center; }
   .tile-pic { font-size: 64px; line-height: 1; }
   .tile.close { min-height: 160px; font-size: 18px; }
+  .tile[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .vol { margin-top: 16px; padding: 4px 16px 12px; border-radius: 12px; background: var(--surface); color: var(--ink); }
   .ctl .big, .tools .big { min-height: 52px; padding-inline: 22px; font-size: 17px; }
   /* Tools sits in the bottom left corner, where a projector's mouse usually is, and its panel
      rises from there. */

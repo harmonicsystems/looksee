@@ -2,9 +2,14 @@
 // file and nothing fetched. It plays only where someone has already clicked
 // or pressed a key on the page (starting the timer counts).
 
+import { dip } from './player.js'
+
 let ctx
 
+// Background music dips for the two notes (player.js).
 export function chime() {
+  dip('chime', true)
+  setTimeout(() => dip('chime', false), 2500)
   try {
     ctx ??= new (window.AudioContext || window.webkitAudioContext)()
     ctx.resume()

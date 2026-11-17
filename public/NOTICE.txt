@@ -23,3 +23,13 @@ it shows these copies.
 
 The emoji on the school-day bar are not files. They are drawn by the device's
 own emoji font.
+
+Background music (public/music/)
+--------------------------------
+Nursery tunes: Twinkle Twinkle Little Star, Mary Had a Little Lamb, Row Row
+Row Your Boat, Frère Jacques, London Bridge, Old MacDonald, Hot Cross Buns,
+Au Clair de la Lune, and Ode to Joy (Beethoven). The melodies are in the
+public domain. These recordings were made for Looksee by
+scripts/music.mjs, a music-box sound written in code, and are dedicated to
+the public domain under CC0 1.0.
+  https://creativecommons.org/publicdomain/zero/1.0/
