@@ -36,7 +36,9 @@ const PAIRS = [
   ['ink', 'sunk', 4.5, 'inputs, kbd, banner'],
   ['muted', 'surface', 4.5, 'hints, unselected choices'],
   ['brand', 'surface', 4.5, 'links'],
-  ['brand-ink', 'brand', 4.5, 'primary button, selected choices'],
+  ['brand-ink', 'brand', 4.5, 'primary button, the plan block playing'],
+  ['ink', 'pick', 4.5, 'chosen sets, groups and minutes'],
+  ['brand', 'pick', 3, 'the border of a chosen choice'],
   ['bad', 'surface', 4.5, 'error hints'],
   ['focus', 'focus-edge', 3, 'focus ring against its dark edge']
 ]

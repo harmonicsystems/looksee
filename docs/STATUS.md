@@ -515,6 +515,17 @@ dip, then comes back; Save for this device stored all nine and the next tune pla
 saved copy. Not checked: a real corner or Watch video with sound (the dip was driven directly),
 an iPad (where a dip is a pause), and offline in the built app.
 
+## 2026-11-17: a calmer What to show
+
+David sent a screenshot of Settings and found it cluttered. Every chosen thing was the same solid
+dark slab, and every plan block repeated its seven controls. Now a chosen set, group or minute is
+a pale tint with a brand edge (and a ✓ on sets and groups); solid is kept for the plan block
+playing; only that block shows its minutes, ↑ and Remove; groups sit two to a row; and a closed
+section's summary stays on one line ("…" when long). CSS only, apart from one `{#if}` and a
+wrapper, so the JS stays 67.8 KB. Checked in the dev server at 1366 × 768 and 375 × 812, light and
+dark: clicking a block moves its toolbar there, minutes and ↑ work, the grid gives way to rows
+when single sets show, and Pace now ends at 620 px. Not checked on the classroom Chromebook.
+
 ## 2026-11-17: Quiet classical
 
 A second playlist, 🌙 Quiet classical: Satie's Gymnopédie No. 1, Bach's Prelude in C, Schumann's

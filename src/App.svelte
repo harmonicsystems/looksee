@@ -845,26 +845,28 @@
           <div class="fld" role="group" aria-label="Plan">
             {#each s.plan as b, i (b)}
               <div class="grp">
-                <button class="btn grp-head" aria-pressed={i === bi} onclick={() => goBlock(i)}>{i + 1}. {setsName(b.sets) || 'No sets yet'} · {b.min} min</button>
-                <div class="seg">
+                <button class="btn grp-head blk" aria-pressed={i === bi} onclick={() => goBlock(i)}>{i + 1}. {setsName(b.sets) || 'No sets yet'} · {b.min} min</button>
+                <!-- Only the block playing shows its minutes, ↑ and Remove. -->
+                {#if i === bi}<div class="seg">
                   {#each MINUTES as m}
                     <label class:on={b.min === m}><input type="radio" name="min{i}" value={m} bind:group={b.min} aria-label="{m} minutes" />{m}</label>
                   {/each}
                   <button class="btn small" onclick={() => moveBlock(i)} disabled={!i} aria-label="Move block {i + 1} earlier">↑</button>
                   <button class="btn small" onclick={() => removeBlock(i)} disabled={s.plan.length < 2} aria-label="Remove block {i + 1}">Remove</button>
-                </div>
+                </div>{/if}
               </div>
             {/each}
             <button class="btn small" onclick={addBlock} disabled={s.plan.length >= PLAN_MAX}>Add a block</button>
           </div>
           <p class="hint">
             Each block plays for its minutes, then the next begins. Minutes count only while the slides play. Click a block to
-            play it now and choose its sets below.
+            play it now and change its minutes and its sets below.
           </p>
         {/if}
         <fieldset class="fld">
           <legend>{block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
           <!-- One click on a group turns it all on, or all off when it is all on. -->
+          <div class="tiles">
           {#each GROUPS as g}
             {@const on = g.sets.filter((id) => cur.sets.includes(id)).length}
             <div class="grp">
@@ -882,6 +884,7 @@
               {/if}
             </div>
           {/each}
+          </div>
           <label class="chk"><input type="checkbox" bind:checked={single} /> Choose single sets</label>
         </fieldset>
       </details>
@@ -1228,10 +1231,15 @@
   .sec { border-top: 1px solid var(--line); }
   /* An option that does not apply is hidden, whatever display its row is given. */
   .sec [hidden] { display: none !important; }
-  .sec > summary { padding: 13px 0; cursor: pointer; }
+  /* The heading and what the section is set to share one line; a long summary ends in "…". */
+  .sec > summary { display: flex; align-items: baseline; gap: 12px; padding: 13px 0; cursor: pointer; }
+  .sec > summary { list-style: none; }
+  .sec > summary::-webkit-details-marker { display: none; }
+  .sec > summary::before { content: ''; flex: none; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: translateY(-2px) rotate(-45deg); }
+  .sec[open] > summary::before { transform: translateY(-4px) rotate(45deg); }
   .sec[open] > summary { margin-bottom: 4px; }
   h2 { display: inline; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0 4px; }
-  .sum { float: right; max-width: 58%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); font-size: 14px; }
+  .sum { flex: 1; min-width: 0; text-align: right; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); font-size: 14px; }
   .sec[open] .sum { display: none; }
   .once { margin: 26px 0 8px; font-size: 14px; font-weight: 700; }
   .fld { display: block; border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
@@ -1244,8 +1252,11 @@
   .day-row input[type='text'] { width: 5.5em; font-size: 18px; }
   .day-row .hint { margin: 0; flex: 1; }
   .seg { display: flex; flex-wrap: wrap; gap: 6px; }
-  .seg label { position: relative; border: 1px solid var(--line); border-radius: 6px; padding: 6px 11px; cursor: pointer; font-weight: 700; background: var(--surface); color: var(--muted); }
-  .seg label.on { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .seg label { position: relative; border: 1px solid var(--line); border-radius: 6px; padding: 6px 11px; cursor: pointer; font-weight: 600; background: var(--surface); color: var(--muted); }
+  /* Chosen: a pale tint, a brand edge and a check, so it never rests on color alone. Solid
+     brand is kept for one thing, the plan block playing now. */
+  .seg label.on, .grp-head[aria-pressed='true']:not(.blk) { background: var(--pick); color: var(--ink); border: 2px solid var(--brand); padding: 5px 10px; }
+  .seg label.on:has([type='checkbox'])::before, .tiles .grp-head[aria-pressed='true']::before { content: '✓ ' / ''; }
   .seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
   .seg label:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--ring); }
   .chk { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
@@ -1253,6 +1264,10 @@
   .hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
   .hint.bad { color: var(--bad); }
   .grp { margin-bottom: 6px; }
+  [aria-label='Plan'] .grp { margin-bottom: 8px; }
+  /* Groups two to a row, unless their single sets are showing under them. */
+  .tiles:not(:has(.seg)) { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 10px; }
+  .tiles:not(:has(.seg)) .grp { margin: 0; }
   .grp .seg { margin-top: 6px; }
   .hint.things { margin: 8px 0; }
   .files { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
@@ -1261,7 +1276,7 @@
   .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
   .file:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: var(--ring); }
   .grp-head { display: block; width: 100%; min-height: 40px; text-align: left; font-size: 16px; }
-  .grp-head[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .blk[aria-pressed='true'] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .grp-head[aria-pressed='mixed'] { border: 2px solid var(--brand); }
   a.btn { text-decoration: none; display: inline-flex; align-items: center; }
   .voice { display: inline-block; margin-left: 0.6em; }

@@ -414,9 +414,17 @@ needs each thing, and folded:
 - **The order is by use.** What changes in class comes first: What to show, Words and speech,
   Pace. Then Options for these sets. Then, under the label "Set up once": School day, Weather,
   Pictures, Videos, Look, Share this setup, and Keys, reset and credits. At 1366 × 768 the first screen
-  holds the plan's checkbox, the nine groups, Words and speech, and Pace, with no scrolling.
-- **What to show lists the groups, one click each.** The sets inside them appear with "Choose
-  single sets" (`single`), which starts on when a group is only partly on.
+  holds the plan's checkbox, the nine groups, Words and speech, Pace and Options (Pace ends at
+  620 px, measured 2026-11-17), with no scrolling.
+- **What to show lists the groups, one click each,** two to a row (`.tiles`, a grid only while no
+  single sets show). The sets inside them appear with "Choose single sets" (`single`), which
+  starts on when a group is only partly on; then each group takes the whole row, its sets under it.
+- **Quiet "chosen" (2026-11-17, after David found the drawer cluttered).** A chosen set, group or
+  choice is a pale tint (`--pick`, held by the contrast gate) with a 2 px brand edge; checkboxes
+  (sets, groups) also get a ✓, so it never rests on color alone. Solid brand is kept for one
+  thing in the section: the plan block playing now (`.blk`). Only that block shows its minutes,
+  ↑ and Remove; the others are one line, a click to play and edit. The section heading's
+  chevron is drawn in CSS (the font's ▸ was too small to see).
 - **A set's own options show only while that set is in use** (`setsInUse` in plan.js: with a plan
   on, every block's sets). Letter case and letter words for Letters; the number style for Numbers,
   Adding and Subtracting; From and to for Numbers; "Up to 5 or 10" for Adding and Subtracting;
