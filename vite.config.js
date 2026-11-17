@@ -43,7 +43,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ttf,webmanifest,avif,txt}'],
         // The Things pictures (src/things.js) are local only and are never
         // listed for storing: they are not part of what is published.
-        globIgnores: ['things/**']
+        globIgnores: ['things/**', 'music/**']
       }
     })
   ],

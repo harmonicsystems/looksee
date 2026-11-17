@@ -503,6 +503,29 @@ pictures load, and a link to the Places group is titled "🌍 Places · EN+ES". 
 Not checked: the first screen of Settings at 1366 × 768 with nine groups instead of eight, and
 the label sweep for the new words (the longest are "caja de herramientas" and "fútbol americano").
 
+## 2026-11-16: background music
+
+Settings ▸ Music turns on **Music** in Tools: big tiles per playlist, Soft / Medium, and a 🎵 Stop
+button in the bar while it plays (`B` too). The first playlist is nine nursery tunes rendered by
+`scripts/music.mjs` as a soft music box (9 minutes, 4.4 MB, CC0). **David raised the size gate
+from 66 KB to 68 KB** for it: the app is 67.6 KB. Checked in the dev server at 1366 × 768: a
+playlist starts from Tools and moves on to the next tune; Stop and `B` work; the music dips to a
+third while a slide is read aloud and for the timer's chime, and fades out and pauses for a video
+dip, then comes back; Save for this device stored all nine and the next tune played from the
+saved copy. Not checked: a real corner or Watch video with sound (the dip was driven directly),
+an iPad (where a dip is a pause), and offline in the built app.
+
+## 2026-11-17: Quiet classical
+
+A second playlist, 🌙 Quiet classical: Satie's Gymnopédie No. 1, Bach's Prelude in C, Schumann's
+Träumerei, Bach's Air, Chopin's Nocturne Op. 9 No. 2, Bach's Cello Suite No. 1 Prelude, Grieg's
+Morning Mood and Schumann's Child Falling Asleep (25 minutes, 12.3 MB). David approved the eight
+recordings; their licences were checked again on Commons before use (five PD, three CC0), and each
+is credited in `NOTICE.txt`. The app is 67.8 KB of 68. Checked in the dev server: both tiles show,
+the playlist plays from Gymnopédie and moves on to the Prelude, every file is served, Stop works.
+**Not listened to by anyone yet**: how they sound together, and whether Morning Mood's loud
+middle is too much for the room, is for David to hear.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -609,4 +632,5 @@ setting, which was checked). Any device other than one Mac.
   banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
   chile for pepper, palomitas for popcorn, panqueques for pancakes.
 
-- **Background music.** Planned in `docs/MUSIC-PLAN.md` (recorded PD/CC0 files, chosen in Tools, a bar button to stop). Waits on the 68 KB limit and the choice of recordings.
+- **Background music: listen to both playlists.** Nobody has heard them yet. Morning Mood grows
+  loud in the middle; drop it if it is too much. The budget has 0.2 KB left.

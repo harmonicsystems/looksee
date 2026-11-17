@@ -1,8 +1,9 @@
 # Plan: background music
 
-Status (2026-11-16): **Part 1 is done** (merged as #12). **Part 2 is approved but not started.** Two
-decisions wait on David: raising the size limit from 66 to 68 KB, and approving each classical
-recording before it is downloaded.
+Status (2026-11-16): **Part 1 is done** (merged as #12). **Part 2 is built for the Nursery tunes**
+(rendered by `scripts/music.mjs`), and the limit is 68 KB. Quiet classical was added on 2026-11-17
+with eight PD/CC0 recordings from Wikimedia Commons. `CLAUDE.md` ▸ Background music describes
+what was built.
 
 ## Context
 

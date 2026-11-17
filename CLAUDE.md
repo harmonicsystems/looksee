@@ -33,7 +33,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - **Mouse-only must work too.** The classroom it is made for has a Chromebook with a mouse and no
   keyboard: everything a teacher needs during class takes only clicks on large targets, no typing.
 - **Keyboard-only must work.** `Space` play/pause, `←` `→`, `R` read aloud, `S` settings, `V` video, `W` watch, `T` timer,
-  `O` weather, `M` sound, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
+  `O` weather, `M` sound, `B` music, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
   loops by seeking back just before the end.
@@ -42,9 +42,9 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 66 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 65.6 KB now, 0.4 KB under. David raised it on 2026-11-15 from 60 to 62 for
-  the timer, to 64 for the weather, then to 66 for the timer's faces; the five newer sets of things fit under it) and WCAG AA on both control palettes
+- Build gates (`npm run build`): app JS ≤ 68 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 67.8 KB now, 0.2 KB under. David raised it on 2026-11-15 from 60 to 62 for
+  the timer, to 64 for the weather, to 66 for the timer's faces, and on 2026-11-16 to 68 for background music) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -82,8 +82,11 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
   `startSeconds` (reads a link's `?t=`).
 - `weather.js` — the place, the temperature bands and sky words, reading Open-Meteo's answer (pure).
   `outside.js` — `getWeather`, the one `fetch` in the app (not pure).
+- `music.js` — `PLAYLISTS`, `VOLUMES`, `duckLevel` (pure). `player.js` — `playMusic`, `stopMusic`, `dip`,
+  `saveMusic` on one `<audio>` (not pure).
 - `styles.css` — control palettes (parsed by the contrast gate) and base styles.
 - `public/feelings`, `public/people` — the emoji pictures. `public/NOTICE.txt` — their credits.
+- `scripts/music.mjs` — renders the Nursery tunes into `public/music/` (`npm run music`, needs ffmpeg).
 - `scripts/fetch-pictures.mjs`, `scripts/check-bundle-size.mjs`, `scripts/check-contrast.mjs`.
 - `tests/looksee.test.js`.
 
@@ -486,6 +489,41 @@ cold. cloudy." **Back to slides**, `O` or `Esc` closes it. `T` is the timer, whi
   (`&weather=1`) and survives "Reset look and pace". A reading is kept in memory for ten minutes
   and never stored; offline, the slide says the weather could not be reached and offers Try again.
 - Not built: Celsius, a choice of place in Settings, what to wear, and a chip on the school-day bar.
+
+## Background music
+
+**Music** in Tools (or `B`) opens big tiles, one per playlist in `PLAYLISTS` (`src/music.js`), and a
+Soft / Medium volume. One click plays it, track after track, starting over at the end; while it
+plays, a 🎵 Stop button sits in the bar, and `B` stops it or plays the last playlist again. Offered
+only when Settings ▸ Music is on (off for a new visitor). Asked for on 2026-11-16; the plan is
+`docs/MUSIC-PLAN.md`.
+
+- **It is its own thing, like the timer.** The slides, plans, Watch and the timer never start or
+  stop it. It gives way to other sounds (`dip(reason, on)` in `player.js`): it fades out and pauses
+  under a corner or Watch video with sound (not a muted one), and dips to a third while `speak()`
+  talks and for 2.5 s around the timer's `chime()`. Those two call `dip` themselves. It keeps the
+  screen awake while it plays.
+- **iPhone and iPad ignore an `<audio>`'s volume**, so there a dip is a pause and Soft = Medium
+  (`fixed` in `player.js`). Not yet seen on a device.
+- **Files:** `public/music/<file>.m4a`, mono AAC 64 kbps, one loudness (`loudnorm` −23 LUFS). Every
+  recording must itself be free to publish (CC0 or public domain, not just the tune); `credit` on
+  the playlist says which, and `public/NOTICE.txt` lists them. A test checks the folder matches
+  the playlists exactly. The Nursery tunes (nine, 9 minutes, 4.4 MB) are made by
+  `scripts/music.mjs`: the notes are written there, played by a music-box sound in code, so they
+  are ours (CC0). To add a tune: its notes and chords there, a line in `PLAYLISTS`, `npm run music`.
+- **Quiet classical** (eight pieces, 25 minutes, 12.3 MB; David approved them on 2026-11-17) are
+  recordings from Wikimedia Commons, each marked there PD or CC0 (Musopen, Kimiko Ishizaka, the
+  US Air Force Band, a Commons cellist). Each is in `NOTICE.txt` by its file name with its Commons
+  page (a test checks). They were made mono and AAC with a two-pass `loudnorm` (`linear=true`,
+  so a piece keeps its own soft and loud), so they land between −23 and −26 LUFS; the Air is the
+  quietest. Only these: Clair de lune and The Swan had no clean PD/CC0 piano recording, and
+  Brahms's Lullaby on Commons names no performer. A recording someone else made needs David's
+  OK before it is downloaded.
+- **Offline:** the files are not precached (`globIgnores` has `music/**`). Settings ▸ Music has
+  "Save for this device", which puts every track in Cache Storage (`looksee-music`, with
+  `cache.add`: the site's own files, so no `fetch` and nothing outside). A saved track is played
+  from a blob URL, so the service worker never has to answer an `<audio>`'s range requests.
+- Not built: a choice of track, and fading out at the end of the timer.
 
 ## School-day bar
 

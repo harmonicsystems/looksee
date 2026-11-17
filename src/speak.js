@@ -3,6 +3,7 @@
 // device's own voices are used (see pickVoice); a language with none is
 // skipped.
 import { pickVoice } from './speech.js'
+import { dip } from './player.js'
 
 const synth = typeof speechSynthesis === 'undefined' ? null : speechSynthesis
 
@@ -19,10 +20,12 @@ export function onVoices(fn) {
 
 export function stopSpeaking() {
   synth?.cancel()
+  dip('speak', false)
 }
 
 // Says each line in turn, each in its own language's voice. Cancels whatever
-// was being said. onStart / onEnd bracket the whole thing.
+// was being said. onStart / onEnd bracket the whole thing; background music
+// dips meanwhile (player.js).
 export function speak(lines, { onStart, onEnd } = {}) {
   if (!synth) return
   synth.cancel()
@@ -33,8 +36,8 @@ export function speak(lines, { onStart, onEnd } = {}) {
     u.voice = l.voice
     u.lang = l.voice.lang
     u.rate = 0.9
-    if (i === 0) u.onstart = () => onStart?.()
-    if (i === queue.length - 1) u.onend = u.onerror = () => onEnd?.()
+    if (i === 0) u.onstart = () => (dip('speak', true), onStart?.())
+    if (i === queue.length - 1) u.onend = u.onerror = () => (dip('speak', false), onEnd?.())
     synth.speak(u)
   })
 }

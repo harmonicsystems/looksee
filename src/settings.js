@@ -54,7 +54,8 @@ export const OPTIONS = {
   idle: ['still', 'float', 'breathe'],
   font: ['atkinson', 'rounded', 'serif'],
   corner: ['tl', 'tr', 'bl', 'br'],
-  videoSize: ['small', 'medium', 'large']
+  videoSize: ['small', 'medium', 'large'],
+  musicVol: ['soft', 'medium']
 }
 
 export const DEFAULTS = {
@@ -85,6 +86,9 @@ export const DEFAULTS = {
   // Off until a teacher turns it on: the weather is asked of an outside
   // service (weather.js), and nothing else in Looksee is.
   weather: false,
+  // Background music in Tools (music.js), off until a teacher turns it on.
+  music: false,
+  musicVol: 'soft',
   ...normalizeDay(),
   theme: 'calm',
   background: 'plain',
@@ -115,7 +119,7 @@ export function normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const s = { ...DEFAULTS }
   for (const k of Object.keys(OPTIONS)) if (OPTIONS[k].includes(r[k])) s[k] = r[k]
-  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'planOn', 'weather']) if (typeof r[k] === 'boolean') s[k] = r[k]
+  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'planOn', 'weather', 'music']) if (typeof r[k] === 'boolean') s[k] = r[k]
   // Fresh arrays every time, so editing settings never edits DEFAULTS.
   s.sets = [...s.sets]
   if (Array.isArray(r.sets)) {
