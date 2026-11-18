@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-18. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-19. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -568,7 +568,7 @@ preset with an Our day set around it:
 - Let's Get Fit, Count to 100 by 1's, Jack Hartmann (4:10, a new exercise every ten):
   `https://youtu.be/0TgLtF3PMOc`. Words: Math words.
 - Goodbye Song, The Singing Walrus: no link found. Words: Going home.
-- A calm aquarium video: none found with no music and no ads. Words: Good morning.
+- A calm aquarium video: found by David (2026-11-19), now the 🐠 Aquarium preset. Words: Good morning.
 - Holiday cartoons for snack and lunch: waiting for her list. Words: Asking.
 
 **Not built: a day by the clock.** Her schedule is in clock times, and two moments are "around"
@@ -591,6 +591,18 @@ named "🏫➕ School day · EN". A review then found four problems, all fixed a
 slides froze when two parts in a row had the same sets; editing the playing part's time cut the
 slide off; the sets before and after the day could not be chosen; and with the day bar hidden
 there was nowhere to edit the times. Not yet seen in the classroom.
+
+## 2026-11-19: Count to 100, and the aquarium
+
+**Count to 100** (💯, its own group): a hundred chart that fills in as the class counts, by 1s, 5s
+or 10s (Settings ▸ Options for these sets). The number now is big and lit; the words under it
+run to one hundred / cien. Swept in a browser by 1s, 5s and 10s at laptop and phone shapes, in
+both languages: every word fits, the chart stays on screen from number to number, no errors. The
+Spanish number words (veintiséis, cuarenta y siete, cien) are unchecked like the rest.
+
+**🐠 Aquarium in Watch**, with the Good morning words around it: `https://youtu.be/-CDH2fN7XXA`,
+found by David. Not seen embedded from here (YouTube is out of reach); check it plays in the
+corner. The app is 70.9 KB of 72.
 
 ## Checked, and not checked
 
@@ -681,7 +693,7 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 70.0 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
+- **The size budget.** 70.9 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
   2026-11-18 to 70 for Our day and to 72 for sets by the school day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.

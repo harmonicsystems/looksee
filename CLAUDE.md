@@ -43,7 +43,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 72 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 70.0 KB now, 2 KB under. David raised it on 2026-11-15 from 60 to 62 for
+  (`scripts/check-bundle-size.mjs`; 70.9 KB now, 1.1 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -62,7 +62,7 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
 - `index.html` → `src/main.svelte.js` → `App.svelte`: the stage, the control bar that fades while
   playing, the settings drawer, the school-day bar, the corner video and the **window-level
   keyboard handler**.
-- `Visual.svelte` — draws one slide by `kind` (`glyph | number | shape | color | mix | sum | pair | picture`;
+- `Visual.svelte` — draws one slide by `kind` (`glyph | number | chart | shape | color | mix | sum | pair | picture`;
   a `title` slide is words only and is drawn by `App.svelte`).
 - `concepts.js` — the sets as data + `buildDeck(settings, rng)` + `dotLayout` + `labelRows`. Add a
   concept here, with its word in English (`label`) and Spanish (`es`, plus `art` for a noun).
@@ -201,9 +201,8 @@ home (packing up and the bus).
   these words describe food and things ("frío", not "frío/a"). Emoji are Emoji 13 or older,
   since a word slide has no picture file to fall back on (🟰 was blank on older Windows). Tests
   hold all of that, and that every word has Spanish and an emoji.
-- **A Watch preset can use a set as its words:** `words: ROUTINE.arrival` (import it into
-  `videos.js`). None does yet: the teacher's videos are waiting for David to check each one plays
-  in the corner (`docs/STATUS.md` has the candidates).
+- **A Watch preset can use a set as its words:** `words: ROUTINE.arrival`. The Aquarium does;
+  the teacher's other videos are waiting for links (`docs/STATUS.md`).
 - One bookmark per part of her day is the way to switch: `docs/teacher-links.md`.
 
 ## Seen from across a classroom
@@ -288,6 +287,16 @@ attribute, and the slide's name for a screen reader follows the words shown (`ro
   the ones taken away turn the second number's color and fade away one by one, and the answer
   appears in the color of what is left. Words "two plus three is five" / "dos más tres son
   cinco" ("es" when the answer is one).
+- **Count to 100** (`hundred` set, its own group, 💯; asked for 2026-11-19): a hundred chart, one
+  slide per number, counting by 1s, 5s or 10s (`countBy`, a deck key; 100, 20 or 10 slides). What
+  has been counted is shaded in ink (the stops when counting by 5s or 10s a little more), so the
+  chart stays calm while the slide color changes; the number now is drawn last, bigger and in the
+  slide color, and grows in (not under reduced motion). **One chart stays on screen through the
+  count**, like shapes: `runStart` runs across `chart` slides and `slideKey` uses it, so the chart
+  is not faded in again for every number. Words to 100 come from `numberWord(n, lang)`
+  ("forty-seven", "cuarenta y siete", "veintiséis", "cien"). It is its own group because inside
+  Letters & Numbers it would make that group partly on for every new visitor (and rename their
+  "Letters & Numbers" bookmarks).
 - **Set names** (`setNames`): a `title` slide before each set, when more than one set plays and
   they play in order (`namesSets`). They show even when the words under the pictures are hidden.
 - Long words are drawn smaller instead of running off the screen: the label gets its longest
@@ -333,6 +342,9 @@ above the word, through `labelRows`, so the Words settings (English / Spanish / 
 apply; a word the same in both languages shows once. Every 4 s the next word is lit (a soft
 highlight, and a slight grow unless reduced motion). **Back to slides** or `Esc` ends it and
 destroys the player. "Words around the video" (`wordWeb`) turns the frame off.
+
+Presets: 🐠 Aquarium (David found it, 2026-11-19), a calm tank for arrival with the Our day
+Good morning words (`words: ROUTINE.arrival`), and Paw Patrol: Penguins.
 
 **To add a preset:** an entry in `VIDEOS` (link, title, tile emoji, words with `label`, `es`, `art`,
 `emoji`). Check first that it plays in the corner: some owners block embedding.
@@ -487,8 +499,8 @@ fits the bar. "➕ Math · EN+ES"; part of a group lists its sets with commas ("
 Math · ES"; three or more "🔤➕🎨 Mix · EN"; every set "Looksee · All · EN". A bookmark keeps the
 name it was saved with.
 
-`GROUPS` (concepts.js) puts every set in one of ten groups, in `SETS` order (a test): 🔤 Letters &
-Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, 🏫 Our day, and the four whose pictures
+`GROUPS` (concepts.js) puts every set in one of eleven groups, in `SETS` order (a test): 🔤 Letters &
+Numbers, 💯 Count to 100, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, 🏫 Our day, and the four whose pictures
 a device adds for itself, 🐾 Animals, 🍎 Food, 🧸 Things and 🌍 Places. Settings lists the sets under
 their groups; a group's heading turns the whole group on, or off when it is all on (`toggleGroup`),
 and shows "mixed" when part of it is on. For

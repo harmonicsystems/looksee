@@ -192,7 +192,7 @@
   // One shape after another stays on screen as a single picture that changes
   // from each shape into the next, so those slides share a key. Every other
   // slide is made fresh, which is what plays its entrance.
-  const slideKey = $derived((s.morph && !reduced && item?.pts ? 'run' + runStart(deck, index) : index) + deckKey)
+  const slideKey = $derived(((s.morph && !reduced && item?.pts) || item?.kind === 'chart' ? 'run' + runStart(deck, index) : index) + deckKey)
 
   // A block's minutes are minutes of playing: `spent` is what it had played
   // before `since`, the moment playing last began (0 while paused).
@@ -993,6 +993,7 @@
           <label class="chk"><input type="checkbox" bind:checked={s.letterWords} /> A word for each letter</label>
         </div>
         <div hidden={!has('numbers', 'adding', 'subtracting')}>{@render seg('numberStyle', 'Numbers')}</div>
+        <div hidden={!has('hundred')}>{@render seg('countBy', 'Count to 100 by', OPTIONS.countBy, {}, 's')}</div>
         <div class="fld row" hidden={!has('numbers')}>
           <label>From <input type="number" min="0" max="20" bind:value={s.numberFrom} onchange={fixRange} /></label>
           <label>to <input type="number" min="0" max="20" bind:value={s.numberTo} onchange={fixRange} /></label>

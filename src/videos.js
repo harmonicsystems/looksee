@@ -8,9 +8,13 @@
 // Check first that the video plays in the corner (Settings ▸ Videos): some
 // owners don't allow their videos to be played on other sites.
 
+import { ROUTINE } from './routine.js'
+
 const w = (label, es, art, emoji) => ({ label, es, art, emoji })
 
 export const VIDEOS = [
+  // A calm tank for arrival, with the Good morning words (found by David, 2026-11-19).
+  { id: 'aquarium', title: 'Aquarium', emoji: '🐠', url: 'https://youtu.be/-CDH2fN7XXA', words: ROUTINE.arrival },
   {
     id: 'pawPenguins',
     title: 'Paw Patrol: Penguins',

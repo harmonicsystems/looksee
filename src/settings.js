@@ -40,6 +40,7 @@ export const OPTIONS = {
   letterCase: ['upper', 'lower', 'both'],
   numberStyle: ['digit', 'dots', 'both'],
   mathTo: [5, 10],
+  countBy: [1, 5, 10],
   feelingMotion: ['moving', 'still'],
   words: ['en', 'es', 'both'],
   esGender: ['both', 'o', 'a'],
@@ -73,6 +74,7 @@ export const DEFAULTS = {
   numberTo: 10,
   numberStyle: 'both',
   mathTo: 5,
+  countBy: 1,
   feelingMotion: 'moving',
   words: 'en',
   esGender: 'both',
@@ -163,7 +165,7 @@ export function saveSettings(s) {
 
 // The settings that change which slides there are. Look-only settings must
 // not restart or reshuffle a running deck, so they are not here.
-export const DECK_KEYS = ['sets', 'order', 'letterCase', 'numberFrom', 'numberTo', 'mathTo', 'skin']
+export const DECK_KEYS = ['sets', 'order', 'letterCase', 'numberFrom', 'numberTo', 'mathTo', 'countBy', 'skin']
 
 // Changes exactly when the deck has to be built again. Set names count only
 // when they would actually appear (see namesSets).

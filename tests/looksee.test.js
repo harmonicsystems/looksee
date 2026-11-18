@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
-  buildDeck, dotLayout, shuffle, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix, mathFacts, sumSlide, genderForm,
+  buildDeck, dotLayout, shuffle, numberWord, emojiCode, pictureSrc, pictureFiles, labelRows, rowsText, labelLen, slideName, runStart, colorShape, colorMix, mathFacts, sumSlide, genderForm,
   SETS, GROUPS, MIXES, LETTERS, SHAPES, COLORS, OPPOSITES, FEELINGS, GESTURES, BODY, TONES
 } from '../src/concepts.js'
 import { POINTS, mix, ease, pathOf } from '../src/morph.js'
@@ -317,6 +317,36 @@ describe('shapes that change into each other', () => {
   })
 })
 
+describe('count to 100', () => {
+  it('names every number to 100 in both languages', () => {
+    const en = [0, 7, 20, 21, 22, 30, 31, 47, 99, 100].map((n) => numberWord(n))
+    expect(en).toEqual(['zero', 'seven', 'twenty', 'twenty-one', 'twenty-two', 'thirty', 'thirty-one', 'forty-seven', 'ninety-nine', 'one hundred'])
+    const es = [0, 7, 20, 21, 22, 23, 26, 30, 31, 47, 99, 100].map((n) => numberWord(n, 'es'))
+    expect(es).toEqual(['cero', 'siete', 'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veintiséis', 'treinta', 'treinta y uno', 'cuarenta y siete', 'noventa y nueve', 'cien'])
+    for (let n = 0; n <= 100; n++) expect(numberWord(n) && numberWord(n, 'es'), String(n)).toBeTruthy()
+  })
+  it('counts by 1s, 5s or 10s, always to 100', () => {
+    for (const [by, len] of [[1, 100], [5, 20], [10, 10]]) {
+      const d = deck({ sets: ['hundred'], countBy: by })
+      expect(d.length).toBe(len)
+      expect(d[0]).toMatchObject({ kind: 'chart', n: by, by, say: String(by) })
+      expect(d.at(-1)).toMatchObject({ n: 100, label: 'one hundred', es: 'cien' })
+    }
+    expect(deckKey({ ...DEFAULTS, countBy: 5 })).not.toBe(deckKey(DEFAULTS))
+    expect(linkSettings('?' + linkQuery({ ...DEFAULTS, countBy: 10 })).countBy).toBe(10)
+    expect(normalizeSettings({ countBy: 3 }).countBy).toBe(1)
+  })
+  it('keeps one chart on screen through the count', () => {
+    const d = deck({ sets: ['numbers', 'hundred'], numberFrom: 1, numberTo: 3, countBy: 10 })
+    expect(runStart(d, 2)).toBe(2)
+    expect(runStart(d, 3 + 9)).toBe(3)
+    expect(GROUPS.find((g) => g.sets.includes('hundred')).emoji).toBe('💯')
+  })
+  it('plays the aquarium with the Good morning words', () => {
+    expect(VIDEOS.find((v) => v.id === 'aquarium').words).toBe(ROUTINE.arrival)
+  })
+})
+
 describe('our day', () => {
   it('puts every routine set in the Our day group, in order', () => {
     expect(GROUPS.find((g) => g.id === 'day').sets).toEqual(Object.keys(ROUTINE))
@@ -621,7 +651,7 @@ describe('preset videos', () => {
     expect(ids.size).toBe(VIDEOS.length)
   })
   it('shows a word in the language asked for, with el or la', () => {
-    const dog = VIDEOS[0].words.find((x) => x.label === 'dog')
+    const dog = VIDEOS.find((v) => v.id === 'pawPenguins').words.find((x) => x.label === 'dog')
     expect(rowsText(labelRows(dog, { words: 'both', articles: true }))).toBe('dog / el perro')
   })
   it('spreads words evenly around the video', () => {
