@@ -1,0 +1,8 @@
+Use case: reference sheet for a children's picture app.
+Asset type: landscape 3:2 furniture and props reference sheet.
+Input images: Image 1 is the school chair-desk reference sheet: match its outline weight, flat fills, colours and cream background exactly. Image 2 is a character sheet for drawing style only.
+Style: Flat simple children's picture-card illustration, even medium-brown outlines, muted warm tan, cream, sage and dusty-blue palette, plain uniform flat cream #f7f2e7 background, solid fills, no shading, no gradients, no shadows, no floor line, no texture. No text, lettering, numbers, arrows, logos, brand marks, frames, panels or watermark.
+Content, each item a separate silhouette with generous cream space around it, all in the same three-quarter view as the right-hand chair in Image 1, at consistent real-world scale relative to that chair:
+Top row, left to right: (1) a low rectangular classroom table for young children, light warm oak tan top like the chair-desk tablet, four pale grey-silver tube legs with grey foot caps, the table top a little higher than the chair-desk seat; (2) a section of plain classroom wall with one window: only the window is drawn, a cream-white wooden frame with four panes of pale dusty-blue glass, and a deep flat sage-green window ledge sticking out below it like a shelf, with nothing on the ledge and no wall colour around it; (3) an open, empty, round-cornered plastic toy bin in muted sage green, about knee height to a child, open at the top so the inside is visible.
+Bottom row, small, left to right: a dusty-blue child's backpack, a red-brick and cream striped play ball the size of a child's head, a soft tan teddy bear sitting.
+No people. Generate the actual illustration.

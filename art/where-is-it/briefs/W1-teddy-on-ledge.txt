@@ -1,0 +1,9 @@
+Use case: a picture card that teaches a place word (preposition) to young children. The place word must be obvious at a glance, even at thumbnail size.
+Input images: Image 1 is the master layout to edit. Image 2 is the size line-up (Sam beside the same furniture), for scale only. Image 3 is the furniture and props sheet: draw the prop exactly as there.
+
+This is an EDIT of Image 1, the master layout. Keep everything already in Image 1 exactly as it is: the same furniture, same shape, same colours, same position, same size, same camera, same square framing and the same plain cream background. Do not move, resize, redraw or recolour anything that is already there. Add ONLY what is described below, at the true real-world scale shown in the size line-up image, so the only difference from Image 1 is the new child or object.
+
+Style: Flat simple children's picture-card illustration, even medium-brown outlines, muted warm tan, cream, sage and dusty-blue palette, plain uniform flat cream #f7f2e7 background, solid fills, no shading, no gradients, no shadows, no floor line, no texture. No text, lettering, numbers, arrows, logos, brand marks, frames, panels or watermark.
+
+Add: The tan teddy bear sitting on top of the deep sage-green window ledge, in the middle of it, upright, clearly resting on the ledge, in front of the lower window panes.
+Calm, ordinary, happy-neutral acting. No standing or climbing on furniture. Generate the actual illustration.
