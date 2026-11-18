@@ -60,18 +60,19 @@
 
   // ---- the school day's own sets ----
   // With "Follow the school day", the part the clock is in plays its sets
-  // (day.js). `pat` is the start time of the part playing: while the slides
-  // play it moves on at the next slide, as a plan's block does; while they
-  // are paused, at once. A part is named by its time, which stays put when
-  // the parts are put back in order.
-  let pat = $state('')
-  const atNow = $derived(s.daySets ? (s.day[partAt(s.day, s.dayEnd, now)]?.at ?? '') : '')
+  // (day.js). `pp` is the part playing: while the slides play it moves on at
+  // the next slide, as a plan's block does; while they are paused (or have
+  // nothing to show), at once. Parts are held as themselves, not by their
+  // time, so editing a time never swaps the slides mid-slide (tidyDay keeps
+  // each part the same object).
+  let pp = $state(null)
+  const partNow = $derived(s.daySets ? (s.day[partAt(s.day, s.dayEnd, now)] ?? null) : null)
   $effect(() => {
-    if (!playing) pat = atNow
+    if (!playing || !deck.length) pp = partNow
   })
   // Before the first part, after the day and in a part with no sets, the
   // settings' own sets play.
-  const part = $derived(s.daySets ? s.day.find((p) => p.at === pat && p.sets?.length) : null)
+  const part = $derived(s.daySets && s.day.includes(pp) && pp.sets?.length ? pp : null)
 
   // ---- plan ----
   // With a plan, its blocks play in turn, each for its minutes (plan.js).
@@ -82,9 +83,10 @@
   const block = $derived(s.planOn && !s.daySets && s.plan.length ? s.plan[bi] : null)
   const cur = $derived(part ?? block ?? s)
   // Whose sets Settings is choosing: with the school day, the part clicked
-  // there (`pick`, a start time); else whatever is playing.
-  let pick = $state('')
-  const ed = $derived((s.daySets && s.day.find((p) => p.at === pick)) || cur)
+  // there (`pick`), or the settings' own for before and after the day (and
+  // for a part with none); else whatever is playing.
+  let pick = $state(null)
+  const ed = $derived(s.daySets ? (s.day.includes(pick) ? pick : s) : cur)
   const edSets = $derived(ed.sets ?? [])
   // Turning the school day on gives every part the sets chosen so far, to
   // change from, and turns a plan off: one or the other decides.
@@ -92,7 +94,7 @@
     if (!s.daySets) return
     s.planOn = false
     for (const p of s.day) if (!p.sets?.length) p.sets = [...s.sets]
-    pick = atNow || s.day[0].at
+    pick = partNow
   }
 
   // ---- deck ----
@@ -228,10 +230,10 @@
   function step(by) {
     if (!deck.length) return
     // A new part of the school day starts at a slide's end, from its first slide.
-    if (by > 0 && pat !== atNow) {
-      const was = cur.sets
-      pat = atNow
-      if (cur.sets !== was) return
+    if (by > 0 && pp !== partNow) {
+      const was = deckKey
+      pp = partNow
+      if (deckKey !== was) return
     }
     // A block that has had its minutes hands over to the next at a slide's end.
     if (by > 0 && block && blockDone(block.min, played())) {
@@ -302,7 +304,7 @@
   const hideBar = $derived(playing && quiet && !drawer && !tools && !timerOpen)
   // Settings opens on the part of the school day the clock is in.
   $effect(() => {
-    if (drawer) pick = untrack(() => atNow || pick)
+    if (drawer) pick = untrack(() => partNow)
   })
 
   function fullscreen() {
@@ -343,7 +345,13 @@
   function tidyDay(e) {
     if (e.currentTarget.contains(e.relatedTarget)) return
     const t = normalizeDay(s.day, s.dayEnd)
-    if (JSON.stringify(t.day) !== JSON.stringify(s.day) || t.dayEnd !== s.dayEnd) Object.assign(s, t)
+    if (JSON.stringify(t.day) === JSON.stringify(s.day) && t.dayEnd === s.dayEnd) return
+    // Each part stays the same object (the school day's sets hold on to them).
+    t.day = t.day.map((n) => {
+      const o = s.day.find((p) => toMin(p.at) === toMin(n.at))
+      return o ? Object.assign(o, { sets: [] }, n) : n
+    })
+    Object.assign(s, t)
   }
   const DAY_ICONS = [
     ['✏️📚', 'Morning work'],
@@ -883,12 +891,13 @@
         {#if s.daySets}
           <div class="fld" role="group" aria-label="Sets for each part of the day">
             {#each s.day as p (p)}
-              <button class="btn grp-head blk" aria-pressed={p.at === pick} onclick={() => (pick = p.at)}>{clock12(p.at)} {p.icon} · {setsName(p.sets ?? []) || 'No sets yet'}{p.at === atNow ? ' · now' : ''}</button>
+              <button class="btn grp-head blk" aria-pressed={p === ed} onclick={() => (pick = p)}>{clock12(p.at)} {p.icon} · {setsName(p.sets ?? []) || 'Same as other times'}{p === partNow ? ' · now' : ''}</button>
             {/each}
+            <button class="btn grp-head blk" aria-pressed={s === ed} onclick={() => (pick = null)}>Before and after the day · {setsName(s.sets) || 'Nothing'}{s.day.includes(partNow) ? '' : ' · now'}</button>
           </div>
           <p class="hint">
             When the clock reaches a part, its sets begin at the next slide. Nothing starts playing by itself. Click a part to choose its
-            sets below; its time and pictures are under School day.
+            sets below; its time and pictures are under School day. A part with no sets plays the ones before and after the day.
           </p>
         {/if}
         <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && ((s.daySets = false), s.plan.length || addBlock())} /> A plan: different sets in turn, a few minutes each</label>
@@ -915,7 +924,7 @@
           </p>
         {/if}
         <fieldset class="fld">
-          <legend>{ed !== cur || part ? `Sets at ${clock12(ed.at)}` : block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
+          <legend>{s.daySets ? (ed === s ? 'Sets before and after the day' : `Sets at ${clock12(ed.at)}`) : block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
           <!-- One click on a group turns it all on, or all off when it is all on. -->
           <div class="tiles">
           {#each GROUPS as g}
@@ -1000,7 +1009,7 @@
       <details class="sec">
         <summary><h2>School day</h2><span class="sum">{s.dayBar ? `${s.day[0].at} to ${s.dayEnd}` : 'Off'}</span></summary>
         <label class="chk"><input type="checkbox" bind:checked={s.dayBar} /> Show the day bar at the top</label>
-        {#if s.dayBar}
+        {#if s.dayBar || s.daySets}
           <div class="fld" role="group" aria-label="Parts of the day" onfocusout={tidyDay}>
             {#each s.day as p, i (p)}
               <div class="day-row">

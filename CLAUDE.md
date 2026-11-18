@@ -43,7 +43,7 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 72 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 69.8 KB now, 2.2 KB under. David raised it on 2026-11-15 from 60 to 62 for
+  (`scripts/check-bundle-size.mjs`; 70.0 KB now, 2 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -568,21 +568,25 @@ sets** (`sets` on a part of `day`), and with **Follow the school day** (`daySets
 clock is in plays them. The schedule is the same every day (David chose that over one per
 weekday).
 
-- **It changes at the next slide, never mid-slide.** `pat` in `App.svelte` is the start time of
-  the part playing; `atNow` is the part the clock is in (`partAt`). While playing, `step` moves
-  `pat` on at a slide's end and the new sets start from their first slide; while paused, it
-  moves at once. **Nothing starts playing by itself**: a part only changes what Play plays. The
-  clock is read every 15 s.
+- **It changes at the next slide, never mid-slide.** `pp` in `App.svelte` is the part playing;
+  `partNow` is the part the clock is in (`partAt`). While playing, `step` moves `pp` on at a
+  slide's end, and the new sets start from their first slide (if they are the same sets, the
+  slides just carry on); while paused, or with nothing to show, it moves at once. **Nothing
+  starts playing by itself**: a part only changes what Play plays. The clock is read every 15 s.
 - **Before the first part, after the day, and in a part with no sets, `s.sets` play.** Turning the
   setting on gives every part without sets a copy of `s.sets`, to change from.
-- **A part is named by its start time,** not its place in the list, because `tidyDay` puts the
-  parts back in order (and makes them afresh) when focus leaves the editor.
+- **A part is held as itself** (`pp`, `pick`), never by its time or its place: a time is edited a
+  keystroke at a time, and `tidyDay` puts the parts back in order when focus leaves the editor.
+  So `tidyDay` keeps each part the same object. Editing the playing part's time takes effect at
+  the next slide, like the clock (a review found the slides cut mid-slide when parts were named
+  by time).
 - **It and a plan are never on together.** Turning either on turns the other off; a link with both
   plays the school day (`block` needs `!s.daySets`).
-- **Settings ▸ What to show** lists the parts as buttons ("9:14 🚶 · 🏫 Lining up · now"). A click
-  picks one (`pick`) and the Sets picker below edits it ("Sets at 9:14"); `ed` is whatever the
-  picker edits. Settings opens on the part the clock is in. Times and pictures stay in Settings ▸
-  School day, which now takes 12 parts (`DAY_MAX_PARTS`).
+- **Settings ▸ What to show** lists the parts as buttons ("9:14 🚶 · 🏫 Lining up · now"), and a
+  last one, "Before and after the day", for `s.sets`. A click picks one (`pick`) and the Sets
+  picker below edits it ("Sets at 9:14"); `ed` is whatever the picker edits. Settings opens on
+  the part the clock is in. Times and pictures stay in Settings ▸ School day, which now takes 12
+  parts (`DAY_MAX_PARTS`) and shows its editor whenever this is on, even with the bar hidden.
 - The control bar shows "🍎 until 2:09" (`partEnd`, `clock12`: US clock, no AM/PM).
 - **In a link** a part with sets is `[at, icon, "sets.joined"]` in `day`; `setupName` gives
   "🏫➕ School day · EN" (each group's emoji, in the order the parts play them). `setsInUse`

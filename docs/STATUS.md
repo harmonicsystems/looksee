@@ -582,12 +582,15 @@ school day can now have its own sets, and with **Follow the school day** on, the
 in plays them. It changes at the next slide, never mid-slide, and never starts playing by itself.
 The schedule is the same every day. Set up in Settings ▸ What to show: click a part, choose its
 sets. The day bar takes 12 parts now, so her whole day fits. The size gate went to 72 KB; the app
-is 69.8 KB.
+is 70.0 KB.
 
 Checked in a browser with the clock moved: paused at 9:13 it shows Good morning and at 9:14
 Lining up; playing across 12:05 it finishes the slide, then starts Asking from its first word;
 the bar shows "🍎 until 2:09"; clicking a part and a group changes only that part; the bookmark is
-named "🏫➕ School day · EN". Not yet seen in the classroom.
+named "🏫➕ School day · EN". A review then found four problems, all fixed and checked again: the
+slides froze when two parts in a row had the same sets; editing the playing part's time cut the
+slide off; the sets before and after the day could not be chosen; and with the day bar hidden
+there was nowhere to edit the times. Not yet seen in the classroom.
 
 ## Checked, and not checked
 
@@ -678,7 +681,7 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 69.8 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
+- **The size budget.** 70.0 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
   2026-11-18 to 70 for Our day and to 72 for sets by the school day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.
