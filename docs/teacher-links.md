@@ -1,11 +1,11 @@
 # One bookmark for the whole day
 
 For the classroom Chromebook. Open this link once and bookmark it (the star in the address bar,
-or Ctrl + D). It is named **🏫🔤😊 School day · EN**. All day, the screen follows the clock: when a
+or Ctrl + D). It is named **🏫🔤😊💯 School day · EN**. All day, the screen follows the clock: when a
 part of the day begins, its words start at the next slide. Press Play to start them; nothing
 plays by itself.
 
-https://harmonicsystems.github.io/looksee/?v=1&sets=arrival&daySets=1&day=%5B%5B%2207%3A50%22%2C%22%F0%9F%90%A0%F0%9F%91%8B%22%2C%22arrival%22%5D%2C%5B%2208%3A32%22%2C%22%F0%9F%93%9A%22%2C%22letters%22%5D%2C%5B%2208%3A45%22%2C%22%E2%98%80%EF%B8%8F%F0%9F%8E%B5%22%2C%22feelings.arrival%22%5D%2C%5B%2209%3A14%22%2C%22%F0%9F%9A%B6%22%2C%22lineUp%22%5D%2C%5B%2209%3A56%22%2C%22%F0%9F%8D%8E%F0%9F%93%96%22%2C%22core.requesting%22%5D%2C%5B%2210%3A38%22%2C%22%F0%9F%9A%B6%22%2C%22lineUp%22%5D%2C%5B%2211%3A20%22%2C%22%F0%9F%94%A2%22%2C%22numbers.mathWords%22%5D%2C%5B%2212%3A05%22%2C%22%F0%9F%8D%BD%EF%B8%8F%22%2C%22requesting.senses%22%5D%2C%5B%2212%3A47%22%2C%22%F0%9F%A7%A9%22%2C%22feelings.gestures.body%22%5D%2C%5B%2214%3A00%22%2C%22%F0%9F%9A%8C%F0%9F%91%8B%22%2C%22packUp%22%5D%5D&dayEnd=14%3A09
+https://harmonicsystems.github.io/looksee/?v=1&sets=arrival&daySets=1&day=%5B%5B%2207%3A50%22%2C%22%F0%9F%90%A0%F0%9F%91%8B%22%2C%22arrival%22%5D%2C%5B%2208%3A32%22%2C%22%F0%9F%93%9A%22%2C%22letters%22%5D%2C%5B%2208%3A45%22%2C%22%E2%98%80%EF%B8%8F%F0%9F%8E%B5%22%2C%22feelings.arrival%22%5D%2C%5B%2209%3A14%22%2C%22%F0%9F%9A%B6%22%2C%22lineUp%22%5D%2C%5B%2209%3A56%22%2C%22%F0%9F%8D%8E%F0%9F%93%96%22%2C%22core.requesting%22%5D%2C%5B%2210%3A38%22%2C%22%F0%9F%9A%B6%22%2C%22lineUp%22%5D%2C%5B%2211%3A20%22%2C%22%F0%9F%94%A2%22%2C%22hundred.mathWords%22%5D%2C%5B%2212%3A05%22%2C%22%F0%9F%8D%BD%EF%B8%8F%22%2C%22requesting.senses%22%5D%2C%5B%2212%3A47%22%2C%22%F0%9F%A7%A9%22%2C%22feelings.gestures.body%22%5D%2C%5B%2214%3A00%22%2C%22%F0%9F%9A%8C%F0%9F%91%8B%22%2C%22packUp%22%5D%5D&dayEnd=14%3A09
 
 | time | part | words on the screen |
 |---|---|---|
@@ -15,7 +15,7 @@ https://harmonicsystems.github.io/looksee/?v=1&sets=arrival&daySets=1&day=%5B%5B
 | 9:14 | 🚶 Specials | Lining up |
 | 9:56 | 🍎📖 ELA, snack | Core words, Asking |
 | 10:38 | 🚶 Specials | Lining up |
-| 11:20 | 🔢 Math | Numbers, Math words |
+| 11:20 | 🔢 Math | Count to 100 (a hundred chart, by 1s), Math words |
 | 12:05 | 🍽️ Lunch | Asking, Five senses |
 | 12:47 | 🧩 Centers | Feelings, Gestures, Body |
 | 2:00 | 🚌👋 Going home | Going home |
