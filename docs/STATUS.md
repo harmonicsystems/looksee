@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-15. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-18. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -537,6 +537,44 @@ the playlist plays from Gymnopédie and moves on to the Prelude, every file is s
 **Not listened to by anyone yet**: how they sound together, and whether Morning Mood's loud
 middle is too much for the room, is for David to hear.
 
+## 2026-11-18: Our day, from the teacher's schedule
+
+The class's teacher sent her day and what she would like on the screen in each part of it:
+
+| time | part | what she asked for |
+|---|---|---|
+| 7:50–8:30 | Arrival | a calm video (an aquarium, or another sensory-friendly one), with words around it for the morning routine or classroom expectations |
+| 8:32–9:12 | Reading | circle time about 8:45–8:50; Mooseclumps' Good Morning Song to move to clean-up and the carpet |
+| 9:14–9:54 | Specials | words for lining up |
+| 9:56–10:36 | ELA | snack and the bathroom, then core words; some videos to choose from at snack (Thanksgiving or holiday cartoons, she will send them) |
+| 10:38–11:18 | Specials | |
+| 11:20–12:00 | Math | math words; a count-to-100 movement video for a movement break |
+| 12:05–12:45 | Lunch | a video to choose, words and requesting phrases, the five senses (for trying new foods) |
+| 12:47–2:09 | Centers | about 2:00, the Singing Walrus Goodbye Song with words for packing up and the bus |
+
+**Built: 🏫 Our day,** seven sets of words drawn as the device's emoji (Good morning, Lining up,
+Core words, Asking, Five senses, Math words, Going home). The lists are first drafts for her to
+correct, and the Spanish is unchecked. She switches between them with one bookmark per part of
+the day (`docs/teacher-links.md`). The size gate went from 68 to 70 KB for them (David,
+2026-11-18); the app is 69.0 KB. Swept in a browser at laptop and phone shapes, both languages:
+every slide fits and nothing is requested from the network.
+
+**Not built: the videos.** YouTube could not be reached from where this was built, so none was
+checked. Candidates for David to try in the corner (Settings ▸ Videos) before any becomes a Watch
+preset with an Our day set around it:
+
+- Good Morning Song, Mooseclumps (she wrote "Mooselumps"): `https://youtu.be/n4Vi1JWf3bc`, found
+  through a mirror site, so check it is the channel's own upload. Words: Good morning.
+- Let's Get Fit, Count to 100 by 1's, Jack Hartmann (4:10, a new exercise every ten):
+  `https://youtu.be/0TgLtF3PMOc`. Words: Math words.
+- Goodbye Song, The Singing Walrus: no link found. Words: Going home.
+- A calm aquarium video: none found with no music and no ads. Words: Good morning.
+- Holiday cartoons for snack and lunch: waiting for her list. Words: Asking.
+
+**Not built: a day by the clock.** Her schedule is in clock times, and two moments are "around"
+a time (circle 8:45, goodbye 2:00). David chose bookmarks first; a by-the-clock day comes after
+she has used them.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -618,13 +656,16 @@ setting, which was checked). Any device other than one Mac.
 - **What Clip Choice has learned since.** Its repo has newer handling for pre-roll ads and for
   pasted embed code and share links. Looksee now waits out pre-roll ads the same way; `src/link.js` still reads plain links only.
 - **A license for the code.** The repo is public and has none yet.
-- **A plan by the clock?** Blocks follow playing time. If the teacher meant "letters at 9:15",
-  blocks need start times, probably shared with the school-day bar.
+- **A plan by the clock?** Blocks follow playing time. The teacher's schedule (2026-11-18) is in
+  clock times, so she probably meant "letters at 9:15": blocks would need start times, shared with
+  the school-day bar. Waiting until she has used the Our day bookmarks.
+- **The Our day words** are drafts. She offered to say what the vocabulary should be once the
+  shape is settled; their Spanish is unchecked.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 65.6 KB of 66, so about 0.4 KB is left. David raised the limit three times
-  on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
+- **The size budget.** 69.0 KB of 70, so about 1 KB is left. David raised the limit to 68 on
+  2026-11-16 for music and to 70 on 2026-11-18 for Our day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.
 - **The weather.** The place is fixed in the code (Rhinebeck), the temperature is °F only, and the
