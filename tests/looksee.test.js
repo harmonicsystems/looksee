@@ -330,6 +330,16 @@ describe('our day', () => {
         expect(x.emoji, x.label).toMatch(/\p{Extended_Pictographic}/u)
       }
   })
+  it('writes no word in the child\'s gender, and uses only emoji most devices have', () => {
+    // "o/a" follows the child (esGender); these words describe things, not the child.
+    // A word slide has no picture behind its emoji, so nothing newer than Emoji 13 (2020).
+    const newer = /[\u{1F7F0}\u{1F6DD}-\u{1F6DF}\u{1F979}\u{1F9CC}\u{1FAA9}-\u{1FAAF}\u{1FAB7}-\u{1FABF}\u{1FAC3}-\u{1FACF}\u{1FAD7}-\u{1FAFF}]/u
+    for (const id in ROUTINE)
+      for (const x of ROUTINE[id]) {
+        expect(x.es, x.label).not.toMatch(/o\/a\b/)
+        expect(x.emoji, x.label).not.toMatch(newer)
+      }
+  })
   it('draws a routine word as its emoji, never a file', () => {
     const d = deck({ sets: ['packUp'] })
     expect(d.length).toBe(ROUTINE.packUp.length)

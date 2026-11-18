@@ -195,8 +195,12 @@ home (packing up and the bus).
   else is shared with the other sets: the Words settings, el / la, speech, set names, plans,
   settings links and bookmark names ("🏫 Going home · EN").
 - **The lists are first drafts for the teacher to correct;** she offered more detail once the
-  shape was settled. The Spanish is as unchecked as the rest. A test checks every word has
-  Spanish, an article from `el la los las` or none, and an emoji.
+  shape was settled. The Spanish is as unchecked as the rest. Directions are the familiar
+  command (mira, siéntate, espera), and only nouns take el / la ("ayuda" and "silencio" said as a
+  request have none). No word is written "o/a": that form follows the child's `esGender`, and
+  these words describe food and things ("frío", not "frío/a"). Emoji are Emoji 13 or older,
+  since a word slide has no picture file to fall back on (🟰 was blank on older Windows). Tests
+  hold all of that, and that every word has Spanish and an emoji.
 - **A Watch preset can use a set as its words:** `words: ROUTINE.arrival` (import it into
   `videos.js`). None does yet: the teacher's videos are waiting for David to check each one plays
   in the corner (`docs/STATUS.md` has the candidates).

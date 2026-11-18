@@ -10,8 +10,11 @@
 //
 // These lists are first drafts for the teacher to correct. The Spanish follows
 // the rest of Looksee (Latin American, as heard in US classrooms) and has not
-// been checked by a Spanish speaker; words that change with gender are
-// written "frío/a", like the feelings.
+// been checked by a Spanish speaker. Directions are the familiar command
+// (mira, siéntate), as a teacher says them. No word here is written "o/a":
+// that form follows the child (Settings ▸ Spanish feelings), and these
+// words describe food and things, not the child. Only emoji from 2020 or
+// earlier (Emoji 13), since a word slide has no picture file to fall back on.
 
 const set = (lines) =>
   lines.split('\n').map((line) => {
@@ -22,31 +25,31 @@ const set = (lines) =>
 export const ROUTINE = {
   arrival: set(`hello,hola,,👋
 backpack,mochila,la,🎒
-hang up,colgar,,🧥
-wash hands,lavar las manos,,🧼
-sit,sentarse,,🪑
-look,mirar,,👀
-listen,escuchar,,👂
-quiet,silencio,el,🤫
-wait,esperar,,⏳
-help,ayuda,la,🙋`),
-  lineUp: set(`line up,hacer fila,,🚸
-walk,caminar,,🚶
+hang up,cuelga,,🧥
+wash hands,lávate las manos,,🧼
+sit,siéntate,,🪑
+look,mira,,👀
+listen,escucha,,👂
+quiet,silencio,,🤫
+wait,espera,,⏳
+help,ayuda,,🙋`),
+  lineUp: set(`line up,haz fila,,🚸
+walk,camina,,🚶
 stop,alto,,🛑
-wait,esperar,,⏳
+wait,espera,,⏳
 quiet hands,manos quietas,,✋
 eyes forward,ojos al frente,,👀
-follow,seguir,,👣
+follow,sigue,,👣
 door,puerta,la,🚪
 first,primero,,🥇
 last,último,,🏁`),
-  core: set(`I,yo,,🙋
+  core: set(`I,yo,,🧒
 want,quiero,,🤲
 more,más,,➕
 go,vamos,,🟢
 stop,alto,,🛑
 like,me gusta,,👍
-help,ayuda,la,🆘
+help,ayuda,,🙋
 look,mira,,👀
 again,otra vez,,🔁
 not,no,,🚫
@@ -55,13 +58,13 @@ all done,terminé,,✅`),
 please,por favor,,🙏
 thank you,gracias,,💛
 more please,más por favor,,➕
-help please,ayuda por favor,,🆘
+help please,ayuda por favor,,🙋
 open please,abre por favor,,📦
 all done,terminé,,✅
 eat,comer,,🍽️
 drink,beber,,🥤
 water,agua,el,💧
-napkin,servilleta,la,🧻
+cup,vaso,el,🥛
 spoon,cuchara,la,🥄`),
   senses: set(`see,ver,,👁️
 hear,oír,,👂
@@ -69,33 +72,32 @@ smell,oler,,👃
 taste,probar,,👅
 touch,tocar,,✋
 sweet,dulce,,🍭
-sour,ácido/a,,🍋
-salty,salado/a,,🧂
+sour,ácido,,🍋
+salty,salado,,🧂
 crunchy,crujiente,,🥨
 soft,suave,,🧸
 hot,caliente,,🔥
-cold,frío/a,,🧊`),
+cold,frío,,🧊`),
   mathWords: set(`count,contar,,🧮
 number,número,el,🔢
 how many?,¿cuántos?,,❓
 more,más,,⬆️
 less,menos,,⬇️
-same,lo mismo,,👯
-equal,igual,,🟰
+equal,igual,,⚖️
 add,sumar,,➕
 take away,quitar,,➖
 first,primero,,🥇
 next,siguiente,,➡️
 last,último,,🏁`),
   packUp: set(`jacket,chaqueta,la,🧥
-hat,gorro,el,🧢
+hat,gorra,la,🧢
 gloves,guantes,los,🧤
 backpack,mochila,la,🎒
 folder,carpeta,la,📁
 lunchbox,lonchera,la,🍱
-line up,hacer fila,,🚸
+line up,haz fila,,🚸
 bus,autobús,el,🚌
 car,carro,el,🚗
-home,casa,la,🏠
+home,casa,,🏠
 goodbye,adiós,,👋`)
 }
