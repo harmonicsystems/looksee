@@ -9,12 +9,17 @@
 // real video back, and YouTube starts the video by itself when the ad ends.
 // So only a player that never gets *ready* within 20 s is a failure; once it
 // is ready, a slow start is reported with onWaiting ("probably an ad") and
-// left to finish. (Clip Choice does the same.) The ad can't be skipped: the
-// player takes no clicks, so no one can reach YouTube's suggestions.
+// left to finish. (Clip Choice does the same.) Nothing can skip an ad for
+// the viewer, but while one is probably on (and for 20 s after "Skip ad" in
+// the bar) the player takes clicks, so YouTube's own Skip button can be
+// pressed (`setClicks`, App.svelte). The rest of the time it takes none, so
+// no one reaches YouTube's suggestions; and a click that pauses it is undone
+// at once, because a paused embed shows a "more videos" shelf.
 import { loadApi } from './youtube.js'
 
 const ENDED = 0
 const PLAYING = 1
+const PAUSED = 2
 
 export class PipPlayer {
   constructor(host, { videoId, start = 0, muted = false, loop = true }, { onPlaying, onWaiting, onError, onEnd } = {}) {
@@ -81,6 +86,8 @@ export class PipPlayer {
 
   tick() {
     this.reclaimFocus()
+    // Never left paused (a click while it takes clicks can pause it).
+    if (this.player?.getPlayerState?.() === PAUSED) this.player.playVideo()
     const t = this.player?.getCurrentTime?.()
     const d = this.player?.getDuration?.()
     if (typeof t === 'number' && d > 2 && t >= d - 0.6) this.restart()
@@ -112,7 +119,15 @@ export class PipPlayer {
     } catch {}
   }
 
+  // Clicks reach the video (for YouTube's Skip button) or not. Focus may sit
+  // in it only while they do.
+  setClicks(on) {
+    this.clicks = on
+    this.reclaimFocus()
+  }
+
   reclaimFocus() {
+    if (this.clicks) return
     const a = document.activeElement
     if (a && a.tagName === 'IFRAME') {
       setTimeout(() => {

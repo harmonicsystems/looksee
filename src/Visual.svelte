@@ -156,14 +156,15 @@
          slide's color, so it never rests on color alone. -->
     {#each { length: 100 } as _, i}
       {@const n = i + 1}
-      <rect x={11 + (i % 10) * 38} y={11 + Math.floor(i / 10) * 38} width="34" height="34" rx="6" fill={n <= item.n ? ink : 'none'} fill-opacity={n % item.by ? 0.12 : 0.28} stroke={ink} stroke-opacity="0.25" stroke-width="1.5" />
-      <text x={28 + (i % 10) * 38} y={28 + Math.floor(i / 10) * 38} font-size={n > 99 ? 13 : 16} class="glyph cell" fill={ink} fill-opacity={n <= item.n ? 1 : 0.45}>{n}</text>
+      <rect x={11 + (i % 10) * 38} y={11 + Math.floor(i / 10) * 38} width="34" height="34" rx="6" fill={n <= item.n ? ink : 'none'} fill-opacity={n % item.by ? 0.12 : 0.28} stroke={ink} stroke-opacity="0.4" stroke-width="1.5" />
+      <text x={28 + (i % 10) * 38} y={28 + Math.floor(i / 10) * 38} font-size={n > 99 ? 13 : 16} class="glyph cell" fill={ink} fill-opacity={n <= item.n ? 1 : 0.7}>{n}</text>
     {/each}
     {#key item.n}
-      <g transform="translate({Math.min(362, Math.max(38, 28 + ((item.n - 1) % 10) * 38))} {Math.min(362, Math.max(38, 28 + Math.floor((item.n - 1) / 10) * 38))})">
+      <!-- On its own square, a little bigger, so its neighbours stay readable. -->
+      <g transform="translate({28 + ((item.n - 1) % 10) * 38} {28 + Math.floor((item.n - 1) / 10) * 38})">
         <g class="lit">
-          <rect x="-30" y="-30" width="60" height="60" rx="12" fill={color} stroke={ink} stroke-width="3" />
-          <text font-size={item.n > 99 ? 28 : 34} class="glyph" fill="var(--stage-bg)">{item.n}</text>
+          <rect x="-22" y="-22" width="44" height="44" rx="9" fill={color} stroke={ink} stroke-width="2.5" />
+          <text font-size={item.n > 99 ? 19 : 25} class="glyph" fill="var(--stage-bg)">{item.n}</text>
         </g>
       </g>
     {/key}

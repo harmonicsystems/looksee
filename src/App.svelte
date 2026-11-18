@@ -380,6 +380,19 @@
     timeout: 'The video took too long to start.',
     waiting: 'Waiting for the video, probably an ad. It starts by itself when the ad ends.'
   }
+  // Ads: nothing can skip one for the viewer, but the video takes clicks
+  // while an ad is probably on (it has not started after 6 s) and for 20 s
+  // after "Skip ad" in the bar (an ad in the middle of a video), so YouTube's
+  // own Skip button can be pressed. Otherwise it takes none (pip.js).
+  let unlocked = $state(false)
+  let unlockT
+  function skipAd() {
+    unlocked = true
+    clearTimeout(unlockT)
+    unlockT = setTimeout(() => (unlocked = false), 20000)
+  }
+  const pipClicks = $derived(pipOn && (pipStatus === 'waiting' || unlocked))
+  const SKIP = 'Click “Skip ad” on the video when it appears.'
   function stopVideo() {
     pip?.destroy()
     pip = null
@@ -460,6 +473,9 @@
     }
   })
   let watchPlayer = null
+  const watchClicks = $derived(!!watching && (watchStatus === 'waiting' || unlocked))
+  $effect(() => watchPlayer?.setClicks(watchClicks))
+  $effect(() => pip?.setClicks(pipClicks))
   $effect(() => {
     const m = s.videoMuted
     watchPlayer?.setMuted(m)
@@ -742,9 +758,10 @@
     <div class="prog" aria-hidden="true"><i style="width:{((index + 1) / deck.length) * 100}%"></i></div>
   {/if}
 
-  <div class="pip pip-{s.corner} pip-{s.videoSize}" class:on={pipOn} aria-hidden="true">
+  <div class="pip pip-{s.corner} pip-{s.videoSize}" class:on={pipOn} class:clicks={pipClicks} aria-hidden="true">
     <div class="pip-host" bind:this={pipHost}></div>
     <div class="pip-shield"></div>
+    {#if pipClicks}<p class="watch-msg">{SKIP}</p>{/if}
   </div>
 
   {#snippet word(x)}
@@ -764,10 +781,10 @@
         <div class="ww-side right">{#each web.right as x (x.i)}{@render word(x)}{/each}</div>
         <div class="ww-side bottom">{#each web.bottom as x (x.i)}{@render word(x)}{/each}</div>
       {/if}
-      <div class="watch-video" aria-hidden="true">
+      <div class="watch-video" class:clicks={watchClicks} aria-hidden="true">
         <div class="pip-host" bind:this={watchHost}></div>
         <div class="pip-shield"></div>
-        {#if watchStatus !== 'playing'}<p class="watch-msg">{PIP_MSG[watchStatus] ?? ''}</p>{/if}
+        {#if watchClicks}<p class="watch-msg">{SKIP}</p>{:else if watchStatus !== 'playing'}<p class="watch-msg">{PIP_MSG[watchStatus] ?? ''}</p>{/if}
       </div>
     </section>
   {/if}
@@ -834,6 +851,7 @@
       <button class="btn primary big" onclick={stopWatch}>Back to slides</button>
       <button class="btn big" onclick={() => (s.videoMuted = !s.videoMuted)} aria-pressed={s.videoMuted}>{s.videoMuted ? 'Sound on' : 'Sound off'}</button>
       <button class="btn big" onclick={() => (picking = true)} aria-haspopup="dialog">Other video</button>
+      <button class="btn big" onclick={skipAd} aria-pressed={unlocked}><span aria-hidden="true">⏭️</span> Skip ad</button>
     {:else}
     <button class="btn" onclick={() => step(-1)} disabled={!deck.length}>Back</button>
     <button class="btn primary play" onclick={toggle} disabled={!deck.length}>{playing ? 'Pause' : 'Play'}</button>
@@ -841,6 +859,7 @@
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
     {#if block}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
     {#if part}<span class="count mono">{part.icon} until {clock12(partEnd(s.day, s.dayEnd, s.day.indexOf(part)))}</span>{/if}
+    {#if pipOn}<button class="btn" onclick={skipAd} aria-pressed={unlocked}><span aria-hidden="true">⏭️</span> Skip ad</button>{/if}
     {/if}
     <button class="btn big" class:primary={timerStatus !== 'idle'} bind:this={timerBtn} onclick={toggleTimer} aria-expanded={timerOpen}>
       <span aria-hidden="true">⏱️</span> <span class:mono={timerStatus !== 'idle' && timerStatus !== 'done'}>{timerText || 'Timer'}</span>
@@ -986,7 +1005,7 @@
       </details>
 
       <!-- A set's own options, shown only for the sets that are in use. -->
-      <details class="sec" hidden={!has('letters', 'numbers', 'adding', 'subtracting', 'shapes', 'colorShapes', 'feelings', 'gestures', 'body')}>
+      <details class="sec" hidden={!has('letters', 'numbers', 'hundred', 'adding', 'subtracting', 'shapes', 'colorShapes', 'feelings', 'gestures', 'body')}>
         <summary><h2>Options for these sets</h2></summary>
         <div hidden={!has('letters')}>
           {@render seg('letterCase', 'Letters')}
@@ -1232,6 +1251,8 @@
   .pip-host :global(iframe) { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; }
   /* Clicks never reach YouTube: no links out, no focus in the iframe. */
   .pip-shield { position: absolute; inset: 0; }
+  .clicks .pip-shield { display: none; }
+  .clicks .pip-host :global(iframe) { pointer-events: auto; }
 
   /* Watch: the video in the middle, its words in a frame around it. */
   .watch { position: absolute; inset: var(--bar-h) var(--inset-r) calc(var(--inset-b) + 78px) var(--inset-l); container-type: size; display: grid;
@@ -1239,7 +1260,9 @@
   .watch.bare { grid-template: '. . .' 1fr '. video .' auto '. . .' 1fr / 1fr minmax(0, 80cqw) 1fr; }
   .watch-video { grid-area: video; position: relative; aspect-ratio: 16 / 9; max-height: 62cqh; border-radius: 12px; overflow: hidden; background: #000; border: 3px solid var(--stage-ink); justify-self: center; width: 100%; }
   .watch.bare .watch-video { max-height: 80cqh; }
-  .watch-msg { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; color: #fff; font-size: clamp(14px, 2.4cqmin, 22px); text-align: center; }
+  .watch-msg { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 16px; color: #fff; font-size: clamp(14px, 2.4cqmin, 22px); text-align: center; pointer-events: none; }
+  /* While the video takes clicks, the note sits along its top, out of the Skip button's way. */
+  .clicks .watch-msg { bottom: auto; padding: 8px; background: rgb(0 0 0 / 0.7); font-size: clamp(12px, 2cqmin, 18px); }
   .ww-side { display: flex; align-items: center; justify-content: space-evenly; gap: 2cqmin; min-height: 0; min-width: 0; }
   .ww-side.top { grid-area: top; }
   .ww-side.bottom { grid-area: bottom; }

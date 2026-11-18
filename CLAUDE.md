@@ -36,14 +36,15 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   `O` weather, `M` sound, `B` music, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
-  loops by seeking back just before the end.
+  loops by seeking back just before the end. It takes no clicks, except while an ad is probably on
+  and for 20 s after ⏭️ Skip ad, so YouTube's own Skip button can be pressed (see Watch ▸ Ads).
 - **The site may be served from `/` or from `/looksee/`.** Nothing in `src/` may assume `/`:
   pictures and the credits link are requested relative to the page, and Vite rewrites the absolute
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
 - Build gates (`npm run build`): app JS ≤ 72 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 70.9 KB now, 1.1 KB under. David raised it on 2026-11-15 from 60 to 62 for
+  (`scripts/check-bundle-size.mjs`; 71.3 KB now, 0.7 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
@@ -287,14 +288,17 @@ attribute, and the slide's name for a screen reader follows the words shown (`ro
   the ones taken away turn the second number's color and fade away one by one, and the answer
   appears in the color of what is left. Words "two plus three is five" / "dos más tres son
   cinco" ("es" when the answer is one).
-- **Count to 100** (`hundred` set, its own group, 💯; asked for 2026-11-19): a hundred chart, one
+- **Count to 100** (`hundred` set, its own group, 💯; asked for 2026-11-18): a hundred chart, one
   slide per number, counting by 1s, 5s or 10s (`countBy`, a deck key; 100, 20 or 10 slides). What
   has been counted is shaded in ink (the stops when counting by 5s or 10s a little more), so the
   chart stays calm while the slide color changes; the number now is drawn last, bigger and in the
   slide color, and grows in (not under reduced motion). **One chart stays on screen through the
   count**, like shapes: `runStart` runs across `chart` slides and `slideKey` uses it, so the chart
   is not faded in again for every number. Words to 100 come from `numberWord(n, lang)`
-  ("forty-seven", "cuarenta y siete", "veintiséis", "cien"). It is its own group because inside
+  ("forty-seven", "cuarenta y siete", "veintiséis", "cien"). Mixed up, its slides stay in order as
+  one run at a random place among the others, since each chart shades what came before. The lit
+  number sits on its own square, a little bigger, so its neighbours stay readable; numbers not yet
+  counted are ink at 70% (at least 5:1 in every theme). It is its own group because inside
   Letters & Numbers it would make that group partly on for every new visitor (and rename their
   "Letters & Numbers" bookmarks).
 - **Set names** (`setNames`): a `title` slide before each set, when more than one set plays and
@@ -343,7 +347,7 @@ apply; a word the same in both languages shows once. Every 4 s the next word is 
 highlight, and a slight grow unless reduced motion). **Back to slides** or `Esc` ends it and
 destroys the player. "Words around the video" (`wordWeb`) turns the frame off.
 
-Presets: 🐠 Aquarium (David found it, 2026-11-19), a calm tank for arrival with the Our day
+Presets: 🐠 Aquarium (David found it, 2026-11-18), a calm tank for arrival with the Our day
 Good morning words (`words: ROUTINE.arrival`), and Paw Patrol: Penguins.
 
 **To add a preset:** an entry in `VIDEOS` (link, title, tile emoji, words with `label`, `es`, `art`,
@@ -352,8 +356,19 @@ Good morning words (`words: ROUTINE.arrival`), and Paw Patrol: Penguins.
 **Ads** (both players, `pip.js`): YouTube gives embeds no ad events, but a pre-roll holds the real
 video back and YouTube starts the video itself when the ad ends. So only a player that never gets
 *ready* within 20 s fails; once ready, a start slower than 6 s shows "Waiting for the video,
-probably an ad" and is left to finish (Clip Choice's approach). The ad can't be skipped: the player
-takes no clicks, which also keeps YouTube's suggestions out of reach.
+probably an ad" and is left to finish (Clip Choice's approach).
+
+**Skipping an ad (2026-11-18, David: "it won't let me").** Nothing may skip an ad for the viewer
+(YouTube's terms), so Looksee lets the teacher press YouTube's own Skip button. The player takes
+clicks (`setClicks`; the `.clicks` class drops the shield and the iframe's `pointer-events: none`)
+**while an ad is probably on** (`waiting`) and **for 20 s after ⏭️ Skip ad** in the bar (Watch's bar,
+and the slides' bar while the corner video is on), for an ad in the middle of a video. A note
+along the top of the video says "Click “Skip ad” on the video when it appears". The rest of the
+time it takes none, as before. While it takes clicks, focus may sit in the iframe; `setClicks(false)`
+takes it back. A click on the video itself pauses a YouTube embed, and a paused embed shows the
+"more videos" shelf, so `tick` plays it again at once whenever it is found paused. Checked with a
+stand-in for YouTube's API in Playwright (the real one is out of reach from Claude's sandbox), not
+yet on a real ad. Not possible: skipping an unskippable ad.
 
 ## A plan: sets in timed blocks
 
@@ -468,7 +483,7 @@ needs each thing, and folded:
   on, every block's sets). Letter case and letter words for Letters; the number style for Numbers,
   Adding and Subtracting; From and to for Numbers; "Up to 5 or 10" for Adding and Subtracting;
   "Shapes change into each other" for Shapes and Colors and shapes; Moving or Still for Feelings,
-  Gestures and Body; skin tone for Gestures and Body. The rows are hidden with the `hidden`
+  Gestures and Body; skin tone for Gestures and Body; count by 1s, 5s or 10s for Count to 100. The rows are hidden with the `hidden`
   attribute, not `{#if}`, which is smaller; `.sec [hidden]` needs `!important` because some rows
   set their own `display`. With none in use the whole section is hidden.
 - **No sliders.** Seconds on each and the pause before the word are rows of choices to click
