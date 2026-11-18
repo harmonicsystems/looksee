@@ -5,6 +5,7 @@
 // Reads  art/where-is-it/drafts/<name>.png  (Codex output, cream #f7f2e7-ish)
 // Writes art/where-is-it/drafts/cut/<name>.png and .avif (512 px, transparent)
 //        art/where-is-it/drafts/index.html (each cutout on the four stage themes)
+//        public/where-is-it/ (the same sheet, light, published with the site)
 //
 // The background is cleared in two passes:
 // 1. A flood fill from the edges with a wide tolerance takes the outside cream
@@ -20,7 +21,7 @@
 // Needs ImageMagick (`magick`).
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -133,21 +134,50 @@ for (const c of cards) {
 const known = new Set(CARDS.map((c) => `${c.file}.png`))
 const extra = readdirSync(DRAFTS).filter((f) => f.endsWith('.png') && !known.has(f))
 
+// The published copy of the sheet: public/where-is-it/, served with the site
+// at <base>where-is-it/. Small files only (AVIF cutouts, 512 px JPEG
+// originals); the service worker neither stores it nor answers for it
+// (vite.config.js). No reference sheets: R1 is drawn from a retailer's photo.
+const PUBLISH = join(HERE, '..', '..', 'public', 'where-is-it')
+rmSync(PUBLISH, { recursive: true, force: true })
+mkdirSync(join(PUBLISH, 'cut'), { recursive: true })
+mkdirSync(join(PUBLISH, 'orig'), { recursive: true })
+for (const c of made) {
+  copyFileSync(join(CUT, `${c.file}.avif`), join(PUBLISH, 'cut', `${c.file}.avif`))
+  magick(join(DRAFTS, `${c.file}.png`), '-resize', `${SIZE}x${SIZE}`, '-strip', '-quality', '80',
+    join(PUBLISH, 'orig', `${c.file}.jpg`))
+}
+
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-const row = (c) => `
+const row = (c, orig, cut) => `
 <section>
   <h2>${esc(c.word)}${c.es ? ` <span lang="es">· ${esc(c.es)}</span>` : ''}</h2>
   ${c.who ? `<p>${esc(c.who)}</p>` : ''}
   <div class="row">
-    <figure><img src="${c.file}.png" alt=""><figcaption>Codex original</figcaption></figure>
-    ${THEMES.map(([name, bg]) => `<figure style="background:${bg}"><img src="cut/${c.file}.png" alt=""><figcaption>${name}</figcaption></figure>`).join('')}
+    <figure><img src="${orig(c.file)}" alt="${esc(c.who || c.word)}, as generated" loading="lazy"><figcaption>Codex original</figcaption></figure>
+    ${THEMES.map(([name, bg]) => `<figure style="background:${bg}"><img src="${cut(c.file)}" alt="" loading="lazy"><figcaption>${name}</figcaption></figure>`).join('')}
   </div>
   <p class="file">${c.file}</p>
 </section>`
 
-writeFileSync(join(DRAFTS, 'index.html'), `<!doctype html>
+const LOCAL = {
+  title: 'Where is it? drafts',
+  lede: "Each picture as Codex made it, then cut out on Looksee's four stage themes. Look for drift between a master and its cards, cream halos on Night and High contrast, and anything that makes the place word unclear.",
+  orig: (f) => `${f}.png`,
+  cut: (f) => `cut/${f}.png`,
+  head: '',
+}
+const PUBLIC = {
+  title: 'Where is it? — picture drafts',
+  lede: 'A first look at pictures for a Looksee set that teaches place words: on, under, next to, between and in. Each picture was made with image generation as an edit of an empty scene, so between the cards of one scene only the child or the object moves, never the furniture. Nobody stands on furniture. Every picture is shown as it was made, then cut out on the four stage themes Looksee offers. These are drafts and are not in the app yet.',
+  orig: (f) => `orig/${f}.jpg`,
+  cut: (f) => `cut/${f}.avif`,
+  head: '<meta name="robots" content="noindex">\n',
+}
+
+const page = (p, extras) => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Where is it? drafts</title>
+${p.head}<title>${p.title}</title>
 <style>
   :root { --bg: #f7f3ec; --ink: #2c2a26; --soft: #6b645a; --line: #d8cfc0; }
   body { margin: 0; padding: 24px 16px 64px; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, sans-serif; }
@@ -160,11 +190,15 @@ writeFileSync(join(DRAFTS, 'index.html'), `<!doctype html>
   figure img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; }
   figcaption { font-size: 12px; padding: 4px 8px; background: rgba(255,255,255,.85); color: var(--ink); }
 </style></head><body>
-<h1>Where is it? — drafts</h1>
-<p class="lede">Each picture as Codex made it, then cut out on Looksee's four stage themes. Look for drift between a master and its cards, cream halos on Night and High contrast, and anything that makes the place word unclear.</p>
-${made.map(row).join('\n')}
-${extra.length ? `<section><h2>Not in the card list</h2><p class="file">${extra.map(esc).join(', ')}</p></section>` : ''}
+<h1>${p.title}</h1>
+<p class="lede">${p.lede}</p>
+${made.map((c) => row(c, p.orig, p.cut)).join('\n')}
+${extras}
 </body></html>
-`)
+`
 
-console.log(`cut ${made.length} of ${CARDS.length} cards${extra.length ? `; not listed: ${extra.join(', ')}` : ''}`)
+writeFileSync(join(DRAFTS, 'index.html'), page(LOCAL,
+  extra.length ? `<section><h2>Not in the card list</h2><p class="file">${extra.map(esc).join(', ')}</p></section>` : ''))
+writeFileSync(join(PUBLISH, 'index.html'), page(PUBLIC, ''))
+
+console.log(`cut ${made.length} of ${CARDS.length} cards${extra.length ? `; not listed: ${extra.join(', ')}` : ''}; published to public/where-is-it/`)

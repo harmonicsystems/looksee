@@ -541,6 +541,21 @@ emoji font, so the user can type any emoji and there are no files. The editor in
 rows in the order typed and sorts them only when focus leaves the list (`tidyDay`), so a row never
 jumps while its time is being typed. "Reset look and pace" keeps the school day and the video link.
 
+## Where is it? (generated pictures, not in the app yet)
+
+Drafts for a place-words set (on, under, next to, between, in), made with Codex image generation
+(2026-11-17/18). Everything is in `art/where-is-it/`; read its `PROMPTS.md` first. The cast is the
+sequence app's (Ana, Sam, Jo, Max), nobody stands on furniture, and every card is an edit of an
+empty scene, cropped with its scene, so only the child or object moves.
+
+- `cutout.mjs` turns the drafts into transparent 512 px AVIFs and **publishes a review sheet to
+  `public/where-is-it/`**, served at `…/where-is-it/` for David to show people. It is not part of
+  the app: the service worker neither stores it (`globIgnores`) nor answers a visit to it with the
+  app (`navigateFallbackDenylist`), and a test holds both.
+- `art/where-is-it/refs/` (a retailer's chair photo) and `drafts/` are ignored by git.
+- Not built yet: a `where` set in `concepts.js`, its Spanish words, and its pictures in the offline
+  store and the size gate.
+
 ## Dev
 
 ```

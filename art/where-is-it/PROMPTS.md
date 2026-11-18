@@ -31,6 +31,7 @@ the same size in the same place, and the only thing that changes is the thing be
 | `cutout.mjs` | cuts out the background, crops each scene to one box, builds the review page | yes |
 | `refs/` | chair photo, cast turnarounds, R1–R3 reference sheets | no |
 | `drafts/` | masters `M*`, cards, `cut/` (512 px PNG + AVIF), `old/` (replaced versions), `index.html` | no |
+| `public/where-is-it/` | the same sheet, light (AVIF cutouts, 512 px JPEG originals, `noindex`), published with the site at `…/looksee/where-is-it/`. Rewritten by every `cutout.mjs` run; no reference sheets | yes |
 
 ## Making an image
 
@@ -82,3 +83,5 @@ Each brief is put together from these (all in `briefs/`):
 | 11-18 | W1–W3, B1–B2, N1–N2 | W1, B1, B2, N2 read at a glance. W3: Ana's feet floated above the floor strip and the window moved; redone. N1/N2: the bin drifted a little from M5. | Tie a standing child's shoes to something drawn (the strip). |
 | 11-18 | cutout | A global tight-tolerance pass speckled the cream window frame and silver legs; now only enclosed cream patches are cleared, down to 0.05% of the picture (0.2% left the gap under the chair-desk's tablet). The cast's cream shirts survive. | |
 | 11-18 | C1–C3, T1–T3, W3 again | All read at a glance. W3's feet now stand on the strip. T2: Max sits a little forward, his legs past the front table legs, so *under* is weaker than it should be. T3: the table drifted left a little. | For *under*, ask for the child's whole body, feet too, to be between the four legs. |
+| 11-18 | T1 | David spotted the bear on the table had one eye: Codex drew it that way. Fixed by mirroring the left eye about the nose with ImageMagick (`drafts/old/T1-teddy-on-table-one-eye.png` kept), so nothing else moved. | Check faces at full size, not only at thumbnail size. |
+| 11-18 | published | The sheet is on the site at `where-is-it/` so David can show it (508 KB). The service worker neither stores it nor answers a visit to it with the app (`globIgnores`, `navigateFallbackDenylist`); a test holds both. | |
