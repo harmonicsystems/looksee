@@ -493,7 +493,13 @@ export function buildDeck(s, rng = Math.random) {
   // A routine word is its emoji drawn as text: no file to ask for.
   for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label })))
   for (const id of Object.keys(THINGS)) add(id, () => THINGS[id].map((x) => thing(id, x)))
-  return s.order === 'shuffle' ? shuffle(deck, rng) : deck
+  if (s.order !== 'shuffle') return deck
+  // Mixed up, the count to 100 still counts: its slides stay in order, as one
+  // run at a random place among the rest (each chart shades what came before).
+  const count = deck.filter((x) => x.set === 'hundred')
+  const rest = shuffle(deck.filter((x) => x.set !== 'hundred'), rng)
+  rest.splice(Math.floor(rng() * (rest.length + 1)), 0, ...count)
+  return rest
 }
 
 // Where each dot of a number sits: rows of five, like a ten-frame.

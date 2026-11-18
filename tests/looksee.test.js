@@ -336,6 +336,12 @@ describe('count to 100', () => {
     expect(linkSettings('?' + linkQuery({ ...DEFAULTS, countBy: 10 })).countBy).toBe(10)
     expect(normalizeSettings({ countBy: 3 }).countBy).toBe(1)
   })
+  it('still counts in order when the slides are mixed up', () => {
+    const d = buildDeck({ ...DEFAULTS, sets: ['colors', 'shapes', 'hundred'], countBy: 10, order: 'shuffle' }, () => 0.42)
+    const at = d.findIndex((x) => x.set === 'hundred')
+    expect(d.slice(at, at + 10).map((x) => x.n)).toEqual([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+    expect(d.length).toBe(10 + COLORS.length + SHAPES.length)
+  })
   it('keeps one chart on screen through the count', () => {
     const d = deck({ sets: ['numbers', 'hundred'], numberFrom: 1, numberTo: 3, countBy: 10 })
     expect(runStart(d, 2)).toBe(2)

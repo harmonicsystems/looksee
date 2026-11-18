@@ -13,7 +13,7 @@ import { ROUTINE } from './routine.js'
 const w = (label, es, art, emoji) => ({ label, es, art, emoji })
 
 export const VIDEOS = [
-  // A calm tank for arrival, with the Good morning words (found by David, 2026-11-19).
+  // A calm tank for arrival, with the Good morning words (found by David, 2026-11-18).
   { id: 'aquarium', title: 'Aquarium', emoji: '🐠', url: 'https://youtu.be/-CDH2fN7XXA', words: ROUTINE.arrival },
   {
     id: 'pawPenguins',

@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-19. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-18. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -568,7 +568,7 @@ preset with an Our day set around it:
 - Let's Get Fit, Count to 100 by 1's, Jack Hartmann (4:10, a new exercise every ten):
   `https://youtu.be/0TgLtF3PMOc`. Words: Math words.
 - Goodbye Song, The Singing Walrus: no link found. Words: Going home.
-- A calm aquarium video: found by David (2026-11-19), now the 🐠 Aquarium preset. Words: Good morning.
+- A calm aquarium video: found by David (2026-11-18), now the 🐠 Aquarium preset. Words: Good morning.
 - Holiday cartoons for snack and lunch: waiting for her list. Words: Asking.
 
 **Not built: a day by the clock.** Her schedule is in clock times, and two moments are "around"
@@ -592,7 +592,7 @@ slides froze when two parts in a row had the same sets; editing the playing part
 slide off; the sets before and after the day could not be chosen; and with the day bar hidden
 there was nowhere to edit the times. Not yet seen in the classroom.
 
-## 2026-11-19: Count to 100, and the aquarium
+## 2026-11-18: Count to 100, and the aquarium
 
 **Count to 100** (💯, its own group): a hundred chart that fills in as the class counts, by 1s, 5s
 or 10s (Settings ▸ Options for these sets). The number now is big and lit; the words under it
@@ -603,6 +603,20 @@ Spanish number words (veintiséis, cuarenta y siete, cien) are unchecked like th
 **🐠 Aquarium in Watch**, with the Good morning words around it: `https://youtu.be/-CDH2fN7XXA`,
 found by David. Not seen embedded from here (YouTube is out of reach); check it plays in the
 corner. The app is 70.9 KB of 72.
+
+## 2026-11-18: skipping ads
+
+David could not skip a YouTube ad: the player takes no clicks, on purpose. It now takes clicks
+while an ad is probably on (the video has not started after 6 s) and for 20 s after a new ⏭️ Skip
+ad button in the bar, so YouTube's own Skip button can be pressed; a note on the video says so.
+Then it takes none again. Checked in a browser with a stand-in for YouTube's player (Watch and
+the corner: the note, clicking Skip, the 20 s button, a stray pause undone, focus brought back).
+**Not yet seen on a real ad.** An unskippable ad still has to play out.
+
+A review of Count to 100 found five things, all fixed: Mixed up scattered the count (it now stays
+in order); the lit number covered its neighbours along the edges; numbers not yet counted were
+too faint in Calm and Bright; the Count by choice was hidden when it was the only set; and the
+notes were dated a day ahead. The app is 71.3 KB of 72.
 
 ## Checked, and not checked
 
@@ -693,7 +707,7 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 70.9 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
+- **The size budget.** 71.3 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
   2026-11-18 to 70 for Our day and to 72 for sets by the school day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.
