@@ -10,6 +10,7 @@
 
 import { polygon, curves, ellipse, regular, resample } from './morph.js'
 import { THINGS, THINGS_DIR } from './things.js'
+import { ROUTINE } from './routine.js'
 
 const dot = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`
 
@@ -366,6 +367,13 @@ export const SETS = [
   { id: 'feelings', label: 'Feelings', es: 'Emociones' },
   { id: 'gestures', label: 'Gestures', es: 'Gestos' },
   { id: 'body', label: 'Body', es: 'Cuerpo' },
+  { id: 'arrival', label: 'Good morning', es: 'Buenos días' },
+  { id: 'lineUp', label: 'Lining up', es: 'Hacer fila' },
+  { id: 'core', label: 'Core words', es: 'Palabras clave' },
+  { id: 'requesting', label: 'Asking', es: 'Pedir' },
+  { id: 'senses', label: 'Five senses', es: 'Los cinco sentidos' },
+  { id: 'mathWords', label: 'Math words', es: 'Palabras de matemáticas' },
+  { id: 'packUp', label: 'Going home', es: 'Ir a casa' },
   { id: 'animals', label: 'Pets and farm', es: 'Mascotas y granja' },
   { id: 'wild', label: 'Wild animals', es: 'Animales salvajes' },
   { id: 'sea', label: 'Sea animals', es: 'Animales del mar' },
@@ -394,6 +402,7 @@ export const GROUPS = [
   { id: 'art', label: 'Shapes & Colors', emoji: '🎨', sets: ['shapes', 'colors', 'colorShapes', 'mixing'] },
   { id: 'opposites', label: 'Opposites', emoji: '↔️', sets: ['opposites'] },
   { id: 'people', label: 'Feelings & Body', emoji: '😊', sets: ['feelings', 'gestures', 'body'] },
+  { id: 'day', label: 'Our day', emoji: '🏫', sets: Object.keys(ROUTINE) },
   // `own`: these come with no pictures, each device adds its own (things.js).
   { id: 'animals', label: 'Animals', emoji: '🐾', own: true, sets: ['animals', 'wild', 'sea', 'birds'] },
   { id: 'food', label: 'Food', emoji: '🍎', own: true, sets: ['food', 'fruit', 'vegetables'] },
@@ -456,6 +465,8 @@ export function buildDeck(s, rng = Math.random) {
   const tone = dealer(s.skin, rng)
   add('gestures', () => GESTURES.map((x) => picture('gestures', 'people', x, tone(x))))
   add('body', () => BODY.map((x) => picture('body', 'people', x, tone(x))))
+  // A routine word is its emoji drawn as text: no file to ask for.
+  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label })))
   for (const id of Object.keys(THINGS)) add(id, () => THINGS[id].map((x) => thing(id, x)))
   return s.order === 'shuffle' ? shuffle(deck, rng) : deck
 }

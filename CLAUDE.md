@@ -42,9 +42,10 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 68 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 67.8 KB now, 0.2 KB under. David raised it on 2026-11-15 from 60 to 62 for
-  the timer, to 64 for the weather, to 66 for the timer's faces, and on 2026-11-16 to 68 for background music) and WCAG AA on both control palettes
+- Build gates (`npm run build`): app JS ≤ 70 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 69.0 KB now, 1 KB under. David raised it on 2026-11-15 from 60 to 62 for
+  the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
+  and on 2026-11-18 to 70 for the Our day words) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -78,6 +79,7 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
 - `speech.js` — `speechLines` (what to say for a slide) and `pickVoice` (pure). `speak.js` — `speak`,
   the Web Speech API (not pure).
 - `videos.js` — `VIDEOS`, the preset videos for Watch with their words, and `sides(n)`.
+- `routine.js` — `ROUTINE`, the Our day word sets (below).
 - `pip.js` — `PipPlayer`, the corner video and the Watch video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
   `startSeconds` (reads a link's `?t=`).
 - `weather.js` — the place, the temperature bands and sky words, reading Open-Meteo's answer (pure).
@@ -177,6 +179,28 @@ Outside, Music, Sports, Tools) and 🌍 Places (Around town, Space). **The code 
 - Not built: "goes together" slides from the library's tags, and its pictures for letter words
   and Watch words. Runners-up for more sets: getting ready (toothpaste, towel, mirror), the
   kitchen, and more animals.
+
+## Our day: words for the routines of a school day
+
+The class's teacher sent her schedule (2026-11-18) and asked for words on screen for each part of
+it. 🏫 **Our day** (`src/routine.js`) is seven sets of words, each drawn as the device's own emoji
+above the word: Good morning (arrival and classroom expectations), Lining up, Core words, Asking
+(requesting phrases for snack and lunch), Five senses (for trying new foods), Math words and Going
+home (packing up and the bus).
+
+- **Each word is a line of text,** `label,es,art,emoji` (like `things.js`, to spare the size
+  gate), with no commas inside a word. A phrase ("more please", "all done") is one word here.
+- **A word slide is a `picture` with `word: true`.** `Visual.svelte` draws its emoji as text from
+  the start (no `<img>`, so no 404) and `App.svelte` does not preload a file for it. Everything
+  else is shared with the other sets: the Words settings, el / la, speech, set names, plans,
+  settings links and bookmark names ("🏫 Going home · EN").
+- **The lists are first drafts for the teacher to correct;** she offered more detail once the
+  shape was settled. The Spanish is as unchecked as the rest. A test checks every word has
+  Spanish, an article from `el la los las` or none, and an emoji.
+- **A Watch preset can use a set as its words:** `words: ROUTINE.arrival` (import it into
+  `videos.js`). None does yet: the teacher's videos are waiting for David to check each one plays
+  in the corner (`docs/STATUS.md` has the candidates).
+- One bookmark per part of her day is the way to switch: `docs/teacher-links.md`.
 
 ## Seen from across a classroom
 
@@ -327,8 +351,10 @@ A teacher asked to "program different sets throughout the day in 5 to 25 minute 
   over as often as needed, whatever `loop` says; `loop` decides what happens after the last block:
   the first again, or stop.
 - **It is not by the clock.** A block starts when the one before it ends, not at 9:15. Blocks that
-  begin at set times of day (tied to the school-day bar) would be a different feature; ask the
-  teacher which she meant before building it.
+  begin at set times of day (tied to the school-day bar) would be a different feature. The
+  teacher's schedule (2026-11-18, in `docs/STATUS.md`) is written in clock times, so that is how
+  she thinks of her day; David chose to give her one bookmark per block first and build a
+  by-the-clock day only once she has used those.
 - **The plan is not a deck key.** `App.svelte` plays a block by lending the deck its sets: `cur`
   is the block playing now or, with no plan, the settings themselves, and `deckKey` and
   `buildDeck` are given `cur.sets`. The Sets picker in Settings edits `cur.sets` too, so with a
@@ -460,8 +486,8 @@ fits the bar. "➕ Math · EN+ES"; part of a group lists its sets with commas ("
 Math · ES"; three or more "🔤➕🎨 Mix · EN"; every set "Looksee · All · EN". A bookmark keeps the
 name it was saved with.
 
-`GROUPS` (concepts.js) puts every set in one of nine groups, in `SETS` order (a test): 🔤 Letters &
-Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, and the four whose pictures
+`GROUPS` (concepts.js) puts every set in one of ten groups, in `SETS` order (a test): 🔤 Letters &
+Numbers, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, 🏫 Our day, and the four whose pictures
 a device adds for itself, 🐾 Animals, 🍎 Food, 🧸 Things and 🌍 Places. Settings lists the sets under
 their groups; a group's heading turns the whole group on, or off when it is all on (`toggleGroup`),
 and shows "mixed" when part of it is on. For

@@ -13,6 +13,7 @@ import { linkQuery, linkSettings, setupName, setsName } from '../src/share.js'
 import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter, setsInUse } from '../src/plan.js'
 import { PRESETS, FACES, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone, faceTrack, faceFill } from '../src/timer.js'
 import { VIDEOS, sides } from '../src/videos.js'
+import { ROUTINE } from '../src/routine.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
 import { PLAYLISTS, MUSIC_DIR, VOLUMES, duckLevel } from '../src/music.js'
@@ -313,6 +314,32 @@ describe('shapes that change into each other', () => {
     expect(mix(a, b, 1)).toEqual(b)
     expect([ease(0), ease(0.5), ease(1)]).toEqual([0, 0.5, 1])
     expect(pathOf([[1, 2], [3.04, 4.06], [5, 6]])).toBe('M1 2L3 4.1L5 6z')
+  })
+})
+
+describe('our day', () => {
+  it('puts every routine set in the Our day group, in order', () => {
+    expect(GROUPS.find((g) => g.id === 'day').sets).toEqual(Object.keys(ROUTINE))
+    for (const id in ROUTINE) expect(SETS.some((x) => x.id === id), id).toBe(true)
+  })
+  it('gives every word Spanish, an article that fits and an emoji', () => {
+    for (const id in ROUTINE)
+      for (const x of ROUTINE[id]) {
+        expect(x.es, x.label).toBeTruthy()
+        expect(['', 'el', 'la', 'los', 'las'], x.label).toContain(x.art)
+        expect(x.emoji, x.label).toMatch(/\p{Extended_Pictographic}/u)
+      }
+  })
+  it('draws a routine word as its emoji, never a file', () => {
+    const d = deck({ sets: ['packUp'] })
+    expect(d.length).toBe(ROUTINE.packUp.length)
+    expect(d[0]).toMatchObject({ kind: 'picture', word: true, label: 'jacket', emoji: '🧥', say: 'jacket' })
+    expect(d.every((x) => !x.dir && !x.code)).toBe(true)
+    expect(rowsText(labelRows(d[0], { words: 'both', articles: true }))).toBe('jacket / la chaqueta')
+  })
+  it('names a bookmark after the group', () => {
+    expect(setupName({ ...DEFAULTS, sets: Object.keys(ROUTINE) })).toMatch(/^🏫 Our day/)
+    expect(setupName({ ...DEFAULTS, sets: ['packUp'] })).toMatch(/^🏫 Going home/)
   })
 })
 
