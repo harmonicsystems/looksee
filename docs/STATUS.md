@@ -575,6 +575,23 @@ preset with an Our day set around it:
 a time (circle 8:45, goodbye 2:00). David chose bookmarks first; a by-the-clock day comes after
 she has used them.
 
+## 2026-11-18: sets by the school day
+
+Once the Our day bookmarks worked, David asked for the day to run by itself. Each part of the
+school day can now have its own sets, and with **Follow the school day** on, the part the clock is
+in plays them. It changes at the next slide, never mid-slide, and never starts playing by itself.
+The schedule is the same every day. Set up in Settings ▸ What to show: click a part, choose its
+sets. The day bar takes 12 parts now, so her whole day fits. The size gate went to 72 KB; the app
+is 70.0 KB.
+
+Checked in a browser with the clock moved: paused at 9:13 it shows Good morning and at 9:14
+Lining up; playing across 12:05 it finishes the slide, then starts Asking from its first word;
+the bar shows "🍎 until 2:09"; clicking a part and a group changes only that part; the bookmark is
+named "🏫➕ School day · EN". A review then found four problems, all fixed and checked again: the
+slides froze when two parts in a row had the same sets; editing the playing part's time cut the
+slide off; the sets before and after the day could not be chosen; and with the day bar hidden
+there was nowhere to edit the times. Not yet seen in the classroom.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -656,16 +673,16 @@ setting, which was checked). Any device other than one Mac.
 - **What Clip Choice has learned since.** Its repo has newer handling for pre-roll ads and for
   pasted embed code and share links. Looksee now waits out pre-roll ads the same way; `src/link.js` still reads plain links only.
 - **A license for the code.** The repo is public and has none yet.
-- **A plan by the clock?** Blocks follow playing time. The teacher's schedule (2026-11-18) is in
-  clock times, so she probably meant "letters at 9:15": blocks would need start times, shared with
-  the school-day bar. Waiting until she has used the Our day bookmarks.
+- **Sets by the school day: one schedule for every day.** Centers changes through her week; a
+  schedule per weekday was offered and not chosen. Nor is a video cued at a time (the morning song
+  around 8:45, the goodbye song at 2:00).
 - **The Our day words** are drafts. She offered to say what the vocabulary should be once the
   shape is settled; their Spanish is unchecked.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 69.0 KB of 70, so about 1 KB is left. David raised the limit to 68 on
-  2026-11-16 for music and to 70 on 2026-11-18 for Our day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
+- **The size budget.** 70.0 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
+  2026-11-18 to 70 for Our day and to 72 for sets by the school day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.
 - **The weather.** The place is fixed in the code (Rhinebeck), the temperature is °F only, and the

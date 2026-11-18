@@ -63,6 +63,8 @@ export const DEFAULTS = {
   // A plan plays its blocks in turn instead of `sets` (plan.js).
   planOn: false,
   plan: [],
+  // Each part of the school day plays its own sets, by the clock (day.js).
+  daySets: false,
   order: 'inOrder',
   loop: true,
   seconds: 4,
@@ -119,7 +121,7 @@ export function normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {}
   const s = { ...DEFAULTS }
   for (const k of Object.keys(OPTIONS)) if (OPTIONS[k].includes(r[k])) s[k] = r[k]
-  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'planOn', 'weather', 'music']) if (typeof r[k] === 'boolean') s[k] = r[k]
+  for (const k of ['loop', 'showLabel', 'showProgress', 'videoMuted', 'dayBar', 'letterWords', 'articles', 'firstLetter', 'setNames', 'morph', 'wordWeb', 'speakSlides', 'planOn', 'daySets', 'weather', 'music']) if (typeof r[k] === 'boolean') s[k] = r[k]
   // Fresh arrays every time, so editing settings never edits DEFAULTS.
   s.sets = [...s.sets]
   if (Array.isArray(r.sets)) {
