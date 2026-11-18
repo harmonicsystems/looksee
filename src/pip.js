@@ -10,11 +10,12 @@
 // So only a player that never gets *ready* within 20 s is a failure; once it
 // is ready, a slow start is reported with onWaiting ("probably an ad") and
 // left to finish. (Clip Choice does the same.) Nothing can skip an ad for
-// the viewer, but while one is probably on (and for 20 s after "Skip ad" in
-// the bar) the player takes clicks, so YouTube's own Skip button can be
-// pressed (`setClicks`, App.svelte). The rest of the time it takes none, so
-// no one reaches YouTube's suggestions; and a click that pauses it is undone
-// at once, because a paused embed shows a "more videos" shelf.
+// the viewer, but for a while (App.svelte decides when) the corner where
+// YouTube draws its Skip button takes clicks (`setClicks`), so it can be
+// pressed. The rest of the video, and the rest of the time, takes none, so no
+// one reaches YouTube's suggestions or an ad's link. A click that pauses the
+// video is undone at once (a paused embed shows a "more videos" shelf), and
+// focus is taken back a moment after any click, so the keys keep working.
 import { loadApi } from './youtube.js'
 
 const ENDED = 0
@@ -26,7 +27,9 @@ export class PipPlayer {
     Object.assign(this, { host, videoId, start, muted, loop, onPlaying, onWaiting, onError, onEnd })
     this.player = null
     this.dead = false
-    this._guard = () => this.reclaimFocus()
+    // A click into the video moves focus there; it comes back a moment later
+    // (after YouTube has had the click), or at once when clicks are off.
+    this._guard = () => (this.clicks ? setTimeout(() => this.reclaimFocus(true), 400) : this.reclaimFocus())
     this.open()
   }
 
@@ -85,7 +88,7 @@ export class PipPlayer {
   }
 
   tick() {
-    this.reclaimFocus()
+    if (!this.clicks) this.reclaimFocus()
     // Never left paused (a click while it takes clicks can pause it).
     if (this.player?.getPlayerState?.() === PAUSED) this.player.playVideo()
     const t = this.player?.getCurrentTime?.()
@@ -119,15 +122,14 @@ export class PipPlayer {
     } catch {}
   }
 
-  // Clicks reach the video (for YouTube's Skip button) or not. Focus may sit
-  // in it only while they do.
+  // Clicks reach YouTube's Skip button, or nothing.
   setClicks(on) {
     this.clicks = on
-    this.reclaimFocus()
+    this.reclaimFocus(true)
   }
 
-  reclaimFocus() {
-    if (this.clicks) return
+  reclaimFocus(now) {
+    if (this.clicks && !now) return
     const a = document.activeElement
     if (a && a.tagName === 'IFRAME') {
       setTimeout(() => {

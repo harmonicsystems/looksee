@@ -606,12 +606,17 @@ corner. The app is 70.9 KB of 72.
 
 ## 2026-11-18: skipping ads
 
-David could not skip a YouTube ad: the player takes no clicks, on purpose. It now takes clicks
-while an ad is probably on (the video has not started after 6 s) and for 20 s after a new ⏭️ Skip
-ad button in the bar, so YouTube's own Skip button can be pressed; a note on the video says so.
-Then it takes none again. Checked in a browser with a stand-in for YouTube's player (Watch and
-the corner: the note, clicking Skip, the 20 s button, a stray pause undone, focus brought back).
-**Not yet seen on a real ad.** An unskippable ad still has to play out.
+David could not skip a YouTube ad: the player takes no clicks, on purpose. Now the corner where
+YouTube draws its Skip button takes clicks for a while: 30 s once the video is late to start
+(probably an ad), or 20 s after a new ⏭️ Skip ad button in the bar (a second press ends it). A
+note on the video says "If the video shows “Skip”, click it." The ad itself, the title and the
+logo stay unclickable, the window ends when the video plays, and focus comes back a moment after
+a click. A review of the first version found nine problems (the whole video was clickable, so an
+ad's link could open; focus could stay in the video; the window could last for ever or carry over
+to the next video; the bar covered Skip on a phone; the wording promised a skip), all fixed.
+Checked in a browser with a stand-in for YouTube's player. **Not yet seen on a real ad**, nor
+where YouTube draws Skip in a small corner video. It needs a mouse or touch, and an unskippable
+ad still has to play out.
 
 A review of Count to 100 found five things, all fixed: Mixed up scattered the count (it now stays
 in order); the lit number covered its neighbours along the edges; numbers not yet counted were

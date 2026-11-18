@@ -36,8 +36,8 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   `O` weather, `M` sound, `B` music, `F` full screen, `Esc`. Focus must never get trapped in the YouTube iframe.
 - **Never show YouTube's end screen or recommendations.** The corner video has no pause on
   purpose (a paused embed shows a "more videos" shelf): it is either playing or destroyed, and it
-  loops by seeking back just before the end. It takes no clicks, except while an ad is probably on
-  and for 20 s after ⏭️ Skip ad, so YouTube's own Skip button can be pressed (see Watch ▸ Ads).
+  loops by seeking back just before the end. It takes no clicks, except in the corner where YouTube
+  draws its Skip button, for a short while (see Watch ▸ Skipping an ad).
 - **The site may be served from `/` or from `/looksee/`.** Nothing in `src/` may assume `/`:
   pictures and the credits link are requested relative to the page, and Vite rewrites the absolute
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
@@ -359,16 +359,29 @@ video back and YouTube starts the video itself when the ad ends. So only a playe
 probably an ad" and is left to finish (Clip Choice's approach).
 
 **Skipping an ad (2026-11-18, David: "it won't let me").** Nothing may skip an ad for the viewer
-(YouTube's terms), so Looksee lets the teacher press YouTube's own Skip button. The player takes
-clicks (`setClicks`; the `.clicks` class drops the shield and the iframe's `pointer-events: none`)
-**while an ad is probably on** (`waiting`) and **for 20 s after ⏭️ Skip ad** in the bar (Watch's bar,
-and the slides' bar while the corner video is on), for an ad in the middle of a video. A note
-along the top of the video says "Click “Skip ad” on the video when it appears". The rest of the
-time it takes none, as before. While it takes clicks, focus may sit in the iframe; `setClicks(false)`
-takes it back. A click on the video itself pauses a YouTube embed, and a paused embed shows the
-"more videos" shelf, so `tick` plays it again at once whenever it is found paused. Checked with a
-stand-in for YouTube's API in Playwright (the real one is out of reach from Claude's sandbox), not
-yet on a real ad. Not possible: skipping an unskippable ad.
+(YouTube's terms), so Looksee lets the teacher press YouTube's own Skip button.
+
+- **Only the corner where YouTube draws Skip takes clicks** (bottom right, 42% × 38%): with the
+  `.clicks` class the iframe takes pointer events and `.pip-shield` is clipped to leave that
+  corner open. The ad itself (its link opens the advertiser in a new tab), the title, the logo
+  and the middle stay behind the shield.
+- **For a while, never for good** (`unlocked`, `unlock(ms)`, `lock()` in `App.svelte`): 30 s once
+  the video is late to start (`onWaiting`, probably an ad), or 20 s after **⏭️ Skip ad** in the bar
+  (Watch's bar, and the slides' bar while the corner video is on), for an ad in the middle. A
+  second press ends it. It ends as soon as the video plays, and with the video (`stopVideo`,
+  `watch`, `stopWatch`), so it never carries over to the next one. A note along the top says "If
+  the video shows “Skip”, click it."
+- **Focus comes back** 0.4 s after a click into the video (the window `blur` guard; YouTube has
+  had the click by then), so `Esc`, `Space` and the rest keep working. `setClicks` is called from
+  effects that read the derived value first: `pip` and `watchPlayer` are plain variables.
+- A click that pauses the video is undone at once by `tick` (a paused embed shows the "more
+  videos" shelf).
+- **On a phone** the corner video sits above the bar's two rows, so the bar does not cover Skip.
+- **Needs a mouse or touch:** the Skip button is inside YouTube's frame, out of reach of the keys.
+  Not possible at all: skipping an ad YouTube makes unskippable.
+- Checked with a stand-in for YouTube's API in Playwright (the real one is out of reach from
+  Claude's sandbox); **not yet on a real ad**, including where exactly YouTube puts Skip in a small
+  corner video.
 
 ## A plan: sets in timed blocks
 

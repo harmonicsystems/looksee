@@ -380,20 +380,27 @@
     timeout: 'The video took too long to start.',
     waiting: 'Waiting for the video, probably an ad. It starts by itself when the ad ends.'
   }
-  // Ads: nothing can skip one for the viewer, but the video takes clicks
-  // while an ad is probably on (it has not started after 6 s) and for 20 s
-  // after "Skip ad" in the bar (an ad in the middle of a video), so YouTube's
-  // own Skip button can be pressed. Otherwise it takes none (pip.js).
+  // Ads: nothing can skip one for the viewer, but the corner of the video
+  // where YouTube draws its Skip button takes clicks for a while: 30 s once
+  // the video is late to start (probably an ad), or 20 s after ⏭️ Skip ad in
+  // the bar (an ad in the middle; a second press ends it). It ends as soon as
+  // the video plays, and with the video. Otherwise no clicks (pip.js).
   let unlocked = $state(false)
   let unlockT
-  function skipAd() {
-    unlocked = true
+  function lock() {
     clearTimeout(unlockT)
-    unlockT = setTimeout(() => (unlocked = false), 20000)
+    unlocked = false
   }
-  const pipClicks = $derived(pipOn && (pipStatus === 'waiting' || unlocked))
-  const SKIP = 'Click “Skip ad” on the video when it appears.'
+  function unlock(ms) {
+    lock()
+    unlocked = true
+    unlockT = setTimeout(lock, ms)
+  }
+  const skipAd = () => (unlocked ? lock() : unlock(20000))
+  const pipClicks = $derived(pipOn && unlocked)
+  const SKIP = 'If the video shows “Skip”, click it.'
   function stopVideo() {
+    lock()
     pip?.destroy()
     pip = null
     pipOn = false
@@ -408,8 +415,8 @@
       pipHost,
       { videoId: vid, start: startSeconds(s.videoUrl), muted: s.videoMuted },
       {
-        onPlaying: () => (pipStatus = 'playing'),
-        onWaiting: () => (pipStatus = 'waiting'),
+        onPlaying: () => ((pipStatus = 'playing'), lock()),
+        onWaiting: () => ((pipStatus = 'waiting'), unlock(30000)),
         onError: (why) => {
           pip = null
           pipOn = false
@@ -442,11 +449,13 @@
   function watch(v) {
     playing = false
     stopVideo()
+    lock()
     picking = false
     lit = 0
     watching = v
   }
   function stopWatch() {
+    lock()
     watching = null
     stageEl?.focus({ preventScroll: true })
   }
@@ -461,8 +470,8 @@
           watchHost,
           { videoId: videoId(v.url), start: startSeconds(v.url), muted: s.videoMuted },
           {
-            onPlaying: () => (watchStatus = 'playing'),
-            onWaiting: () => (watchStatus = 'waiting'),
+            onPlaying: () => ((watchStatus = 'playing'), lock()),
+            onWaiting: () => ((watchStatus = 'waiting'), unlock(30000)),
             onError: (why) => (watchStatus = why)
           }
         )
@@ -473,9 +482,16 @@
     }
   })
   let watchPlayer = null
-  const watchClicks = $derived(!!watching && (watchStatus === 'waiting' || unlocked))
-  $effect(() => watchPlayer?.setClicks(watchClicks))
-  $effect(() => pip?.setClicks(pipClicks))
+  const watchClicks = $derived(!!watching && unlocked)
+  // Read first, so the effect follows it (the players are plain variables).
+  $effect(() => {
+    const c = watchClicks
+    watchPlayer?.setClicks(c)
+  })
+  $effect(() => {
+    const c = pipClicks
+    pip?.setClicks(c)
+  })
   $effect(() => {
     const m = s.videoMuted
     watchPlayer?.setMuted(m)
@@ -1251,7 +1267,9 @@
   .pip-host :global(iframe) { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; }
   /* Clicks never reach YouTube: no links out, no focus in the iframe. */
   .pip-shield { position: absolute; inset: 0; }
-  .clicks .pip-shield { display: none; }
+  /* Only the bottom-right corner, where YouTube draws Skip, is open: never the
+     ad itself (its link), the title or the logo. */
+  .clicks .pip-shield { clip-path: polygon(0 0, 100% 0, 100% 62%, 58% 62%, 58% 100%, 0 100%); }
   .clicks .pip-host :global(iframe) { pointer-events: auto; }
 
   /* Watch: the video in the middle, its words in a frame around it. */
@@ -1381,6 +1399,8 @@
     .pip-small { width: 160px; }
     .pip-medium { width: 220px; }
     .pip-large { width: 300px; }
+    /* Above the two rows of the bar, so YouTube's Skip button is not under it. */
+    .pip-bl, .pip-br { bottom: calc(var(--inset-b) + 140px); }
   }
 
   @media (prefers-reduced-motion: no-preference) {
