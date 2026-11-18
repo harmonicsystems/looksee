@@ -7,7 +7,7 @@ import {
 } from '../src/concepts.js'
 import { POINTS, mix, ease, pathOf } from '../src/morph.js'
 import { DEFAULTS, THEMES, normalizeSettings, deckKey, wordWait, upgrade } from '../src/settings.js'
-import { toMin, normalizeDay, daySegments, DAY_DEFAULT } from '../src/day.js'
+import { toMin, normalizeDay, daySegments, partAt, partEnd, clock12, DAY_DEFAULT } from '../src/day.js'
 import { videoId, toSeconds, startSeconds } from '../src/link.js'
 import { linkQuery, linkSettings, setupName, setsName } from '../src/share.js'
 import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter, setsInUse } from '../src/plan.js'
@@ -415,7 +415,7 @@ describe('school day', () => {
     expect(t.dayEnd).toBe('13:00')
     expect(normalizeDay(null, null)).toEqual({ day: DAY_DEFAULT, dayEnd: '15:00' })
     expect(normalizeDay([], '10:00').day).toEqual(DAY_DEFAULT)
-    expect(normalizeDay(Array.from({ length: 20 }, (_, i) => ({ at: `0${i % 10}:${10 + i}`, icon: '' })), '23:00').day.length).toBe(8)
+    expect(normalizeDay(Array.from({ length: 20 }, (_, i) => ({ at: `0${i % 10}:${10 + i}`, icon: '' })), '23:00').day.length).toBe(12)
   })
   it('shows where the day is', () => {
     const at = (time) => daySegments(DAY_DEFAULT, '15:00', toMin(time)).map((p) => p.state)
@@ -427,6 +427,42 @@ describe('school day', () => {
     const mid = daySegments(DAY_DEFAULT, '15:00', toMin('09:45'))
     expect(mid[0]).toMatchObject({ minutes: 210, state: 'now', frac: 0.5 })
     expect(mid.map((p) => p.minutes)).toEqual([210, 45, 135, 30])
+  })
+})
+
+describe('school day sets', () => {
+  // The teacher's day (2026-11-18), shortened.
+  const day = [
+    { at: '07:50', icon: '🐠', sets: ['arrival'] },
+    { at: '09:14', icon: '🚶', sets: ['lineUp'] },
+    { at: '11:20', icon: '➕' },
+    { at: '12:05', icon: '🍎', sets: ['requesting', 'senses'] }
+  ]
+  it('finds the part the clock is in, and nothing outside the day', () => {
+    const at = (t) => partAt(day, '14:09', toMin(t))
+    expect([at('07:49'), at('07:50'), at('09:13'), at('09:14'), at('12:30'), at('14:08'), at('14:09')]).toEqual([-1, 0, 0, 1, 3, 3, -1])
+    // Mid-edit the parts can be out of order; the answer is still by time.
+    expect(partAt([day[1], day[0]], '14:09', toMin('08:00'))).toBe(1)
+  })
+  it('says when a part ends, on a US clock', () => {
+    expect(partEnd(day, '14:09', 1)).toBe('11:20')
+    expect(partEnd(day, '14:09', 3)).toBe('14:09')
+    expect(['07:50', '12:05', '14:09', '00:30'].map(clock12)).toEqual(['7:50', '12:05', '2:09', '12:30'])
+  })
+  it('keeps a part\'s known sets, in order, and only when it has some', () => {
+    const t = normalizeDay([{ at: '09:00', icon: 'a', sets: ['senses', 'nope', 'letters'] }, { at: '10:00', icon: 'b', sets: [] }], '11:00')
+    expect(t.day).toEqual([{ at: '09:00', icon: 'a', sets: ['letters', 'senses'] }, { at: '10:00', icon: 'b' }])
+  })
+  it('travels in a link and names the bookmark', () => {
+    const s = { ...DEFAULTS, daySets: true, day, dayEnd: '14:09' }
+    const back = linkSettings('?' + linkQuery(s))
+    expect(back.daySets).toBe(true)
+    expect(back.day).toEqual(day)
+    expect(setupName(s)).toBe('🏫 School day · EN')
+    expect(setupName({ ...s, day: [...day, { at: '13:00', icon: '🔤', sets: ['letters'] }] })).toBe('🏫🔤 School day · EN')
+  })
+  it('offers the options of every part\'s sets', () => {
+    expect(setsInUse({ ...DEFAULTS, sets: ['colors'], daySets: true, day })).toEqual(['colors', 'arrival', 'lineUp', 'requesting', 'senses'])
   })
 })
 

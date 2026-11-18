@@ -17,7 +17,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 function encode(k, v) {
   if (k === 'sets') return v.join('.')
   if (k === 'plan') return planQuery(v)
-  if (k === 'day') return JSON.stringify(v.map((p) => [p.at, p.icon]))
+  if (k === 'day') return JSON.stringify(v.map((p) => (p.sets?.length ? [p.at, p.icon, p.sets.join('.')] : [p.at, p.icon])))
   if (typeof v === 'boolean') return v ? '1' : '0'
   return String(v)
 }
@@ -28,7 +28,7 @@ function decode(k, v) {
   if (k === 'plan') return queryPlan(v)
   if (k === 'day') {
     try {
-      return JSON.parse(v).map(([at, icon]) => ({ at, icon }))
+      return JSON.parse(v).map(([at, icon, sets]) => ({ at, icon, sets: String(sets ?? '').split('.') }))
     } catch {
       return undefined
     }
@@ -74,13 +74,15 @@ export function setsName(sets) {
 // the language, short enough for the bookmarks bar. "➕ Math · EN+ES",
 // "🔤➕🎨 Mix · EN", "Looksee · All · EN" for every set, and for a plan its
 // groups in the order they play and how long it is: "🔤➕😊 Plan, 30 min · EN".
+// A school day that plays its own sets: "🏫➕ School day · EN".
 const LANG = { en: 'EN', es: 'ES', both: 'EN+ES' }
 export function setupName(s) {
   const lang = LANG[s.words] ?? 'EN'
-  if (s.planOn && s.plan.length) {
+  const day = s.daySets
+  if (day || (s.planOn && s.plan.length)) {
     const emoji = []
-    for (const b of s.plan) for (const g of GROUPS) if (!emoji.includes(g.emoji) && g.sets.some((id) => b.sets.includes(id))) emoji.push(g.emoji)
-    return `${emoji.join('')} Plan, ${s.plan.reduce((n, b) => n + b.min, 0)} min · ${lang}`
+    for (const b of day ? s.day : s.plan) for (const g of GROUPS) if (!emoji.includes(g.emoji) && g.sets.some((id) => b.sets?.includes(id))) emoji.push(g.emoji)
+    return `${emoji.join('')} ${day ? 'School day' : `Plan, ${s.plan.reduce((n, b) => n + b.min, 0)} min`} · ${lang}`.trim()
   }
   const name = setsName(s.sets)
   return `${name === 'All' ? 'Looksee · All' : name} · ${lang}`

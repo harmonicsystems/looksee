@@ -8,7 +8,7 @@
   import Timer from './Timer.svelte'
   import { SETS, GROUPS, buildDeck, pictureSrc, labelRows, labelLen, slideName, runStart, rowsText } from './concepts.js'
   import { THEMES, OPTIONS, deckKey as deckKeyOf, wordWait, loadSettings, saveSettings, normalizeSettings } from './settings.js'
-  import { daySegments, normalizeDay, toMin, toTime, DAY_MAX_PARTS } from './day.js'
+  import { daySegments, normalizeDay, toMin, toTime, partAt, partEnd, clock12, DAY_MAX_PARTS } from './day.js'
   import { PipPlayer } from './pip.js'
   import { VIDEOS, sides } from './videos.js'
   import { speechLines, pickVoice } from './speech.js'
@@ -58,14 +58,42 @@
     location.href = new URL('./', document.baseURI).href
   }
 
+  // ---- the school day's own sets ----
+  // With "Follow the school day", the part the clock is in plays its sets
+  // (day.js). `pat` is the start time of the part playing: while the slides
+  // play it moves on at the next slide, as a plan's block does; while they
+  // are paused, at once. A part is named by its time, which stays put when
+  // the parts are put back in order.
+  let pat = $state('')
+  const atNow = $derived(s.daySets ? (s.day[partAt(s.day, s.dayEnd, now)]?.at ?? '') : '')
+  $effect(() => {
+    if (!playing) pat = atNow
+  })
+  // Before the first part, after the day and in a part with no sets, the
+  // settings' own sets play.
+  const part = $derived(s.daySets ? s.day.find((p) => p.at === pat && p.sets?.length) : null)
+
   // ---- plan ----
   // With a plan, its blocks play in turn, each for its minutes (plan.js).
-  // `block` is the one playing now. `cur` is whose sets are playing and being
-  // chosen in Settings: the block's or, with no plan, the settings' own.
+  // `block` is the one playing now. `cur` is whose sets are playing: the
+  // school day part's, the block's, or the settings' own.
   let blk = $state(0)
   const bi = $derived(Math.min(blk, s.plan.length - 1))
-  const block = $derived(s.planOn && s.plan.length ? s.plan[bi] : null)
-  const cur = $derived(block ?? s)
+  const block = $derived(s.planOn && !s.daySets && s.plan.length ? s.plan[bi] : null)
+  const cur = $derived(part ?? block ?? s)
+  // Whose sets Settings is choosing: with the school day, the part clicked
+  // there (`pick`, a start time); else whatever is playing.
+  let pick = $state('')
+  const ed = $derived((s.daySets && s.day.find((p) => p.at === pick)) || cur)
+  const edSets = $derived(ed.sets ?? [])
+  // Turning the school day on gives every part the sets chosen so far, to
+  // change from, and turns a plan off: one or the other decides.
+  function followDay() {
+    if (!s.daySets) return
+    s.planOn = false
+    for (const p of s.day) if (!p.sets?.length) p.sets = [...s.sets]
+    pick = atNow || s.day[0].at
+  }
 
   // ---- deck ----
   const deckKey = $derived(deckKeyOf({ ...s, sets: cur.sets }) + (block ? bi : ''))
@@ -199,6 +227,12 @@
 
   function step(by) {
     if (!deck.length) return
+    // A new part of the school day starts at a slide's end, from its first slide.
+    if (by > 0 && pat !== atNow) {
+      const was = cur.sets
+      pat = atNow
+      if (cur.sets !== was) return
+    }
     // A block that has had its minutes hands over to the next at a slide's end.
     if (by > 0 && block && blockDone(block.min, played())) {
       const was = bi
@@ -266,6 +300,10 @@
     quietTimer = setTimeout(() => (quiet = true), 2500)
   }
   const hideBar = $derived(playing && quiet && !drawer && !tools && !timerOpen)
+  // Settings opens on the part of the school day the clock is in.
+  $effect(() => {
+    if (drawer) pick = untrack(() => atNow || pick)
+  })
 
   function fullscreen() {
     if (document.fullscreenElement) document.exitFullscreen?.()
@@ -558,11 +596,11 @@
   // A whole group of sets on or off, keeping the order of SETS. With a plan
   // it is the sets of the block playing now that change.
   function toggleGroup(g, allOn) {
-    const want = new Set(cur.sets)
+    const want = new Set(edSets)
     for (const id of g.sets) allOn ? want.delete(id) : want.add(id)
-    cur.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
+    ed.sets = SETS.map((x) => x.id).filter((id) => want.has(id))
   }
-  const toggleSet = (id) => toggleGroup({ sets: [id] }, cur.sets.includes(id))
+  const toggleSet = (id) => toggleGroup({ sets: [id] }, edSets.includes(id))
 
   // Settings lists the groups; the sets inside them are shown when one is
   // wanted alone, and from the start when a group is only partly on.
@@ -577,7 +615,7 @@
   // Back to the defaults, but the video link, the school day and the plan are
   // kept: those are set up once and are not part of the look.
   function reset() {
-    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, planOn: s.planOn, plan: s.plan, weather: s.weather, music: s.music })
+    const keep = $state.snapshot({ videoUrl: s.videoUrl, dayBar: s.dayBar, day: s.day, dayEnd: s.dayEnd, planOn: s.planOn, plan: s.plan, daySets: s.daySets, weather: s.weather, music: s.music })
     Object.assign(s, normalizeSettings(keep))
   }
 
@@ -794,6 +832,7 @@
     <button class="btn" onclick={() => step(1)} disabled={!deck.length}>Next</button>
     <span class="count mono">{deck.length ? index + 1 : 0}/{deck.length}</span>
     {#if block}<span class="count mono">Block {bi + 1}/{s.plan.length} · {left} min</span>{/if}
+    {#if part}<span class="count mono">{part.icon} until {clock12(partEnd(s.day, s.dayEnd, s.day.indexOf(part)))}</span>{/if}
     {/if}
     <button class="btn big" class:primary={timerStatus !== 'idle'} bind:this={timerBtn} onclick={toggleTimer} aria-expanded={timerOpen}>
       <span aria-hidden="true">⏱️</span> <span class:mono={timerStatus !== 'idle' && timerStatus !== 'done'}>{timerText || 'Timer'}</span>
@@ -839,8 +878,20 @@
            class first and open, what is set up once below. A closed section says
            what it is set to. -->
       <details class="sec" open>
-        <summary><h2>What to show</h2><span class="sum">{block ? `${s.plan.length}-block plan` : setsName(s.sets) || 'Nothing'}</span></summary>
-        <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && !s.plan.length && addBlock()} /> A plan: different sets in turn, a few minutes each</label>
+        <summary><h2>What to show</h2><span class="sum">{s.daySets ? 'By the school day' : block ? `${s.plan.length}-block plan` : setsName(s.sets) || 'Nothing'}</span></summary>
+        <label class="chk"><input type="checkbox" bind:checked={s.daySets} onchange={followDay} /> Follow the school day: each part plays its own sets</label>
+        {#if s.daySets}
+          <div class="fld" role="group" aria-label="Sets for each part of the day">
+            {#each s.day as p (p)}
+              <button class="btn grp-head blk" aria-pressed={p.at === pick} onclick={() => (pick = p.at)}>{clock12(p.at)} {p.icon} · {setsName(p.sets ?? []) || 'No sets yet'}{p.at === atNow ? ' · now' : ''}</button>
+            {/each}
+          </div>
+          <p class="hint">
+            When the clock reaches a part, its sets begin at the next slide. Nothing starts playing by itself. Click a part to choose its
+            sets below; its time and pictures are under School day.
+          </p>
+        {/if}
+        <label class="chk"><input type="checkbox" bind:checked={s.planOn} onchange={() => s.planOn && ((s.daySets = false), s.plan.length || addBlock())} /> A plan: different sets in turn, a few minutes each</label>
         {#if s.planOn}
           <div class="fld" role="group" aria-label="Plan">
             {#each s.plan as b, i (b)}
@@ -864,11 +915,11 @@
           </p>
         {/if}
         <fieldset class="fld">
-          <legend>{block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
+          <legend>{ed !== cur || part ? `Sets at ${clock12(ed.at)}` : block ? `Sets in block ${bi + 1}` : 'Sets'}</legend>
           <!-- One click on a group turns it all on, or all off when it is all on. -->
           <div class="tiles">
           {#each GROUPS as g}
-            {@const on = g.sets.filter((id) => cur.sets.includes(id)).length}
+            {@const on = g.sets.filter((id) => edSets.includes(id)).length}
             <div class="grp">
               <button
                 class="btn grp-head"
@@ -878,7 +929,7 @@
               {#if single && g.sets.length > 1}
                 <div class="seg">
                   {#each g.sets as id}
-                    <label class:on={cur.sets.includes(id)}><input type="checkbox" checked={cur.sets.includes(id)} onchange={() => toggleSet(id)} />{SETS.find((x) => x.id === id).label}</label>
+                    <label class:on={edSets.includes(id)}><input type="checkbox" checked={edSets.includes(id)} onchange={() => toggleSet(id)} />{SETS.find((x) => x.id === id).label}</label>
                   {/each}
                 </div>
               {/if}

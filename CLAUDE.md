@@ -42,10 +42,10 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 70 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 69.0 KB now, 1 KB under. David raised it on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 72 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 69.8 KB now, 2.2 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
-  and on 2026-11-18 to 70 for the Our day words) and WCAG AA on both control palettes
+  on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -70,7 +70,7 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
 - `settings.js` — `DEFAULTS`, `OPTIONS`, `normalizeSettings`, stage `THEMES`. `deckKey(s)` changes
   exactly when the deck must be rebuilt (and reshuffled): `DECK_KEYS`, plus set names when they
   would actually appear. Look-only settings must never be in it.
-- `day.js` — the school-day schedule (below).
+- `day.js` — the school-day schedule and its parts' own sets (below): `partAt`, `partEnd`, `clock12`.
 - `plan.js` — a plan of timed blocks (below): `normalizePlan`, `blockDone`, `minutesLeft`, `blockAfter`.
 - `timer.js` — the timer's state and arithmetic (below). `Timer.svelte` — its sheet, clock and
   "Time's up". `chime.js` — its two notes. `awake.js` — `keepAwake`, the one screen wake lock.
@@ -354,11 +354,8 @@ A teacher asked to "program different sets throughout the day in 5 to 25 minute 
   up the next block begins at the next slide, never mid-slide. Inside a block the slides start
   over as often as needed, whatever `loop` says; `loop` decides what happens after the last block:
   the first again, or stop.
-- **It is not by the clock.** A block starts when the one before it ends, not at 9:15. Blocks that
-  begin at set times of day (tied to the school-day bar) would be a different feature. The
-  teacher's schedule (2026-11-18, in `docs/STATUS.md`) is written in clock times, so that is how
-  she thinks of her day; David chose to give her one bookmark per block first and build a
-  by-the-clock day only once she has used those.
+- **It is not by the clock.** A block starts when the one before it ends, not at 9:15. Sets at
+  times of day are the school day's own sets (below), and the two are never on together.
 - **The plan is not a deck key.** `App.svelte` plays a block by lending the deck its sets: `cur`
   is the block playing now or, with no plan, the settings themselves, and `deckKey` and
   `buildDeck` are given `cur.sets`. The Sets picker in Settings edits `cur.sets` too, so with a
@@ -563,9 +560,39 @@ only when Settings ▸ Music is on (off for a new visitor). Asked for on 2026-11
   from a blob URL, so the service worker never has to answer an `<audio>`'s range requests.
 - Not built: a choice of track, and fading out at the end of the timer.
 
+## Sets by the school day
+
+The teacher's schedule (2026-11-18, in `docs/STATUS.md`) is in clock times, so after the Our day
+bookmarks David asked for it to run by itself. **Each part of the school day can have its own
+sets** (`sets` on a part of `day`), and with **Follow the school day** (`daySets`) on, the part the
+clock is in plays them. The schedule is the same every day (David chose that over one per
+weekday).
+
+- **It changes at the next slide, never mid-slide.** `pat` in `App.svelte` is the start time of
+  the part playing; `atNow` is the part the clock is in (`partAt`). While playing, `step` moves
+  `pat` on at a slide's end and the new sets start from their first slide; while paused, it
+  moves at once. **Nothing starts playing by itself**: a part only changes what Play plays. The
+  clock is read every 15 s.
+- **Before the first part, after the day, and in a part with no sets, `s.sets` play.** Turning the
+  setting on gives every part without sets a copy of `s.sets`, to change from.
+- **A part is named by its start time,** not its place in the list, because `tidyDay` puts the
+  parts back in order (and makes them afresh) when focus leaves the editor.
+- **It and a plan are never on together.** Turning either on turns the other off; a link with both
+  plays the school day (`block` needs `!s.daySets`).
+- **Settings ▸ What to show** lists the parts as buttons ("9:14 🚶 · 🏫 Lining up · now"). A click
+  picks one (`pick`) and the Sets picker below edits it ("Sets at 9:14"); `ed` is whatever the
+  picker edits. Settings opens on the part the clock is in. Times and pictures stay in Settings ▸
+  School day, which now takes 12 parts (`DAY_MAX_PARTS`).
+- The control bar shows "🍎 until 2:09" (`partEnd`, `clock12`: US clock, no AM/PM).
+- **In a link** a part with sets is `[at, icon, "sets.joined"]` in `day`; `setupName` gives
+  "🏫➕ School day · EN" (each group's emoji, in the order the parts play them). `setsInUse`
+  counts every part's sets, so their options show. "Reset look and pace" keeps it.
+- Not built: a different schedule per weekday, a video cued at a time (the Goodbye Song at 2:00),
+  and a warning before a part changes.
+
 ## School-day bar
 
-`day.js`: `day` is a list of `{ at: 'HH:MM', icon }` parts and `dayEnd` closes the last one;
+`day.js`: `day` is a list of `{ at: 'HH:MM', icon }` parts (with `sets` when a part has some) and `dayEnd` closes the last one;
 `daySegments` says which part is past, now or next. The bar's emoji are plain text in the device's
 emoji font, so the user can type any emoji and there are no files. The editor in the drawer leaves
 rows in the order typed and sorts them only when focus leaves the list (`tidyDay`), so a row never
