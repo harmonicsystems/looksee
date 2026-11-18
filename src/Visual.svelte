@@ -149,6 +149,24 @@
     <text x="200" y="212" font-size="290" class="glyph" fill={ink}>{item.emoji}</text>
   {:else if item.kind === 'glyph'}
     <text x="200" y="205" font-size={glyphSize} class="glyph" {fill} fill-opacity={fillOpacity} {stroke} stroke-width="5">{item.text}</text>
+  {:else if item.kind === 'chart'}
+    <!-- A hundred chart: what has been counted is shaded (the stops, counting
+         by 5s or 10s, a little more), in ink so the chart stays calm while the
+         slide color changes; the number now is drawn last, bigger and in the
+         slide's color, so it never rests on color alone. -->
+    {#each { length: 100 } as _, i}
+      {@const n = i + 1}
+      <rect x={11 + (i % 10) * 38} y={11 + Math.floor(i / 10) * 38} width="34" height="34" rx="6" fill={n <= item.n ? ink : 'none'} fill-opacity={n % item.by ? 0.12 : 0.28} stroke={ink} stroke-opacity="0.25" stroke-width="1.5" />
+      <text x={28 + (i % 10) * 38} y={28 + Math.floor(i / 10) * 38} font-size={n > 99 ? 13 : 16} class="glyph cell" fill={ink} fill-opacity={n <= item.n ? 1 : 0.45}>{n}</text>
+    {/each}
+    {#key item.n}
+      <g transform="translate({Math.min(362, Math.max(38, 28 + ((item.n - 1) % 10) * 38))} {Math.min(362, Math.max(38, 28 + Math.floor((item.n - 1) / 10) * 38))})">
+        <g class="lit">
+          <rect x="-30" y="-30" width="60" height="60" rx="12" fill={color} stroke={ink} stroke-width="3" />
+          <text font-size={item.n > 99 ? 28 : 34} class="glyph" fill="var(--stage-bg)">{item.n}</text>
+        </g>
+      </g>
+    {/key}
   {:else if item.kind === 'number'}
     {#if !dotsOnly}
       <text x="200" y={digitOnly ? 205 : 130} font-size={digitSize} class="glyph" {fill} fill-opacity={fillOpacity} {stroke} stroke-width="5">{item.n}</text>
@@ -212,4 +230,9 @@
     .dot { transition: fill 0.3s, stroke 0.3s; }
   }
   .glyph { font-family: var(--stage-font); font-weight: 700; text-anchor: middle; dominant-baseline: central; stroke-linejoin: round; }
+  .cell { font-weight: 400; }
+  @media (prefers-reduced-motion: no-preference) {
+    .lit { animation: lit 0.35s ease-out; }
+  }
+  @keyframes lit { from { transform: scale(0.55); } }
 </style>

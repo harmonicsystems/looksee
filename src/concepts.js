@@ -281,6 +281,22 @@ const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'e
 const WORDS_ES = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once',
   'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte']
 
+// A number's name up to 100: "forty-seven" / "cuarenta y siete".
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
+const TENS_ES = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa']
+// 21–29 are one word in Spanish, some with an accent.
+const VEINTI = ['', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve']
+export function numberWord(n, lang) {
+  const es = lang === 'es'
+  if (n <= 20) return (es ? WORDS_ES : WORDS)[n]
+  if (n === 100) return es ? 'cien' : 'one hundred'
+  const t = Math.floor(n / 10)
+  const o = n % 10
+  if (!o) return (es ? TENS_ES : TENS)[t]
+  if (es) return t === 2 ? VEINTI[o] : `${TENS_ES[t]} y ${WORDS_ES[o]}`
+  return `${TENS[t]}-${WORDS[o]}`
+}
+
 // Adding and subtracting: every fact whose numbers stay within `max`, with
 // no zeros (nothing added, nothing left). Up to 5 that is 10 of each; up to
 // 10, 45 of each.
@@ -345,7 +361,7 @@ export function slideName(item, rows) {
 // Where the run of shapes that slide i belongs to begins. One shape stays on
 // screen through a whole run, changing into each next one.
 export function runStart(deck, i) {
-  while (i > 0 && deck[i - 1].pts && deck[i].pts) i--
+  while (i > 0 && ((deck[i - 1].pts && deck[i].pts) || (deck[i - 1].kind === 'chart' && deck[i].kind === 'chart'))) i--
   return i
 }
 
@@ -357,6 +373,7 @@ export const namesSets = (s) => s.setNames && s.order !== 'shuffle' && SETS.filt
 export const SETS = [
   { id: 'letters', label: 'Letters', es: 'Letras' },
   { id: 'numbers', label: 'Numbers', es: 'Números' },
+  { id: 'hundred', label: 'Count to 100', es: 'Contar hasta 100' },
   { id: 'adding', label: 'Adding', es: 'Sumar' },
   { id: 'subtracting', label: 'Subtracting', es: 'Restar' },
   { id: 'shapes', label: 'Shapes', es: 'Figuras' },
@@ -398,6 +415,7 @@ export const SETS = [
 // exactly one group, and the groups keep the order of SETS.
 export const GROUPS = [
   { id: 'early', label: 'Letters & Numbers', emoji: '🔤', sets: ['letters', 'numbers'] },
+  { id: 'hundred', label: 'Count to 100', emoji: '💯', sets: ['hundred'] },
   { id: 'math', label: 'Math', emoji: '➕', sets: ['adding', 'subtracting'] },
   { id: 'art', label: 'Shapes & Colors', emoji: '🎨', sets: ['shapes', 'colors', 'colorShapes', 'mixing'] },
   { id: 'opposites', label: 'Opposites', emoji: '↔️', sets: ['opposites'] },
@@ -441,6 +459,13 @@ export function buildDeck(s, rng = Math.random) {
     Array.from({ length: Math.max(0, s.numberTo - s.numberFrom + 1) }, (_, i) => {
       const n = s.numberFrom + i
       return { kind: 'number', set: 'numbers', n, label: WORDS[n], es: WORDS_ES[n], say: String(n) }
+    })
+  )
+  // Count to 100 on a hundred chart, by 1s, 5s or 10s.
+  add('hundred', () =>
+    Array.from({ length: 100 / s.countBy }, (_, i) => {
+      const n = (i + 1) * s.countBy
+      return { kind: 'chart', set: 'hundred', n, by: s.countBy, label: numberWord(n), es: numberWord(n, 'es'), say: String(n) }
     })
   )
   // Up to 5, every fact plays. Up to 10 there are 45 of each, so a round
