@@ -43,7 +43,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ttf,webmanifest,avif,txt}'],
         // The Things pictures (src/things.js) are local only and are never
         // listed for storing: they are not part of what is published.
-        globIgnores: ['things/**', 'music/**']
+        // where-is-it/ is a page of picture drafts to show people, not part
+        // of the app: it is not stored, and the service worker must not answer
+        // a visit to it with the app's own page.
+        globIgnores: ['things/**', 'music/**', 'where-is-it/**'],
+        navigateFallbackDenylist: [/\/where-is-it\//]
       }
     })
   ],

@@ -666,7 +666,7 @@ describe('things', () => {
   })
   it('keeps the pictures out of the repo and out of what is stored offline', () => {
     expect(readFileSync(at('.gitignore'), 'utf8').split('\n')).toContain(`public/${THINGS_DIR}/`)
-    expect(readFileSync(at('vite.config.js'), 'utf8')).toContain(`globIgnores: ['${THINGS_DIR}/**', 'music/**']`)
+    expect(readFileSync(at('vite.config.js'), 'utf8')).toContain(`globIgnores: ['${THINGS_DIR}/**', 'music/**'`)
     // None of them is one of the pictures the app ships and credits.
     expect(pictureFiles().some((f) => f.dir === THINGS_DIR)).toBe(false)
   })
@@ -1030,5 +1030,24 @@ describe('music', () => {
     expect(duckLevel(v, new Set(['speak']))).toBeCloseTo(v * 0.3)
     expect(duckLevel(v, new Set(['chime', 'speak']))).toBeCloseTo(v * 0.3)
     expect(duckLevel(v, new Set(['video', 'speak']))).toBe(0)
+  })
+})
+
+// public/where-is-it/: a page of picture drafts to show people (made by
+// art/where-is-it/cutout.mjs). It is published with the site but is not part
+// of the app.
+describe('where-is-it drafts page', () => {
+  const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
+  it('is never stored offline or answered with the app', () => {
+    const config = readFileSync(at('vite.config.js'), 'utf8')
+    expect(config).toContain("'where-is-it/**'")
+    expect(config).toContain('navigateFallbackDenylist: [/\\/where-is-it\\//]')
+  })
+  it('asks not to be indexed, and every picture it shows is there', () => {
+    const html = readFileSync(at('public/where-is-it/index.html'), 'utf8')
+    expect(html).toContain('<meta name="robots" content="noindex">')
+    const srcs = [...html.matchAll(/src="([^"]+)"/g)].map((m) => m[1])
+    expect(srcs.length).toBeGreaterThan(0)
+    for (const src of srcs) expect(existsSync(at(`public/where-is-it/${src}`)), src).toBe(true)
   })
 })

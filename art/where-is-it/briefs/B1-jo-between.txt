@@ -1,0 +1,11 @@
+Use case: a picture card that teaches a place word (preposition) to young children. The place word must be obvious at a glance, even at thumbnail size.
+Input images: Image 1 is the master layout to edit. Image 2 is the size line-up (Sam beside the same furniture), for scale only. Image 3 is the locked character reference.
+
+This is an EDIT of Image 1, the master layout. Keep everything already in Image 1 exactly as it is: the same furniture, same shape, same colours, same position, same size, same camera, same square framing and the same plain cream background. Do not move, resize, redraw or recolour anything that is already there. Add ONLY what is described below, at the true real-world scale shown in the size line-up image, so the only difference from Image 1 is the new child or object.
+
+Match the Jo reference exactly: a seven-year-old girl with light golden-tan skin, round face, dark oval eyes, straight black chin-length bob hair, a sage-green hoodie with a front pocket, tan trousers, dusty-blue sneakers with cream laces. Preserve her age, skin tone, hair silhouette, proportions and clothing design.
+
+Style: Flat simple children's picture-card illustration, even medium-brown outlines, muted warm tan, cream, sage and dusty-blue palette, plain uniform flat cream #f7f2e7 background, solid fills, no shading, no gradients, no shadows, no floor line, no texture. No text, lettering, numbers, arrows, logos, brand marks, frames, panels or watermark.
+
+Add: Jo standing on the floor line in the gap between the chair-desk and the table, exactly in the middle, facing the viewer, arms relaxed at her sides, the chair-desk on her one side and the table on her other side. Not in front of them: in line with both.
+Calm, ordinary, happy-neutral acting. No standing or climbing on furniture. Generate the actual illustration.
