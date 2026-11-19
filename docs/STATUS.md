@@ -623,6 +623,19 @@ in order); the lit number covered its neighbours along the edges; numbers not ye
 too faint in Calm and Bright; the Count by choice was hidden when it was the only set; and the
 notes were dated a day ahead. The app is 71.3 KB of 72.
 
+## 2026-11-19: sharper Our day pictures
+
+David found the Our day emoji low-res. They were the device's emoji font, which on a Chromebook
+is a small bitmap blown up to fill the screen. Each word now shows the still Noto SVG of its emoji
+(59 files, 0.4 MB, from the same source as the Feelings pictures), drawn crisp at any size, with
+the device's emoji behind it if a file cannot load. They are stored for offline use; that cost
+1.4 KB of service worker, and David raised the size gate from 72 to 74 KB (the app is 72.7 KB).
+Swept in a browser at laptop and phone shapes: every word slide showed its picture, no 404s.
+
+**Note:** the merge of harmonicsystems/looksee#20 took only the first ad-skipping commit. The
+fixes from its review (only the Skip corner clickable, a time limit, focus coming back, the
+phone layout) are in the next pull request with this change.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -712,7 +725,7 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 71.3 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
+- **The size budget.** 72.7 KB of 74. David raised the limit to 68 on 2026-11-16 for music, and on
   2026-11-18 to 70 for Our day and to 72 for sets by the school day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.

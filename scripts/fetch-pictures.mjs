@@ -1,7 +1,8 @@
 // Copies the emoji pictures into public/: for every picture the app
 // expects (pictureFiles() in src/concepts.js — feelings, gestures and
 // body parts, the last two in five skin tones), the animated 512×512 AVIF and
-// the still SVG of that Noto emoji, from Google's font CDN.
+// the still SVG of that Noto emoji, from Google's font CDN. The Our day words
+// (`still: true`) get the SVG only.
 //
 //   npm run pictures              fetch whatever is missing
 //   npm run pictures -- --dry     list what is missing and how big, save nothing
@@ -41,7 +42,7 @@ const KINDS = [
 ]
 
 const kb = (n) => (n / 1024).toFixed(1).padStart(7) + ' KB'
-const jobs = pictureFiles().flatMap((f) => KINDS.map((k) => ({ ...f, k, name: `${f.code}.${k.ext}`, path: `${OUT}${f.dir}/${f.code}.${k.ext}` })))
+const jobs = pictureFiles().flatMap((f) => KINDS.filter((k) => !f.still || k.ext === 'svg').map((k) => ({ ...f, k, name: `${f.code}.${k.ext}`, path: `${OUT}${f.dir}/${f.code}.${k.ext}` })))
 const have = jobs.filter((j) => existsSync(j.path) && !force)
 const todo = jobs.filter((j) => !have.includes(j))
 let bytes = 0

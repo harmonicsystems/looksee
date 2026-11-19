@@ -191,7 +191,7 @@ export const emojiCode = (emoji, tone) =>
 // a browser that can't play animated AVIF). Relative to the page on purpose:
 // the site may be served from '/' or from '/looksee/'. A thing (`one`) has a
 // single picture, which does not move.
-export const pictureSrc = (item, still) => `${item.dir}/${item.code}.${still && !item.one ? 'svg' : 'avif'}`
+export const pictureSrc = (item, still) => `${item.dir}/${item.code}.${(still || item.word) && !item.one ? 'svg' : 'avif'}`
 
 // One picture slide. `emoji` is the same picture as text, in the same skin
 // tone: the last resort when the files can't load (offline, say).
@@ -273,7 +273,10 @@ export function pictureFiles() {
   const people = [...GESTURES, ...BODY].flatMap((x) =>
     (x.plain ? [''] : TONES).map((tone) => ({ dir: 'people', code: emojiCode(x.emoji, tone), label: x.label }))
   )
-  return FEELINGS.map((x) => ({ dir: 'feelings', code: emojiCode(x.emoji), label: x.label })).concat(people)
+  // The Our day words: one still SVG each (drawn crisp at any size, where
+  // the device's emoji font is often a small bitmap), shared between words.
+  const words = [...new Map(Object.values(ROUTINE).flat().map((x) => [emojiCode(x.emoji), x.label]))].map(([code, label]) => ({ dir: 'words', code, label, still: true }))
+  return FEELINGS.map((x) => ({ dir: 'feelings', code: emojiCode(x.emoji), label: x.label })).concat(people, words)
 }
 
 const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven',
@@ -490,8 +493,9 @@ export function buildDeck(s, rng = Math.random) {
   const tone = dealer(s.skin, rng)
   add('gestures', () => GESTURES.map((x) => picture('gestures', 'people', x, tone(x))))
   add('body', () => BODY.map((x) => picture('body', 'people', x, tone(x))))
-  // A routine word is its emoji drawn as text: no file to ask for.
-  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label })))
+  // A routine word is the still picture of its emoji (words/), with the
+  // device's own emoji as text behind it.
+  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, dir: 'words', code: emojiCode(x.emoji), ...x, say: x.label })))
   for (const id of Object.keys(THINGS)) add(id, () => THINGS[id].map((x) => thing(id, x)))
   if (s.order !== 'shuffle') return deck
   // Mixed up, the count to 100 still counts: its slides stay in order, as one

@@ -1,7 +1,7 @@
 Emoji pictures in Looksee
 =========================
 
-The picture files in the feelings and people folders are unmodified copies
+The picture files in the feelings, people and words folders are unmodified copies
 of Google's Noto Emoji:
 
   <code>.avif   the animated emoji, 512 x 512

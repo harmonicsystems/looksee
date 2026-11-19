@@ -43,10 +43,10 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 72 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 71.3 KB now, 0.7 KB under. David raised it on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 74 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 72.7 KB now, 1.3 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
-  on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
+  on 2026-11-18 to 70 for the Our day words, the same day to 72 for sets by the school day, and on 2026-11-19 to 74 for the Our day pictures) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -120,7 +120,7 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
   mix is random but even. `round` in `App.svelte` rebuilds the deck each time it starts over, so
   every loop is dealt again (and a mixed-up deck is mixed again). The `skin` setting can hold one
   tone instead.
-- **Offline:** every picture is precached (220 files, 5.4 MB), so the whole app works offline
+- **Offline:** every picture is precached (279 files with the Our day words, 5.8 MB), so the whole app works offline
   once the service worker has installed; only the corner video needs a connection. Each precache
   entry also costs bytes of service worker, which count toward the JS budget: the pictures are
   about 5 KB of it. To test offline for real, build, start the `looksee-built` preview
@@ -191,8 +191,12 @@ home (packing up and the bus).
 
 - **Each word is a line of text,** `label,es,art,emoji` (like `things.js`, to spare the size
   gate), with no commas inside a word. A phrase ("more please", "all done") is one word here.
-- **A word slide is a `picture` with `word: true`.** `Visual.svelte` draws its emoji as text from
-  the start (no `<img>`, so no 404) and `App.svelte` does not preload a file for it. Everything
+- **A word slide is a `picture` with `word: true`,** drawn from the **still Noto SVG** of its emoji
+  in `public/words/` (59 files, 0.4 MB, fetched by `npm run pictures` like the Feelings ones,
+  SVG only: `still: true` in `pictureFiles()`), with the device's own emoji as text behind it.
+  It used to be the emoji as text alone, which on a Chromebook is a small bitmap blown up to fill
+  the screen (David found it low-res, 2026-11-19). The pictures are in the offline store; their
+  59 entries cost 1.4 KB of service worker, so the gate went to 74 KB. Everything
   else is shared with the other sets: the Words settings, el / la, speech, set names, plans,
   settings links and bookmark names ("🏫 Going home · EN").
 - **The lists are first drafts for the teacher to correct;** she offered more detail once the

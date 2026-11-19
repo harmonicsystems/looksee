@@ -376,11 +376,11 @@ describe('our day', () => {
         expect(x.emoji, x.label).not.toMatch(newer)
       }
   })
-  it('draws a routine word as its emoji, never a file', () => {
+  it('draws a routine word as the still picture of its emoji, the emoji behind it', () => {
     const d = deck({ sets: ['packUp'] })
     expect(d.length).toBe(ROUTINE.packUp.length)
-    expect(d[0]).toMatchObject({ kind: 'picture', word: true, label: 'jacket', emoji: '🧥', say: 'jacket' })
-    expect(d.every((x) => !x.dir && !x.code)).toBe(true)
+    expect(d[0]).toMatchObject({ kind: 'picture', word: true, label: 'jacket', emoji: '🧥', say: 'jacket', dir: 'words', code: '1f9e5' })
+    expect(pictureSrc(d[0], false)).toBe('words/1f9e5.svg')
     expect(rowsText(labelRows(d[0], { words: 'both', articles: true }))).toBe('jacket / la chaqueta')
   })
   it('names a bookmark after the group', () => {
@@ -429,8 +429,8 @@ describe('pictures', () => {
   // `npm run pictures` fetches what is missing; delete what is left over.
   it('has a moving and a still picture on disk for every picture slide, and nothing extra', () => {
     const files = pictureFiles()
-    for (const dir of ['feelings', 'people']) {
-      const want = files.filter((f) => f.dir === dir).flatMap((f) => [`${f.code}.avif`, `${f.code}.svg`])
+    for (const dir of ['feelings', 'people', 'words']) {
+      const want = files.filter((f) => f.dir === dir).flatMap((f) => (f.still ? [`${f.code}.svg`] : [`${f.code}.avif`, `${f.code}.svg`]))
       const have = readdirSync(fileURLToPath(new URL(`../public/${dir}/`, import.meta.url))).filter((n) => !n.startsWith('.'))
       expect(have.sort(), dir).toEqual(want.sort())
     }

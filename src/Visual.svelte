@@ -135,13 +135,13 @@
   const digitSize = $derived((digitOnly ? 300 : 220) * (item.n > 9 ? 0.82 : 1))
 </script>
 
-{#if item.kind === 'picture' && !item.word && tier < 2}
+{#if item.kind === 'picture' && tier < 2}
   <img
     src={own1 || pictureSrc(item, still || tier > 0)}
     alt={say}
     {lang}
     draggable="false"
-    onerror={() => (tier = still || tier || item.one ? 2 : 1)}
+    onerror={() => (tier = still || tier || item.one || item.word ? 2 : 1)}
   />
 {:else}
 <svg viewBox="0 0 400 400" role="img" aria-label={say} {lang}>
