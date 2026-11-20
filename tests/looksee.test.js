@@ -1142,9 +1142,9 @@ describe('music', () => {
   })
 })
 
-// public/where-is-it/: a page of picture drafts to show people (made by
-// art/where-is-it/cutout.mjs). It is published with the site but is not part
-// of the app.
+// public/where-is-it/: a page of picture drafts to show people, exported here
+// from the picture library (~/Code/picture-library, projects/where-is-it/
+// cutout.mjs). It is published with the site but is not part of the app.
 describe('where-is-it drafts page', () => {
   const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
   it('is never stored offline or answered with the app', () => {

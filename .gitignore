@@ -9,6 +9,3 @@ dev-dist
 # here from a local copy of the library; they must never be committed. See src/things.js.
 public/things/
 
-# Where is it? exploration: the retailer chair photo and unreviewed drafts stay local
-art/where-is-it/refs/
-art/where-is-it/drafts/
