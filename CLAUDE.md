@@ -43,11 +43,13 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 73 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 72.5 KB now, 0.5 KB under. David raised it on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 74 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 73.9 KB now, 0.1 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
   on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day. It went to
-  73 on 2026-11-20 for the Winter sets, which David chose after being told they would cost about 1 KB) and WCAG AA on both control palettes
+  73 on 2026-11-20 for the Winter sets, which David chose after being told they would cost about 1 KB,
+  and to 74 the same day so the Our day pictures are stored offline: their 50 precache entries cost
+  1.3 KB, and David chose that over leaving them out of the offline store at 72.7 KB) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -92,7 +94,8 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
 - `styles.css` — control palettes (parsed by the contrast gate) and base styles.
 - `public/feelings`, `public/people` — the emoji pictures. `public/NOTICE.txt` — their credits.
 - `scripts/music.mjs` — renders the Nursery tunes into `public/music/` (`npm run music`, needs ffmpeg).
-- `scripts/winter.mjs` — copies the Winter pictures out of the picture library (`npm run winter`).
+- `scripts/library.mjs` — copies the Winter and Our day pictures out of the picture library
+  (`npm run library`); `scripts/day-pictures.json` says where each Our day picture comes from.
 - `scripts/fetch-pictures.mjs`, `scripts/check-bundle-size.mjs`, `scripts/check-contrast.mjs`.
 - `tests/looksee.test.js`.
 
@@ -123,7 +126,8 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
   mix is random but even. `round` in `App.svelte` rebuilds the deck each time it starts over, so
   every loop is dealt again (and a mixed-up deck is mixed again). The `skin` setting can hold one
   tone instead.
-- **Offline:** every picture is precached (220 emoji files, 5.4 MB, and the 30 Winter pictures, 0.25 MB), so the whole app works offline
+- **Offline:** every picture is precached (220 emoji files, 5.4 MB, the 30 Winter pictures, 0.25 MB, and
+  the 50 Our day pictures, 0.38 MB), so the whole app works offline
   once the service worker has installed; only the corner video needs a connection. Each precache
   entry also costs bytes of service worker, which count toward the JS budget: the pictures are
   about 5 KB of it. To test offline for real, build, start the `looksee-built` preview
@@ -187,23 +191,32 @@ Outside, Music, Sports, Tools) and 🌍 Places (Around town, Space). **The code 
 ## Our day: words for the routines of a school day
 
 The class's teacher sent her schedule (2026-11-18) and asked for words on screen for each part of
-it. 🏫 **Our day** (`src/routine.js`) is seven sets of words, each drawn as the device's own emoji
-above the word: Good morning (arrival and classroom expectations), Lining up, Core words, Asking
-(requesting phrases for snack and lunch), Five senses (for trying new foods), Math words and Going
-home (packing up and the bus).
+it. 🏫 **Our day** (`src/routine.js`) is seven sets of words: Good morning (arrival and classroom
+expectations), Lining up, Core words, Asking (requesting phrases for snack and lunch), Five senses
+(for trying new foods), Math words and Going home (packing up and the bus).
 
-- **Each word is a line of text,** `label,es,art,emoji` (like `things.js`, to spare the size
-  gate), with no commas inside a word. A phrase ("more please", "all done") is one word here.
-- **A word slide is a `picture` with `word: true`.** `Visual.svelte` draws its emoji as text from
-  the start (no `<img>`, so no 404) and `App.svelte` does not preload a file for it. Everything
-  else is shared with the other sets: the Words settings, el / la, speech, set names, plans,
-  settings links and bookmark names ("🏫 Going home · EN").
+- **Each word is a line of text,** `label,es,art,emoji,picture` (like `things.js`, to spare the
+  size gate), with no commas inside a word. A phrase ("more please", "all done") is one word here.
+- **60 of the 77 words show a picture of our own (2026-11-20)**: the picture library's cast doing
+  it (Max for the classroom words, Jo for asking, Sam for the senses, Ana waving hello) or one of
+  its props (backpack, bus, spoon). 50 files in `public/day/`, since a picture can serve several
+  words ("more" and "more please"); a test holds that one word has one picture in every set.
+  `npm run library` (`scripts/library.mjs`) copies them out of the library;
+  `scripts/day-pictures.json` says where each comes from there. The rest (first, last, again,
+  follow, cup, folder, the math words) are still their emoji, and so is "quiet hands" on purpose:
+  autistic advocates object to the phrase, so it is a question for the teacher, not a picture.
+- **A word slide is a `picture` with `word: true`.** With a picture it also has `dir`, `code` and
+  `one`, and is drawn like a Winter picture, with its emoji behind it if the file cannot load;
+  without one, `Visual.svelte` draws the emoji as text (no `<img>`, so no 404) and `App.svelte`
+  preloads nothing. Everything else is shared with the other sets: the Words settings, el / la,
+  speech, set names, plans, settings links and bookmark names ("🏫 Going home · EN"). Watch's
+  word frame still shows the emoji.
 - **The lists are first drafts for the teacher to correct;** she offered more detail once the
   shape was settled. The Spanish is as unchecked as the rest. Directions are the familiar
   command (mira, siéntate, espera), and only nouns take el / la ("ayuda" and "silencio" said as a
   request have none). No word is written "o/a": that form follows the child's `esGender`, and
   these words describe food and things ("frío", not "frío/a"). Emoji are Emoji 13 or older,
-  since a word slide has no picture file to fall back on (🟰 was blank on older Windows). Tests
+  since the emoji is what shows when there is no picture (🟰 was blank on older Windows). Tests
   hold all of that, and that every word has Spanish and an emoji.
 - **A Watch preset can use a set as its words:** `words: ROUTINE.arrival`. The Aquarium does;
   the teacher's other videos are waiting for links (`docs/STATUS.md`).
@@ -223,7 +236,7 @@ no photo behind them.
   ornaments, gifts, stockings, wreaths with bows, candles or Santa. A picture that suggests one
   does not go in.
 - **To add or swap one:** a line in `winter.js` (`label,es,art`, then the library's name under
-  `props/` when it is not `winter/<label>`), then `npm run winter` (`scripts/winter.mjs`: crops
+  `props/` when it is not `winter/<label>`), then `npm run library` (`scripts/library.mjs`: crops
   each library cutout, drops specks under 200 px, saves a 512 px AVIF), and commit the files. A
   test fails if the folder and the list differ. **Look at every picture on a dark stage first:**
   cream inside a picture (snow, a white bird) is cut away as a hole unless the library's

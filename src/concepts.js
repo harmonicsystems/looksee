@@ -11,7 +11,7 @@
 import { polygon, curves, ellipse, regular, resample } from './morph.js'
 import { THINGS, THINGS_DIR } from './things.js'
 import { WINTER, WINTER_DIR } from './winter.js'
-import { ROUTINE } from './routine.js'
+import { ROUTINE, DAY_DIR } from './routine.js'
 
 const dot = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`
 
@@ -497,7 +497,8 @@ export function buildDeck(s, rng = Math.random) {
   add('gestures', () => GESTURES.map((x) => picture('gestures', 'people', x, tone(x))))
   add('body', () => BODY.map((x) => picture('body', 'people', x, tone(x))))
   // A routine word is its emoji drawn as text: no file to ask for.
-  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label })))
+  // An Our day word with a picture shows it (one still file, emoji behind it); one without is its emoji.
+  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label, ...(x.pic && { dir: DAY_DIR, code: x.pic, one: true }) })))
   for (const id in WINTER) add(id, () => WINTER[id].map((x) => thing(id, x, WINTER_DIR)))
   for (const id of Object.keys(THINGS)) add(id, () => THINGS[id].map((x) => thing(id, x)))
   if (s.order !== 'shuffle') return deck

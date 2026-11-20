@@ -4,7 +4,7 @@
 // picture library (~/Code/picture-library, private) with Codex image generation,
 // from written descriptions in the library's house style, and no photo was used.
 // So they are in this repo, on the site and in the offline store, and every
-// device has them. `npm run winter` (scripts/winter.mjs) copies them out of the
+// device has them. `npm run library` (scripts/library.mjs) copies them out of the
 // library into public/winter/ as 512 px AVIFs; then commit them.
 //
 // Nothing tied to one holiday or faith (David, 2026-11-20): no star on the

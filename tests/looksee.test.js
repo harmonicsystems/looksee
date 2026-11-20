@@ -13,7 +13,7 @@ import { linkQuery, linkSettings, setupName, setsName } from '../src/share.js'
 import { MINUTES, PLAN_MAX, normalizePlan, blockDone, minutesLeft, blockAfter, setsInUse } from '../src/plan.js'
 import { PRESETS, FACES, normalizeTimer, timerState, remaining, share, startTimer, pauseTimer, resumeTimer, endTimer, addTime, clockText, milestone, faceTrack, faceFill } from '../src/timer.js'
 import { VIDEOS, sides } from '../src/videos.js'
-import { ROUTINE } from '../src/routine.js'
+import { ROUTINE, DAY_DIR, dayFiles } from '../src/routine.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
 import { WINTER, WINTER_DIR, winterFiles } from '../src/winter.js'
@@ -377,12 +377,40 @@ describe('our day', () => {
         expect(x.emoji, x.label).not.toMatch(newer)
       }
   })
-  it('draws a routine word as its emoji, never a file', () => {
+  it('shows a word\'s own picture, with its emoji behind it, or the emoji alone', () => {
     const d = deck({ sets: ['packUp'] })
     expect(d.length).toBe(ROUTINE.packUp.length)
-    expect(d[0]).toMatchObject({ kind: 'picture', word: true, label: 'jacket', emoji: '🧥', say: 'jacket' })
-    expect(d.every((x) => !x.dir && !x.code)).toBe(true)
+    expect(d[0]).toMatchObject({ kind: 'picture', word: true, label: 'jacket', emoji: '🧥', say: 'jacket', dir: DAY_DIR, code: 'jacket', one: true })
+    expect(pictureSrc(d[0], true)).toBe('day/jacket.avif')
     expect(rowsText(labelRows(d[0], { words: 'both', articles: true }))).toBe('jacket / la chaqueta')
+    const folder = d.find((x) => x.label === 'folder')
+    expect(folder.dir || folder.code).toBeFalsy()
+    // Only Things pictures can be a device's own copy.
+    expect(d.every((x) => !x.own)).toBe(true)
+  })
+  it('names each picture once, from the library, and has exactly those files, stored offline and credited', () => {
+    const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
+    const where = JSON.parse(readFileSync(at('scripts/day-pictures.json'), 'utf8'))
+    for (const f of dayFiles()) {
+      expect(f).toMatch(/^[a-z]+(-[a-z]+)*$/)
+      expect(where[f], f).toMatch(/^(cast|props|sets)\/[a-z-]+(\/[a-z-]+)+$/)
+    }
+    expect(Object.keys(where).sort()).toEqual(dayFiles().sort())
+    const have = readdirSync(at(`public/${DAY_DIR}/`)).filter((n) => !n.startsWith('.'))
+    expect(have.sort()).toEqual(dayFiles().map((f) => `${f}.avif`).sort())
+    expect(readFileSync(at('.gitignore'), 'utf8')).not.toContain(DAY_DIR)
+    expect(readFileSync(at('vite.config.js'), 'utf8')).not.toContain(`'${DAY_DIR}/**'`)
+    expect(readFileSync(at('public/NOTICE.txt'), 'utf8')).toContain(`public/${DAY_DIR}/`)
+  })
+  it('gives one word one picture wherever it appears', () => {
+    const seen = {}
+    for (const id in ROUTINE)
+      for (const x of ROUTINE[id]) {
+        // "more" in Math words is how much, not asking for more.
+        const key = id === 'mathWords' ? `math ${x.label}` : x.label
+        if (key in seen) expect(x.pic, `${id} ${x.label}`).toBe(seen[key])
+        seen[key] = x.pic
+      }
   })
   it('names a bookmark after the group', () => {
     expect(setupName({ ...DEFAULTS, sets: Object.keys(ROUTINE) })).toMatch(/^🏫 Our day/)
@@ -835,7 +863,7 @@ describe('winter', () => {
     expect(new Set(all.map((x) => x.file)).size).toBe(all.length)
     expect(new Set(all.map((x) => x.from)).size).toBe(all.length)
   })
-  // `npm run winter` makes what is missing and removes what is left over.
+  // `npm run library` makes what is missing and removes what is left over.
   it('has exactly the pictures the sets ask for, stored offline and credited', () => {
     const have = readdirSync(at(`public/${WINTER_DIR}/`)).filter((n) => !n.startsWith('.'))
     expect(have.sort()).toEqual(winterFiles().map((x) => `${x.file}.avif`).sort())
