@@ -35,7 +35,8 @@ export default defineConfig({
       },
       workbox: {
         // Everything the app shows is stored for offline use: the app shell,
-        // the fonts, every emoji picture (220 files, 5.4 MB) and the credits.
+        // the fonts, every emoji picture (220 files, 5.4 MB), the Winter
+        // pictures (30 files, 0.25 MB) and the credits.
         // YouTube is never cached or intercepted.
         //
         // Each file listed here also costs bytes of service worker, which

@@ -16,6 +16,7 @@ import { VIDEOS, sides } from '../src/videos.js'
 import { ROUTINE } from '../src/routine.js'
 import { speechLines, pickVoice } from '../src/speech.js'
 import { THINGS, THINGS_DIR, thingFiles, thingName } from '../src/things.js'
+import { WINTER, WINTER_DIR, winterFiles } from '../src/winter.js'
 import { PLAYLISTS, MUSIC_DIR, VOLUMES, duckLevel } from '../src/music.js'
 import { PLACE, TEMPS, weatherUrl, tempBand, sky, readWeather, weatherLines } from '../src/weather.js'
 
@@ -796,6 +797,55 @@ describe('things', () => {
     if (!existsSync(dir)) return
     const have = readdirSync(dir).filter((n) => !n.startsWith('.'))
     expect(have.sort()).toEqual(thingFiles().map((x) => `${x.file}.avif`).sort())
+  })
+})
+
+// The Winter sets are pictures of our own, drawn in David's picture library:
+// in the repo, on the site and in the offline store, unlike the Things sets.
+describe('winter', () => {
+  const at = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url))
+  it('is one group of two sets, each a run of single still pictures', () => {
+    const g = GROUPS.find((x) => x.id === 'winter')
+    expect(g).toMatchObject({ label: 'Winter', emoji: '❄️', sets: ['winter', 'winterClothes'] })
+    expect(g.own).toBeFalsy()
+    for (const id of g.sets) {
+      expect(SETS.find((x) => x.id === id).es, id).toBeTruthy()
+      const d = deck({ sets: [id] })
+      expect(d.map((x) => x.label), id).toEqual(WINTER[id].map((x) => x.label))
+      for (const x of d) expect(x).toMatchObject({ kind: 'picture', set: id, dir: WINTER_DIR, one: true, own: false })
+    }
+    const coat = deck({ sets: ['winterClothes'] })[0]
+    expect(pictureSrc(coat, true)).toBe('winter/coat.avif')
+    expect(rowsText(labelRows(coat, { words: 'both', articles: true }))).toBe('coat / el abrigo')
+  })
+  it('never shows a device\'s own Things picture in place of a drawn one', () => {
+    // Both have a coat: the Things one may be the device's copy, the Winter one never.
+    expect(deck({ sets: ['clothes'] }).find((x) => x.label === 'coat').own).toBe(true)
+    expect(deck({ sets: ['winterClothes'] }).find((x) => x.label === 'coat').own).toBe(false)
+  })
+  it('gives every picture two different words, an article and a file of its own', () => {
+    const all = winterFiles()
+    for (const x of all) {
+      expect(x.es, x.label).toBeTruthy()
+      expect(x.es.toLowerCase(), x.label).not.toBe(x.label.toLowerCase())
+      expect(['el', 'la', 'los', 'las'], x.label).toContain(x.art)
+      expect(x.file, x.label).toMatch(/^[a-z]+(-[a-z]+)*$/)
+      expect(x.from, x.label).toMatch(/^(winter|clothes)\/[a-z]+(-[a-z]+)*$/)
+    }
+    expect(new Set(all.map((x) => x.file)).size).toBe(all.length)
+    expect(new Set(all.map((x) => x.from)).size).toBe(all.length)
+  })
+  // `npm run winter` makes what is missing and removes what is left over.
+  it('has exactly the pictures the sets ask for, stored offline and credited', () => {
+    const have = readdirSync(at(`public/${WINTER_DIR}/`)).filter((n) => !n.startsWith('.'))
+    expect(have.sort()).toEqual(winterFiles().map((x) => `${x.file}.avif`).sort())
+    expect(readFileSync(at('.gitignore'), 'utf8')).not.toContain(WINTER_DIR)
+    expect(readFileSync(at('vite.config.js'), 'utf8')).not.toContain(`'${WINTER_DIR}/**'`)
+    expect(readFileSync(at('public/NOTICE.txt'), 'utf8')).toContain(`public/${WINTER_DIR}/`)
+  })
+  it('names a bookmark after the group, or the one set', () => {
+    expect(setupName({ ...DEFAULTS, sets: ['winter', 'winterClothes'] })).toMatch(/^❄️ Winter · /)
+    expect(setupName({ ...DEFAULTS, sets: ['winterClothes'] })).toMatch(/^❄️ Winter clothes · /)
   })
 })
 

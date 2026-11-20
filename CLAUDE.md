@@ -43,10 +43,11 @@ Sibling projects with shared conventions: `harmonicsystems/clip-choice`, `harmon
   paths in `index.html` and CSS. The deploy workflow passes `BASE_PATH`.
 - Accessibility: Atkinson Hyperlegible (self-hosted, `public/fonts`), a two-tone focus ring
   (yellow with a dark edge), light + dark controls, four stage themes including high contrast.
-- Build gates (`npm run build`): app JS ≤ 72 KB gzipped, service worker included
-  (`scripts/check-bundle-size.mjs`; 71.3 KB now, 0.7 KB under. David raised it on 2026-11-15 from 60 to 62 for
+- Build gates (`npm run build`): app JS ≤ 73 KB gzipped, service worker included
+  (`scripts/check-bundle-size.mjs`; 72.5 KB now, 0.5 KB under. David raised it on 2026-11-15 from 60 to 62 for
   the timer, to 64 for the weather, to 66 for the timer's faces, on 2026-11-16 to 68 for background music,
-  on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day) and WCAG AA on both control palettes
+  on 2026-11-18 to 70 for the Our day words, and the same day to 72 for sets by the school day. It went to
+  73 on 2026-11-20 for the Winter sets, which David chose after being told they would cost about 1 KB) and WCAG AA on both control palettes
   (`scripts/check-contrast.mjs`). The stage themes are held to their own ratios by the tests. No
   runtime dependencies.
 
@@ -81,6 +82,7 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
   the Web Speech API (not pure).
 - `videos.js` — `VIDEOS`, the preset videos for Watch with their words, and `sides(n)`.
 - `routine.js` — `ROUTINE`, the Our day word sets (below).
+- `winter.js` — `WINTER`, the Winter sets: pictures of our own, from David's picture library (below).
 - `pip.js` — `PipPlayer`, the corner video and the Watch video. `youtube.js` — `loadApi`. `link.js` — `videoId`,
   `startSeconds` (reads a link's `?t=`).
 - `weather.js` — the place, the temperature bands and sky words, reading Open-Meteo's answer (pure).
@@ -90,6 +92,7 @@ Everything in `src/` except the three `.svelte` files, `main.svelte.js`, `pip.js
 - `styles.css` — control palettes (parsed by the contrast gate) and base styles.
 - `public/feelings`, `public/people` — the emoji pictures. `public/NOTICE.txt` — their credits.
 - `scripts/music.mjs` — renders the Nursery tunes into `public/music/` (`npm run music`, needs ffmpeg).
+- `scripts/winter.mjs` — copies the Winter pictures out of the picture library (`npm run winter`).
 - `scripts/fetch-pictures.mjs`, `scripts/check-bundle-size.mjs`, `scripts/check-contrast.mjs`.
 - `tests/looksee.test.js`.
 
@@ -120,7 +123,7 @@ hold `<code>.avif` (animated) and `<code>.svg` (still) for everything `pictureFi
   mix is random but even. `round` in `App.svelte` rebuilds the deck each time it starts over, so
   every loop is dealt again (and a mixed-up deck is mixed again). The `skin` setting can hold one
   tone instead.
-- **Offline:** every picture is precached (220 files, 5.4 MB), so the whole app works offline
+- **Offline:** every picture is precached (220 emoji files, 5.4 MB, and the 30 Winter pictures, 0.25 MB), so the whole app works offline
   once the service worker has installed; only the corner video needs a connection. Each precache
   entry also costs bytes of service worker, which count toward the JS budget: the pictures are
   about 5 KB of it. To test offline for real, build, start the `looksee-built` preview
@@ -159,7 +162,7 @@ Outside, Music, Sports, Tools) and 🌍 Places (Around town, Space). **The code 
   copy of the folder at `~/Desktop/things` to hand to a classroom device**: after `npm run
   things`, bring it up to date with `rsync -a public/things/ ~/Desktop/things/`.
 - A thing is a `picture` slide with `one: true`: a single still file, no SVG and no emoji behind
-  it. `Visual.svelte` shows the device's own copy when there is one (`pics`), else the file under
+  it, and `own: true`. `Visual.svelte` shows the device's own copy when there is one (`pics`), else the file under
   `things/`, else nothing but the word. On the live site that second step is a 404 for each thing
   with no picture on the device (harmless; the console reports it).
 - The sets are off for a new visitor, who has no pictures for them.
@@ -205,6 +208,34 @@ home (packing up and the bus).
 - **A Watch preset can use a set as its words:** `words: ROUTINE.arrival`. The Aquarium does;
   the teacher's other videos are waiting for links (`docs/STATUS.md`).
 - One bookmark per part of her day is the way to switch: `docs/teacher-links.md`.
+
+## Winter: pictures of our own
+
+❄️ **Winter** (`src/winter.js`, 2026-11-20) is two sets: Winter days (18 pictures: snowman, sled,
+icicles, a pine tree with plain lights, fireplace, polar bear, chickadee…) and Winter clothes (12).
+They are the first pictures drawn for Looksee itself: made in David's picture library
+(`~/Code/picture-library`, private) with Codex image generation, from written descriptions, with
+no photo behind them.
+
+- **Unlike Things, they ship.** They are ours, so `public/winter/` is committed, served and
+  precached, and every device has them with nothing to add (30 AVIFs, 244 KB).
+- **Nothing tied to one holiday or faith** (David, 2026-11-20): no star on the tree, no
+  ornaments, gifts, stockings, wreaths with bows, candles or Santa. A picture that suggests one
+  does not go in.
+- **To add or swap one:** a line in `winter.js` (`label,es,art`, then the library's name under
+  `props/` when it is not `winter/<label>`), then `npm run winter` (`scripts/winter.mjs`: crops
+  each library cutout, drops specks under 200 px, saves a 512 px AVIF), and commit the files. A
+  test fails if the folder and the list differ. **Look at every picture on a dark stage first:**
+  cream inside a picture (snow, a white bird) is cut away as a hole unless the library's
+  `props/sheets.json` lists it as `solid`, and `solid` fills in a mug's handle too. The chickadee
+  and the hot cocoa were cut again for exactly that.
+- **A Winter slide is built like a thing** (`thing(set, x, WINTER_DIR)`: `one: true`, a single
+  still file) **but is never the device's own copy:** only Things slides carry `own`, so a
+  device's own `coat.png` for the Things clothes does not replace the drawn coat.
+- A word that is the same in both languages is left out, as for Things. The Spanish is unchecked
+  (cobija, gorro, mitones, carámbanos, quitanieves, carbonero for chickadee).
+- Off for a new visitor. Each picture's precache entry costs about 20 bytes of service worker;
+  the 30 and their words cost 1.2 KB of the size gate.
 
 ## Seen from across a classroom
 
@@ -514,8 +545,8 @@ fits the bar. "➕ Math · EN+ES"; part of a group lists its sets with commas ("
 Math · ES"; three or more "🔤➕🎨 Mix · EN"; every set "Looksee · All · EN". A bookmark keeps the
 name it was saved with.
 
-`GROUPS` (concepts.js) puts every set in one of eleven groups, in `SETS` order (a test): 🔤 Letters &
-Numbers, 💯 Count to 100, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, 🏫 Our day, and the four whose pictures
+`GROUPS` (concepts.js) puts every set in one of twelve groups, in `SETS` order (a test): 🔤 Letters &
+Numbers, 💯 Count to 100, ➕ Math, 🎨 Shapes & Colors, ↔️ Opposites, 😊 Feelings & Body, 🏫 Our day, ❄️ Winter, and the four whose pictures
 a device adds for itself, 🐾 Animals, 🍎 Food, 🧸 Things and 🌍 Places. Settings lists the sets under
 their groups; a group's heading turns the whole group on, or off when it is all on (`toggleGroup`),
 and shows "mixed" when part of it is on. For

@@ -114,8 +114,8 @@
   // picture, else the still one, else the device's own emoji as text.
   // 0 = as asked, 1 = still picture, 2 = text.
   let tier = $state(0)
-  // A thing's picture is the device's own copy when it has one.
-  const own1 = $derived(item.one && pics[item.code])
+  // A Things picture is the device's own copy when it has one.
+  const own1 = $derived(item.own && pics[item.code])
   $effect(() => {
     if (own1) tier = 0
   })

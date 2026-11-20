@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-18. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-20. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -618,6 +618,31 @@ in order); the lit number covered its neighbours along the edges; numbers not ye
 too faint in Calm and Bright; the Count by choice was hidden when it was the only set; and the
 notes were dated a day ahead. The app is 71.3 KB of 72.
 
+## 2026-11-20: Winter
+
+❄️ **Winter** is a new group of two sets for December: Winter days (18 pictures: snowman,
+snowballs, sled, skis, snow shovel, snowplow, icicles, frozen pond, a bare snowy tree, a pine tree
+with lights, fireplace, firewood, blanket, hot cocoa, polar bear, owl, chickadee, bird feeder) and
+Winter clothes (12: coat, hat, scarf, mittens, gloves, boots, snow pants, snowsuit, earmuffs,
+sweater, socks, vest). David asked for winter things that belong to no religion; the pine tree has
+plain lights and nothing on top.
+
+The pictures are the first drawn for Looksee itself, in David's picture library with Codex image
+generation, so unlike Things they are in the repo, on the site and stored offline: a device needs
+nothing added. Each was looked at on a dark stage. Two were cut again in the library: the
+chickadee's white cheek and belly had been cut away as holes, and the cocoa mug's handle had been
+filled in with cream.
+
+The two sets cost 1.2 KB of the size budget (30 precache entries and their words), so the limit
+went from 72 to 73 KB; the app is 72.5 KB. David was told before choosing the set that it would
+need about a kilobyte, and can still say no to the raise in review.
+
+**Checked locally:** 140 tests pass and the build passes both gates (268 files precached). In a
+browser, all 32 slides (30 pictures and two set names) load their pictures and fit their words in
+both languages at laptop and phone widths, in the Calm and Night themes; the bookmark names are
+"❄️ Winter · EN" and "❄️ Winter clothes · EN+ES", and Settings lists ❄️ Winter after Our day.
+**Not checked:** the live site, offline on a built copy, the classroom Chromebook.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -707,7 +732,7 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 71.3 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
+- **The size budget.** 72.5 KB of 73 (raised from 72 on 2026-11-20 for the Winter sets). David raised the limit to 68 on 2026-11-16 for music, and on
   2026-11-18 to 70 for Our day and to 72 for sets by the school day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.
@@ -726,6 +751,10 @@ setting, which was checked). Any device other than one Mac.
 - **113 new Spanish words** for the things, as unchecked as the rest. Arguable ones: plátano for
   banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
   chile for pepper, palomitas for popcorn, panqueques for pancakes.
+
+- **30 Winter words in Spanish,** unchecked: cobija for blanket, gorro for hat, mitones for
+  mittens, carámbanos for icicles, quitanieves for snowplow, carbonero for chickadee, comedero de
+  pájaros for bird feeder.
 
 - **Background music: listen to both playlists.** Nobody has heard them yet. Morning Mood grows
   loud in the middle; drop it if it is too much. The budget has 0.2 KB left.

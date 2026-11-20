@@ -11,6 +11,7 @@
     "test": "vitest run",
     "pictures": "node scripts/fetch-pictures.mjs",
     "things": "node scripts/things.mjs",
+    "winter": "node scripts/winter.mjs",
     "music": "node scripts/music.mjs"
   },
   "devDependencies": {

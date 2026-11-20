@@ -24,6 +24,13 @@ it shows these copies.
 The emoji on the school-day bar are not files. They are drawn by the device's
 own emoji font.
 
+Winter pictures (public/winter/)
+--------------------------------
+Made for Looksee by Harmonic Systems with OpenAI's image generation (in
+Codex), from written descriptions, then cut out and shrunk by
+scripts/winter.mjs. No photograph and no other artist's picture was used to
+make them.
+
 Background music (public/music/)
 --------------------------------
 Nursery tunes: Twinkle Twinkle Little Star, Mary Had a Little Lamb, Row Row

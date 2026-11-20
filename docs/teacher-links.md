@@ -45,3 +45,13 @@ on a bookmark switches the screen to those words; the Play button starts them.
 - The videos (Good Morning Song, Count to 100, Goodbye Song, an aquarium) are not in yet. They
   will appear under Tools ▸ Watch with these words around them.
 - The words are a first try. Tell us what to add, remove or change in each list.
+
+# Winter
+
+Pictures for circle time in December and January: winter things outside and in, and the clothes
+for going out in the snow. They come with the app; there is nothing to add.
+
+| bookmark name | link |
+|---|---|
+| ❄️ Winter · EN | https://harmonicsystems.github.io/looksee/?v=1&sets=winter.winterClothes |
+| ❄️ Winter clothes · EN | https://harmonicsystems.github.io/looksee/?v=1&sets=winterClothes |
