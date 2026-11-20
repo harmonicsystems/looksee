@@ -10,7 +10,8 @@
 
 import { polygon, curves, ellipse, regular, resample } from './morph.js'
 import { THINGS, THINGS_DIR } from './things.js'
-import { ROUTINE } from './routine.js'
+import { WINTER, WINTER_DIR } from './winter.js'
+import { ROUTINE, DAY_DIR } from './routine.js'
 
 const dot = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0z`
 
@@ -207,9 +208,11 @@ const picture = (set, dir, x, tone) => ({
   emoji: tone ? bare(x.emoji).join('') + String.fromCodePoint(parseInt(tone, 16)) : x.emoji
 })
 
-// One slide of a Things set (things.js): a single still picture, with no
-// emoji to fall back on, so a missing picture leaves the word alone.
-const thing = (set, x) => ({ kind: 'picture', set, dir: THINGS_DIR, one: true, label: x.label, es: x.es, art: x.art, say: x.label, code: x.file, emoji: '' })
+// One slide of a Things set (things.js) or a Winter set (winter.js): a single
+// still picture, with no emoji to fall back on, so a missing picture leaves the
+// word alone. Only a Things picture may be the device's own copy (`own`): a
+// device's coat.png must not stand in for the drawn winter coat.
+const thing = (set, x, dir = THINGS_DIR) => ({ kind: 'picture', set, dir, one: true, own: dir === THINGS_DIR, label: x.label, es: x.es, art: x.art, say: x.label, code: x.file, emoji: '' })
 
 // A bag deals its things like cards: shuffle, hand them out one at a time,
 // shuffle again when they run out. Random, but everything turns up equally
@@ -391,6 +394,8 @@ export const SETS = [
   { id: 'senses', label: 'Five senses', es: 'Los cinco sentidos' },
   { id: 'mathWords', label: 'Math words', es: 'Palabras de matemáticas' },
   { id: 'packUp', label: 'Going home', es: 'Ir a casa' },
+  { id: 'winter', label: 'Winter days', es: 'Días de invierno' },
+  { id: 'winterClothes', label: 'Winter clothes', es: 'Ropa de invierno' },
   { id: 'animals', label: 'Pets and farm', es: 'Mascotas y granja' },
   { id: 'wild', label: 'Wild animals', es: 'Animales salvajes' },
   { id: 'sea', label: 'Sea animals', es: 'Animales del mar' },
@@ -421,6 +426,7 @@ export const GROUPS = [
   { id: 'opposites', label: 'Opposites', emoji: '↔️', sets: ['opposites'] },
   { id: 'people', label: 'Feelings & Body', emoji: '😊', sets: ['feelings', 'gestures', 'body'] },
   { id: 'day', label: 'Our day', emoji: '🏫', sets: Object.keys(ROUTINE) },
+  { id: 'winter', label: 'Winter', emoji: '❄️', sets: Object.keys(WINTER) },
   // `own`: these come with no pictures, each device adds its own (things.js).
   { id: 'animals', label: 'Animals', emoji: '🐾', own: true, sets: ['animals', 'wild', 'sea', 'birds'] },
   { id: 'food', label: 'Food', emoji: '🍎', own: true, sets: ['food', 'fruit', 'vegetables'] },
@@ -491,7 +497,9 @@ export function buildDeck(s, rng = Math.random) {
   add('gestures', () => GESTURES.map((x) => picture('gestures', 'people', x, tone(x))))
   add('body', () => BODY.map((x) => picture('body', 'people', x, tone(x))))
   // A routine word is its emoji drawn as text: no file to ask for.
-  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label })))
+  // An Our day word with a picture shows it (one still file, emoji behind it); one without is its emoji.
+  for (const id in ROUTINE) add(id, () => ROUTINE[id].map((x) => ({ kind: 'picture', set: id, word: true, ...x, say: x.label, ...(x.pic && { dir: DAY_DIR, code: x.pic, one: true }) })))
+  for (const id in WINTER) add(id, () => WINTER[id].map((x) => thing(id, x, WINTER_DIR)))
   for (const id of Object.keys(THINGS)) add(id, () => THINGS[id].map((x) => thing(id, x)))
   if (s.order !== 'shuffle') return deck
   // Mixed up, the count to 100 still counts: its slides stay in order, as one

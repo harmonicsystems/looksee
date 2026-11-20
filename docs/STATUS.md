@@ -1,6 +1,6 @@
 # Status
 
-As of 2026-11-18. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
+As of 2026-11-20. `CLAUDE.md` explains how Looksee is built. This note says where things stand.
 
 ## Where it stands
 
@@ -618,6 +618,62 @@ in order); the lit number covered its neighbours along the edges; numbers not ye
 too faint in Calm and Bright; the Count by choice was hidden when it was the only set; and the
 notes were dated a day ahead. The app is 71.3 KB of 72.
 
+## 2026-11-20: Winter
+
+❄️ **Winter** is a new group of two sets for December: Winter days (18 pictures: snowman,
+snowballs, sled, skis, snow shovel, snowplow, icicles, frozen pond, a bare snowy tree, a pine tree
+with lights, fireplace, firewood, blanket, hot cocoa, polar bear, owl, chickadee, bird feeder) and
+Winter clothes (12: coat, hat, scarf, mittens, gloves, boots, snow pants, snowsuit, earmuffs,
+sweater, socks, vest). David asked for winter things that belong to no religion; the pine tree has
+plain lights and nothing on top.
+
+The pictures are the first drawn for Looksee itself, in David's picture library with Codex image
+generation, so unlike Things they are in the repo, on the site and stored offline: a device needs
+nothing added. Each was looked at on a dark stage. Two were cut again in the library: the
+chickadee's white cheek and belly had been cut away as holes, and the cocoa mug's handle had been
+filled in with cream.
+
+The two sets cost 1.2 KB of the size budget (30 precache entries and their words), so the limit
+went from 72 to 73 KB; the app is 72.5 KB. David was told before choosing the set that it would
+need about a kilobyte, and can still say no to the raise in review.
+
+**Checked locally:** 140 tests pass and the build passes both gates (268 files precached). In a
+browser, all 32 slides (30 pictures and two set names) load their pictures and fit their words in
+both languages at laptop and phone widths, in the Calm and Night themes; the bookmark names are
+"❄️ Winter · EN" and "❄️ Winter clothes · EN+ES", and Settings lists ❄️ Winter after Our day.
+**Not checked:** the live site, offline on a built copy, the classroom Chromebook.
+
+## 2026-11-20: Our day with the cast
+
+David chose to draw the Our day words with the picture library's cast instead of the device's
+emoji. Three new cast sheets were made with Codex (36 pictures, about 29k tokens): Max for the
+classroom words (hang up, sit, look, listen, quiet, wait, stop, eyes forward, line up, me,
+goodbye, raise hand), Jo for asking (want, more, like, all done, please, thank you, open please,
+no thanks, count, yes, share, choose) and Sam for the senses and tastes (see, hear, smell, taste,
+touch, sweet, sour, salty, crunchy, soft, hot, cold). Ana waves hello and washes her hands, from
+her existing sheets. Objects come from the library's props (backpack, door, water, spoon, jacket,
+cap, gloves, lunchbox, bus, car, home).
+
+**60 of the 77 words now show a picture** (50 files in `public/day/`, 382 KB, since a picture can
+serve several words). The rest keep their emoji: first, last, next, again, follow, cup (the
+library's cup is a mug, and "vaso" is a drinking cup), folder, and the math words, which would be
+better drawn by code. **"Quiet hands" keeps its emoji on purpose:** autistic advocates object to
+the phrase because it has been used to stop stimming. Worth asking the teacher whether "calm body"
+or "hands to self" says what she means.
+
+Three pictures read less clearly than the rest without their word: "want" (Jo reaching for a
+ball looks like catching it), "no thanks" (a raised palm looks like a wave) and "share" (holding
+out a crayon looks like pointing). The word is always shown with them.
+
+**Stored offline, like Winter.** Their 50 precache entries cost 1.3 KB of the size budget, so the
+limit went from 73 to 74 KB; the app is 73.9 KB. Leaving them out of the offline store (72.7 KB,
+the emoji showing offline) was offered, and David chose the raise.
+
+**Checked:** 142 tests pass. In a browser, all 84 Our day slides (77 words and 7 set names) at
+laptop and phone widths, both languages, Calm and Night: the 60 pictures load, the 17 emoji show,
+nothing overflows, and the console is clean. **Not checked:** the live site, offline on a built
+copy, the classroom Chromebook, and the teacher's view of the pictures.
+
 ## Checked, and not checked
 
 **Checked on 2026-11-10, locally.** All 28 tests pass. The build passes its size gate (38.5 KB of
@@ -707,7 +763,8 @@ setting, which was checked). Any device other than one Mac.
 - **The Thiings pictures.** Licensed for the app; kept off the repo and the site by David's
   choice. Putting them on the site for every visitor (from a private source at deploy time, or in
   the repo after asking Thiings) is open.
-- **The size budget.** 71.3 KB of 72. David raised the limit to 68 on 2026-11-16 for music, and on
+- **The size budget.** 73.9 KB of 74, 0.1 KB left (raised from 72 to 73 on 2026-11-20 for the Winter sets, and to 74 the
+  same day for the Our day pictures, stored offline). David raised the limit to 68 on 2026-11-16 for music, and on
   2026-11-18 to 70 for Our day and to 72 for sets by the school day. Before that, three times on 2026-11-15: from 60 to 62 for the timer (3 KB), to 64 for the weather (2.1 KB), and to 66
   for the timer's faces (0.9 KB). The 223 things cost about 2.5 KB; many more of them need their
   words loaded apart from the app.
@@ -726,6 +783,10 @@ setting, which was checked). Any device other than one Mac.
 - **113 new Spanish words** for the things, as unchecked as the rest. Arguable ones: plátano for
   banana (the letter B slide says banana), cometa for kite, mariquita for ladybug, tiza for chalk,
   chile for pepper, palomitas for popcorn, panqueques for pancakes.
+
+- **30 Winter words in Spanish,** unchecked: cobija for blanket, gorro for hat, mitones for
+  mittens, carámbanos for icicles, quitanieves for snowplow, carbonero for chickadee, comedero de
+  pájaros for bird feeder.
 
 - **Background music: listen to both playlists.** Nobody has heard them yet. Morning Mood grows
   loud in the middle; drop it if it is too much. The budget has 0.2 KB left.

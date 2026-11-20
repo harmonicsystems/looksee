@@ -158,7 +158,7 @@
   // Have the next picture ready before its slide arrives.
   $effect(() => {
     const next = deck[(index + 1) % deck.length]
-    if (next?.kind === 'picture' && !next.word && !(next.one && pics[next.code])) new Image().src = pictureSrc(next, still)
+    if (next?.kind === 'picture' && next.code && !(next.own && pics[next.code])) new Image().src = pictureSrc(next, still)
   })
 
   // Pictures this device keeps for the Things sets (local.js): added from the
